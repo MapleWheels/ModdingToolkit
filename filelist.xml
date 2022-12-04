@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<contentpackage name="Mod Config Manager" modversion="0.1" corepackage="false">
+    <Other file="%ModDir%/CSharp/Shared/Bootloader.cs" />
+</contentpackage>

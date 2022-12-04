@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>ModConfigManager</AssemblyName>
+        <RootNamespace>ModConfigManager</RootNamespace>
+        <LangVersion>preview</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="0Harmony">
+        <HintPath>..\Refs\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="Barotrauma">
+        <HintPath>..\Refs\Barotrauma-nstrip.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Cecil">
+        <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework.Windows.NetStandard">
+        <HintPath>..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Common">
+        <HintPath>..\Refs\MonoMod.Common.dll</HintPath>
+      </Reference>
+      <Reference Include="XNATypes">
+        <HintPath>..\Refs\XNATypes.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="CSharp\Client\Config" />
+      <Folder Include="CSharp\Client\Settings" />
+      <Folder Include="CSharp\Shared\Config" />
+    </ItemGroup>
+
+</Project>
