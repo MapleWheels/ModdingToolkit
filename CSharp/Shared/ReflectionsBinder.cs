@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Linq;
-using Barotrauma;
-using HarmonyLib;
-
-namespace ModConfigManager;
+﻿namespace ModConfigManager;
 
 public abstract class ReflectionsBinder<TTarget> where TTarget : class
 {
@@ -92,14 +81,30 @@ public abstract class ReflectionsBinder<TTarget> where TTarget : class
 
 public class Bindable<TObj, TVar> where TObj : class
 {
-    public object? ObjInstance { get; protected set; }
+    public WeakReference<TObj>? ObjRef { get; protected set; }
     public string? Name { get; protected set; }
     protected MemberType MType;
-    protected MemberInfo refMember;
+    protected MemberInfo? RefMember;
+    protected bool IsInstanceType = false;
 
     public TVar? Value
     {
-        get => GetValue(this.ObjInstance);
+        get
+        {
+            if (this.RefMember is null)
+                throw new NullReferenceException($"Bindable::SetValue() | Reference member is null. Did you call Bind()?");
+            var weakReference = this.ObjRef;
+            if (weakReference != null && this.IsInstanceType && weakReference.TryGetTarget(out var val))
+            {
+                switch (this.MType)
+                {
+                    case MemberType.Field: return (TVar?)((FieldInfo)this.RefMember).GetValue(this._GetRefObj());
+                    case MemberType.Property: return (TVar?)((PropertyInfo)this.RefMember).GetValue(this._GetRefObj());
+                    default: return default;
+                }
+            }
+            return default;
+        }
         set => SetValue(value);
     }
 
@@ -109,7 +114,21 @@ public class Bindable<TObj, TVar> where TObj : class
             this.Name = name;
     }
 
-    public void Bind(object? instance, string? name = null, bool isInit = false)
+    public virtual bool IsValid
+    {
+        get
+        {
+            if (RefMember is null)
+                return false;
+            if (!IsInstanceType)
+                return true;
+            if (ObjRef is null)
+                return false;
+            return ObjRef.TryGetTarget(out _);
+        }
+    }
+
+    public Bindable<TObj, TVar> Bind(object? instance, string? name = null, bool isInit = false)
     {
         if (this.Name.IsNullOrWhiteSpace())
         {
@@ -120,56 +139,58 @@ public class Bindable<TObj, TVar> where TObj : class
         }
         else if (!isInit && !name.IsNullOrWhiteSpace())
             this.Name = name;
-        
-        this.ObjInstance = instance;
 
-        BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
-                             BindingFlags.FlattenHierarchy;
+
+        this.IsInstanceType = instance is not null;
+        if (this.IsInstanceType)
+            this.ObjRef = new WeakReference<TObj>((TObj)instance!, true);
         
-        FieldInfo? fi = typeof(TObj).GetField(this.Name);
+
+        FieldInfo? fi = AccessTools.DeclaredField(typeof(TObj), this.Name);
         if (fi is null)
         {
-            PropertyInfo? pi = typeof(TObj).GetProperty(this.Name);
-            this.refMember = pi ?? throw new ArgumentException($"Binder::Bind() | Could not find a member named {this.Name}.");
+            PropertyInfo? pi = AccessTools.DeclaredProperty(typeof(TObj), this.Name);
+            this.RefMember = pi ?? throw new ArgumentException($"Binder::Bind() | Could not find a member named {this.Name}.");
             this.MType = MemberType.Property;
         }
         else
         {
-            this.refMember = fi;
+            this.RefMember = fi;
             this.MType = MemberType.Field;
         }
+
+        return this;
     }
     
     public void SetValue(TVar? value)
     {
-        if (this.refMember is null)
+        if (this.RefMember is null)
             throw new NullReferenceException($"Bindable::SetValue() | Reference member is null. Did you call Bind()?");
         
         switch (this.MType)
         {
-            case MemberType.Field: ((FieldInfo)this.refMember).SetValue(this.ObjInstance, value);
+            case MemberType.Field: ((FieldInfo)this.RefMember).SetValue(this._GetRefObj(), value);
                 break;
-            case MemberType.Property: ((PropertyInfo)this.refMember).SetValue(this.ObjInstance, value);
+            case MemberType.Property: ((PropertyInfo)this.RefMember).SetValue(this._GetRefObj(), value);
                 break;
         }
     }
 
-    public TVar? GetValue(object? instance)
+    private TObj? _GetRefObj()
     {
-        if (this.refMember is null)
-            throw new NullReferenceException($"Bindable::SetValue() | Reference member is null. Did you call Bind()?");
-        return _GetValue(instance);
+        var weakReference = this.ObjRef;
+        return !IsInstanceType ? null :
+            weakReference != null && weakReference.TryGetTarget(out var val) ? val : null;
     }
-    
-    private TVar? _GetValue(object? instance) =>
-        this.MType switch
-        {
-            MemberType.Field => (TVar?)((FieldInfo)this.refMember).GetValue(instance ?? this.ObjInstance),
-            MemberType.Property => (TVar?)((PropertyInfo)this.refMember).GetValue(instance ?? this.ObjInstance)
-        };
-    
-    public static implicit operator TVar?(Bindable<TObj, TVar> obj) => obj.Value;
-    
+
+    public void Dispose()
+    {
+        this.ObjRef = null;
+        this.RefMember = null;
+    }
+
+    public static implicit operator TVar(Bindable<TObj, TVar> obj) => obj.Value!;
+
     public enum MemberType
     {
         Field,

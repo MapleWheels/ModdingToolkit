@@ -1,54 +1,34 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Linq;
-using Barotrauma;
-using HarmonyLib;
+﻿using ModConfigManager.Client;
+using ModConfigManager.Client.Patches;
 
 namespace ModConfigManager;
 
-public sealed class Bootloader : ACsMod
+internal sealed class Bootloader : ACsMod
 {
+    // ReSharper disable once MemberCanBePrivate.Global
     public bool IsLoaded { get; private set; }
-
-    private Harmony _instance;
-    
-    private static Dictionary<Tab, GUIFrame>? menuTabs;
 
     public Bootloader()
     {
         DebugConsole.LogError($"ModConfigManager: Loaded.");
-
         PatchSettingsMenu();
+        IsLoaded = true;
     }
 
     private void PatchSettingsMenu()
     {
-
-    }
-    
-    //copied from main menu layout-cast
-    private enum Tab
-    {
-        NewGame = 0,
-        LoadGame = 1,
-        HostServer = 2,
-        Settings = 3,
-        Tutorials = 4,
-        JoinServer = 5,
-        CharacterEditor = 6,
-        SubmarineEditor = 7,
-        SteamWorkshop = 8,
-        Credits = 9,
-        Empty = 10
+        Patch_BT_SettingsMenu<ModSettingsMenu>.HandlesInstance = new ModSettingsMenu();
+        PatchManager.OnPatchStateUpdate += OnPatchUpdate;
+        PatchManager.Load();
+        Patch_BT_SettingsMenu<ModSettingsMenu>.HandlesInstance.ReloadModMenu();
     }
     
     public override void Stop()
     {
-        
+        PatchManager.Unload();
+        PatchManager.OnPatchStateUpdate -= OnPatchUpdate;
+        IsLoaded = false;
     }
+
+    void OnPatchUpdate(bool state) => DebugConsole.Log(state ? "ModConfigManager: Patches loaded." : "ModConfigManager: Patches unloaded.");
 }

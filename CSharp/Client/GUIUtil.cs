@@ -69,7 +69,7 @@ internal class GUIUtil
         };
     }
 
-    public void Slider(GUILayoutGroup parent, Vector2 range, int steps, Func<float, string> labelFunc, float currentValue, Action<float> setter, LocalizedString? tooltip = null)
+    public static void Slider(GUILayoutGroup parent, Vector2 range, int steps, Func<float, string> labelFunc, float currentValue, Action<float> setter, LocalizedString? tooltip = null)
     {
         var layout = new GUILayoutGroup(NewItemRectT(parent), isHorizontal: true);
         var slider = new GUIScrollBar(new RectTransform((0.72f, 1.0f), layout.RectTransform), style: "GUISlider")
@@ -93,7 +93,7 @@ internal class GUIUtil
         };
     }
 
-    public void Tickbox(GUILayoutGroup parent, LocalizedString label, LocalizedString tooltip, bool currentValue, Action<bool> setter)
+    public static void Tickbox(GUILayoutGroup parent, LocalizedString label, LocalizedString tooltip, bool currentValue, Action<bool> setter)
     {
         var tickbox = new GUITickBox(NewItemRectT(parent), label)
         {
@@ -107,7 +107,7 @@ internal class GUIUtil
         };
     }
     
-    public string Percentage(float v) => ToolBox.GetFormattedPercentage(v);
+    public static string Percentage(float v) => ToolBox.GetFormattedPercentage(v);
 
-    public int Round(float v) => (int)MathF.Round(v);
+    public static int Round(float v) => (int)MathF.Round(v);
 }

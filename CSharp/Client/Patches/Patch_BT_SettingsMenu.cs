@@ -1,24 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Linq;
-using Barotrauma;
-using Barotrauma.Extensions;
-using HarmonyLib;
-using Microsoft.Xna.Framework;
+﻿namespace ModConfigManager.Client.Patches;
 
-namespace ModConfigManager.Client.Patches;
-
-internal class Patch_BT_SettingsMenu<T> where T : class, IModSettingsMenu
+internal static class Patch_BT_SettingsMenu<T> where T : class, IModSettingsMenu
 {
-    public static T HandlesInstance { get; set; }
+    public static T? HandlesInstance { get; set; }
     
-    static bool Prefix_CreateControlsTab(SettingsMenu __instance)
+    public static bool Prefix_CreateControlsTab(SettingsMenu __instance)
     {
         if (GetSettingsMenuParams(__instance,
                 out var a, out var b,
@@ -26,14 +12,42 @@ internal class Patch_BT_SettingsMenu<T> where T : class, IModSettingsMenu
                 out var e, out var f,
                 out var g))
         {
-            HandlesInstance?.CreateControlsTab(__instance, ref a, ref b, 
+            HandlesInstance?.CreateControlsTab(__instance, a,  
+                c, d, e, f, g);
+        }
+        return false;
+    }
+
+    public static bool Prefix_CreateGameplayTab(SettingsMenu __instance)
+    {
+        if (GetSettingsMenuParams(__instance,
+                out var a, out var b,
+                out var c, out var d,
+                out var e, out var f,
+                out var g))
+        {
+            HandlesInstance?.CreateGameplayTab(__instance, a,  
+                c, d, e, f, g);
+        }
+        return false;
+    }
+    
+    public static bool Prefix_CreateGraphicsTab(SettingsMenu __instance)
+    {
+        if (GetSettingsMenuParams(__instance,
+                out var a, out var b,
+                out var c, out var d,
+                out var e, out var f,
+                out var g))
+        {
+            HandlesInstance?.CreateGraphicsTab(__instance, a,  
                 c, d, e, f, g);
         }
         return false;
     }
 
     static bool GetSettingsMenuParams(
-        SettingsMenu instance,
+        SettingsMenu? instance,
         out Dictionary<GUIButton, Func<LocalizedString>> inputButtonValueNameGetters,
         out GameSettings.Config unsavedConfig,
         out GUIFrame mainFrame,
