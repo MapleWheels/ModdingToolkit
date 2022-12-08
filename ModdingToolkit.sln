@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsClient", "WindowsClient.csproj", "{72A605DD-37F4-4B78-A234-9557C6D25BF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModConfigManagerClient", "ModConfigManagerClient\ModConfigManagerClient.csproj", "{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{72A605DD-37F4-4B78-A234-9557C6D25BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72A605DD-37F4-4B78-A234-9557C6D25BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72A605DD-37F4-4B78-A234-9557C6D25BF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

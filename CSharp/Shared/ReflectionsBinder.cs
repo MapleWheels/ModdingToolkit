@@ -1,4 +1,4 @@
-﻿namespace ModConfigManager;
+﻿namespace ModdingToolkit;
 
 public abstract class ReflectionsBinder<TTarget> where TTarget : class
 {

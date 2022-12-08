@@ -1,34 +1,37 @@
-﻿using ModConfigManager.Client;
-using ModConfigManager.Client.Patches;
+﻿using ModdingToolkit.Patches;
 
-namespace ModConfigManager;
+namespace ModdingToolkit;
 
 internal sealed class Bootloader : ACsMod
 {
     // ReSharper disable once MemberCanBePrivate.Global
     public bool IsLoaded { get; private set; }
+    private Assembly SettingsMenuAssembly;
 
     public Bootloader()
     {
         DebugConsole.LogError($"ModConfigManager: Loaded.");
+        LoadAssemblies();
         PatchSettingsMenu();
         IsLoaded = true;
     }
 
+    private void LoadAssemblies()
+    {
+        
+    }
+
     private void PatchSettingsMenu()
     {
-        Patch_BT_SettingsMenu<ModSettingsMenu>.HandlesInstance = new ModSettingsMenu();
-        PatchManager.OnPatchStateUpdate += OnPatchUpdate;
-        PatchManager.Load();
-        Patch_BT_SettingsMenu<ModSettingsMenu>.HandlesInstance.ReloadModMenu();
+        #warning TODO: IMPL
     }
     
     public override void Stop()
     {
-        PatchManager.Unload();
-        PatchManager.OnPatchStateUpdate -= OnPatchUpdate;
-        IsLoaded = false;
+        Func<bool> disposeCompleted = AssemblyManager.BeginDispose();
+        while (!disposeCompleted.Invoke())
+        {
+            Thread.Sleep(50); //Halt mod unloading thread until assemblies are confirmed to be unloaded.  
+        } 
     }
-
-    void OnPatchUpdate(bool state) => DebugConsole.Log(state ? "ModConfigManager: Patches loaded." : "ModConfigManager: Patches unloaded.");
 }

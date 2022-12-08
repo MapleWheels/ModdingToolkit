@@ -4,9 +4,14 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>ModConfigManager</AssemblyName>
-        <RootNamespace>ModConfigManager</RootNamespace>
+        <AssemblyName>NetScriptAssembly</AssemblyName>
+        <RootNamespace>ModdingToolkit</RootNamespace>
         <LangVersion>preview</LangVersion>
+        <Company>TBN_MapleWheels</Company>
+        <Product>ModdingToolkit</Product>
+        <AssemblyVersion>0.0.0.1</AssemblyVersion>
+        <FileVersion>0.0.0.1</FileVersion>
+        <NeutralLanguage>en</NeutralLanguage>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,9 +36,23 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="CSharp\Client\Config" />
-      <Folder Include="CSharp\Client\Settings" />
-      <Folder Include="CSharp\Shared\Config" />
+      <Folder Include="CSharp\Shared\Networking" />
+      <Folder Include="CSharp\Shared\Settings" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="SettingsMenuPatcher\**" />
+      <Compile Remove="ModConfigManagerClient\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="SettingsMenuPatcher\**" />
+      <EmbeddedResource Remove="ModConfigManagerClient\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="SettingsMenuPatcher\**" />
+      <None Remove="ModConfigManagerClient\**" />
     </ItemGroup>
 
 </Project>

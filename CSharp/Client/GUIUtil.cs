@@ -11,7 +11,7 @@ using Barotrauma.Extensions;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 
-namespace ModConfigManager.Client;
+namespace ModdingToolkit.Client;
 
 /// <summary>
 /// A collection of helper GUI functions. Mostly ripped from "Barotrauma/ClientSource/Settings/SettingsMenu.cs"
