@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Loader;
+using System.IO;
 
 namespace ModdingToolkit;
 
@@ -246,7 +247,7 @@ public static class AssemblyManager
     internal static AssemblyLoadingSuccessState LoadAssembliesAndPluginsFromLocation(string filePath, out LoadedACL? loadedAcl)
     {
         loadedAcl = null;
-        string vAssemblyName = System.IO.Path.GetFileNameWithoutExtension(filePath);
+        string vAssemblyName = System.IO.Path.GetFileName(filePath);
         lock (_OpsLock)
         {
             // Check if the assembly is already loaded in an ACL, most likely due to it being a dependency.
@@ -279,6 +280,8 @@ public static class AssemblyManager
 
                 foreach (Assembly aclAssembly in acl.Assemblies)
                 {
+                    #warning TODO: Remove debug statement.
+                    LuaCsSetup.PrintCsMessage($"AssemblyManager: Search AssemblyName {aclAssembly.FullName}");
                     var r = GetPluginTypesFromAssembly(aclAssembly);
                     if (r is not null)
                         lc.PluginTypes?.AddRange(r);
@@ -291,22 +294,27 @@ public static class AssemblyManager
         }
         catch (ArgumentNullException ane)
         {
+            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<ANE>: {ane.Message}");
             return AssemblyLoadingSuccessState.BadFilePath;
         }
         catch (ArgumentException ae)
         {
+            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<AE>: {ae.Message}");
             return AssemblyLoadingSuccessState.BadFilePath;
         }
         catch (FileLoadException fle)
         {
+            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<FLE>: {fle.Message}");
             return AssemblyLoadingSuccessState.CannotLoadFile;
         }
         catch (FileNotFoundException fne)
         {
+            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<FNE>: {fne.Message}");
             return AssemblyLoadingSuccessState.NoAssemblyFound;
         }
         catch (BadImageFormatException bfe)
         {
+            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<BFE>: {bfe.Message}");
             return AssemblyLoadingSuccessState.InvalidAssembly;
         }
     }
@@ -473,16 +481,12 @@ public static class AssemblyManager
     {
         try
         {
-            List<Type> pluginTypes = new();
-            foreach (Type type in assembly.GetTypes().Where(t => typeof(IAssemblyPlugin).IsAssignableFrom(t)))
-            {
-                pluginTypes.Add(type);
-            }
-
-            return pluginTypes;
+            return assembly.GetTypes().Where(t => typeof(IAssemblyPlugin).IsAssignableFrom(t)).ToList();
         }
         catch (Exception e)
         {
+            #warning TODO: Remove debug statements.
+            LuaCsSetup.PrintCsError($"AssemblyManager::GetPluginTypesFromAssembly() | ERROR: AssemblyName: {assembly.FullName} | ExceptionMessage: {e.Message}");
             return null;
         }
     }
@@ -499,6 +503,7 @@ public static class AssemblyManager
     internal sealed class AssemblyContextLoader : AssemblyLoadContext
     {
         private AssemblyDependencyResolver dependencyResolver;
+        private bool IsResolving = false;   //this is to avoid circular dependency lookup.
         
         public AssemblyContextLoader(string mainAssemblyLoadPath) : base(isCollectible: true)
         {
@@ -508,9 +513,35 @@ public static class AssemblyManager
         [MethodImpl(MethodImplOptions.NoInlining)]
         protected override Assembly? Load(AssemblyName assemblyName)
         {
+            if (IsResolving)
+                return null;    //circular loading fast exit.
+            
             string? assPath = dependencyResolver.ResolveAssemblyToPath(assemblyName);
             if (assPath is not null)
                 return LoadFromAssemblyPath(assPath);
+
+            try
+            {
+                //try resolve against other loaded alcs
+                IsResolving = true;
+                Assembly? ass = Barotrauma.GameMain.LuaCs.CsScriptLoader.LoadFromAssemblyName(assemblyName);
+                if (ass is not null)
+                    return ass;
+                foreach (var loadedAcL in LoadedACLs)
+                {
+                    if (loadedAcL.Value.Alc.TryGetTarget(out var acl))
+                    {
+                        ass = acl.LoadFromAssemblyName(assemblyName);
+                        if (ass is not null)
+                            return ass;
+                    }
+                }
+            }
+            finally
+            {
+                IsResolving = false;
+            }
+            
             return null;
         }
 

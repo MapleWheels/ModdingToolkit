@@ -2,13 +2,13 @@
 
 namespace ModdingToolkit;
 
-public sealed class Initializer : IPatchable
+public sealed class Initializer : IPatchable, IAssemblyPlugin
 {
     public List<PatchManager.PatchData> GetPatches()
     {
         return new List<PatchManager.PatchData>()
         {
-            new (
+            /*new (
                 AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateAudioAndVCTab"),
                 new HarmonyMethod(AccessTools.DeclaredMethod(
                     typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
@@ -37,7 +37,30 @@ public sealed class Initializer : IPatchable
                 new HarmonyMethod(AccessTools.DeclaredMethod(
                     typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
                     nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Close))),
-                null)
+                null)*/
         };
+    }
+
+    public void Initialize()
+    {
+        DebugConsole.Log($"MCMC: Init called.");
+    }
+
+    public void OnLoadCompleted()
+    {
+        DebugConsole.Log($"MCMC: OnLoadCompleted called.");
+        
+    }
+
+    public PluginInfo GetPluginInfo()
+    {
+        DebugConsole.Log($"MCMC: GetPluginInfo called.");
+        return new PluginInfo("ModConfigManagerClient", "0.0.0.0", ImmutableArray<string>.Empty);
+    }
+
+    public void Dispose()
+    {
+        DebugConsole.Log($"MCMC: Dispose called.");
+        
     }
 }

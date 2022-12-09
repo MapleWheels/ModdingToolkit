@@ -19,7 +19,7 @@
         <HintPath>..\Refs\0Harmony.dll</HintPath>
       </Reference>
       <Reference Include="Barotrauma">
-        <HintPath>..\Refs\Barotrauma-nstrip.dll</HintPath>
+        <HintPath>..\Refs\Barotrauma.dll</HintPath>
       </Reference>
       <Reference Include="Mono.Cecil">
         <HintPath>..\Refs\Mono.Cecil.dll</HintPath>

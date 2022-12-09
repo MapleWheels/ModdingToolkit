@@ -1,4 +1,5 @@
-﻿using Path = Barotrauma.IO.Path;
+﻿using System.IO;
+using Path = System.IO.Path;
 
 namespace ModdingToolkit;
 
@@ -18,42 +19,44 @@ public static class PluginHelper
     public static string GetApplicationModSubDir(ApplicationMode mode) =>
         mode switch
         {
-            ApplicationMode.Client => "/bin/Client",
-            ApplicationMode.Server => "/bin/Server",
-            _ => "/bin/Client"   //default to client mode
+            ApplicationMode.Client => "bin/Client",
+            ApplicationMode.Server => "bin/Server",
+            _ => "bin/Client"   //default to client mode
         };
 
     public static List<string> GetAllAssemblyPathsInPackages(ApplicationMode mode)
     {
+#warning TODO: Remove debug command.
+        LuaCsSetup.PrintCsMessage($"MCM: Scanning packages...");
         List<ContentPackage> scannedPackages = new();
         List<string> dllPaths = new();
-        // I'm not sure why we concat EnPkg.ALL packages list here but this is what LuaCs does.
-        // I'm too lazy to check if it was in error or some packages are missing from the AllPackages list.
+        // Sometimes ALL packages doesn't include packages downloaded from the server. So we need to search twice.
         foreach (ContentPackage package in 
                  ContentPackageManager.AllPackages.Concat(ContentPackageManager.EnabledPackages.All))
         {
             if (scannedPackages.Contains(package))
                 continue;
             scannedPackages.Add(package);
-            // Add always load packages
-            dllPaths.AddRange(FindAssembliesFilePaths(
+            string baseForcedSearchPath = Path.GetFullPath(
                 Path.Combine(
-                    $"{Path.GetFullPath(Path.GetDirectoryName(package.Path)).Replace('\\', '/')}", 
+                    Path.GetDirectoryName(package.Path),
                     GetApplicationModSubDir(mode), 
-                    "/Forced")
-                ));
+                    "Forced")
+                );
+            string baseStandardSearchPath = Path.GetFullPath(
+                Path.Combine(
+                    Path.GetDirectoryName(package.Path),
+                    GetApplicationModSubDir(mode), 
+                    "Standard")
+            );
+            // Add always load packages
+            dllPaths.AddRange(FindAssembliesFilePaths(baseForcedSearchPath));
             // Add enabled-only load packages
             if (ContentPackageManager.EnabledPackages.All.Contains(package))
             {
-                dllPaths.AddRange(FindAssembliesFilePaths(
-                    Path.Combine(
-                        $"{Path.GetFullPath(Path.GetDirectoryName(package.Path)).Replace('\\', '/')}", 
-                        GetApplicationModSubDir(mode), 
-                        "/Standard")
-                ));
+                dllPaths.AddRange(FindAssembliesFilePaths(baseStandardSearchPath));
             }
         }
-
         return dllPaths;
     }
 }
