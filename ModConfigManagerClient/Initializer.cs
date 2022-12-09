@@ -2,7 +2,7 @@
 
 namespace ModdingToolkit;
 
-public class Initializer : IPatchable
+public sealed class Initializer : IPatchable
 {
     public List<PatchManager.PatchData> GetPatches()
     {

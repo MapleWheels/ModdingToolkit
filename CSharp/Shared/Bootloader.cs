@@ -6,7 +6,6 @@ internal sealed class Bootloader : ACsMod
 {
     // ReSharper disable once MemberCanBePrivate.Global
     public bool IsLoaded { get; private set; }
-    private Assembly SettingsMenuAssembly;
 
     public Bootloader()
     {
