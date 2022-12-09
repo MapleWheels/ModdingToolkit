@@ -43,24 +43,22 @@ public sealed class Initializer : IPatchable, IAssemblyPlugin
 
     public void Initialize()
     {
-        DebugConsole.Log($"MCMC: Init called.");
+        LuaCsSetup.PrintCsMessage($"MCMC: Init called.");
     }
 
     public void OnLoadCompleted()
     {
-        DebugConsole.Log($"MCMC: OnLoadCompleted called.");
-        
+        LuaCsSetup.PrintCsMessage($"MCMC: OnLoadCompleted called.");
     }
 
     public PluginInfo GetPluginInfo()
     {
-        DebugConsole.Log($"MCMC: GetPluginInfo called.");
+        LuaCsSetup.PrintCsMessage($"MCMC: GetPluginInfo called.");
         return new PluginInfo("ModConfigManagerClient", "0.0.0.0", ImmutableArray<string>.Empty);
     }
 
     public void Dispose()
     {
-        DebugConsole.Log($"MCMC: Dispose called.");
-        
+        LuaCsSetup.PrintCsMessage($"MCMC: Dispose called.");
     }
 }

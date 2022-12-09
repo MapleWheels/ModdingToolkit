@@ -66,10 +66,29 @@ internal sealed class Bootloader : ACsMod
 
     private void LoadPatches()
     {
-        #warning TODO: IMPL
+        PatchManager.OnPatchStateUpdate += OnPatchStateUpdate;
+        PatchManager.Load();
+    }
+
+    private void OnPatchStateUpdate(bool isLoaded)
+    {
+        if (isLoaded)
+        {
+            LuaCsSetup.PrintCsMessage("ModConfigManager: Patches Loaded.");
+        }
+        else
+        {
+            LuaCsSetup.PrintCsMessage("ModConfigManager: Patches Unloaded.");
+        }
     }
 
     private void UnloadPatches()
+    {
+        PatchManager.Unload();
+        PatchManager.OnPatchStateUpdate -= OnPatchStateUpdate;
+    }
+
+    private void UnloadAssemblies()
     {
         AssemblyManager.BeginDispose();
         while (!AssemblyManager.FinalizeDispose())
@@ -77,15 +96,10 @@ internal sealed class Bootloader : ACsMod
             System.Threading.Thread.Sleep(10);
         }
     }
-
-    private void UnloadAssemblies()
-    {
-        
-    }
     
     public override void Stop()
     {
         UnloadPatches();
-        UnloadPatches();
+        UnloadAssemblies();
     }
 }
