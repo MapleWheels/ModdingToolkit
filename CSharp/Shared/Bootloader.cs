@@ -28,8 +28,8 @@ internal sealed class Bootloader : ACsMod
     
     public override void Stop()
     {
-        Func<bool> disposeCompleted = AssemblyManager.BeginDispose();
-        while (!disposeCompleted.Invoke())
+        AssemblyManager.BeginDispose();
+        while (!AssemblyManager.FinalizeDispose())
         {
             Thread.Sleep(50); //Halt mod unloading thread until assemblies are confirmed to be unloaded.  
         } 

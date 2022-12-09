@@ -2,6 +2,8 @@
 
 public interface IAssemblyPlugin
 {
-    PluginInfo Initialize();
+    void Initialize();
+    void OnLoadCompleted();
+    PluginInfo GetPluginInfo();
     void Dispose();
 }
