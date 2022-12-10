@@ -5,13 +5,26 @@ public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     #region INTERNALS
 
     private T _value;
-    private Func<T, bool> onValueChanged;
-    
+    private Func<T, bool> _valueChangePredicate;
+    private System.Action _onValueChanged;
+
     #endregion
     
     public string Name { get; private set; }
     public string ModName { get; private set; }
-    public T Value { get; set; }
+
+    public T Value
+    {
+        get => _value;
+        set
+        {
+            if (_valueChangePredicate?.Invoke(value) ?? true)
+            {
+                _value = value;
+                _onValueChanged?.Invoke();
+            }
+        }
+    }
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
     public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
     public bool SaveOnValueChanged { get; private set; }
@@ -30,23 +43,13 @@ public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
             throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty");
         if (modName.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | ModName is null or empty");
-        
-        
-        
+
+        Name = name;
+        ModName = modName;
+        Value = newValue;
     }
 
-    public bool Validate(T value)
-    {
-        throw new NotImplementedException();
-    }
+    public bool Validate(T value) => _valueChangePredicate?.Invoke(value) ?? true;
 
-    public string GetStringValue()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetValueFromString(string strvalue)
-    {
-        throw new NotImplementedException();
-    }
+    public string GetStringValue() => _value.ToString() ?? "";
 }

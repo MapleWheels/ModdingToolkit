@@ -6,6 +6,7 @@ namespace ModdingToolkit;
 public static class PluginHelper
 {
     public static readonly string PluginAsmFileSuffix = "*.plugin.dll";
+    private static readonly object _OpsLock = new object();
     
     public static List<string> FindAssembliesFilePaths(string rootPath)
     {
@@ -26,7 +27,6 @@ public static class PluginHelper
 
     public static List<string> GetAllAssemblyPathsInPackages(ApplicationMode mode)
     {
-#warning TODO: Remove debug command.
         LuaCsSetup.PrintCsMessage($"MCM: Scanning packages...");
         List<ContentPackage> scannedPackages = new();
         List<string> dllPaths = new();
@@ -58,5 +58,67 @@ public static class PluginHelper
             }
         }
         return dllPaths;
+    }
+    
+    [MethodImpl(MethodImplOptions.Synchronized | MethodImplOptions.NoInlining)]
+    internal static void UnloadAssemblies()
+    {
+        lock (_OpsLock)
+        {
+            AssemblyManager.BeginDispose();
+            while (!AssemblyManager.FinalizeDispose())
+            {
+                Thread.Sleep(10);
+            }
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.Synchronized | MethodImplOptions.NoInlining)]
+    internal static void LoadAssemblies()
+    {
+        lock (_OpsLock)
+        {
+            LuaCsSetup.PrintCsMessage("ModConfigManager: Loading Assembly Plugins...");
+#if SERVER
+        List<string> pluginDllPaths = PluginHelper.GetAllAssemblyPathsInPackages(ApplicationMode.Server);
+#else
+            List<string> pluginDllPaths = GetAllAssemblyPathsInPackages(ApplicationMode.Client);
+#endif
+            foreach (string path in pluginDllPaths)
+            {
+                LuaCsSetup.PrintCsMessage($"Found Assembly Path: {path}");
+            }
+            AssemblyManager.OnAssemblyLoaded += OnAssemblyLoadedHandle;            
+            List<AssemblyManager.LoadedACL> loadedAcls = new();
+            foreach (string dllPath in pluginDllPaths)
+            {
+                AssemblyManager.AssemblyLoadingSuccessState alss
+                    = AssemblyManager.LoadAssembliesAndPluginsFromLocation(dllPath, out var loadedAcl);
+                if (alss == AssemblyManager.AssemblyLoadingSuccessState.Success)
+                {
+                    if (loadedAcl is not null)
+                        loadedAcls.Add(loadedAcl);
+                }
+            }
+
+            if (AssemblyManager.LoadPlugins(out var pluginInfos))
+            {
+                foreach (var pluginInfo in pluginInfos)
+                {
+                    LuaCsSetup.PrintCsMessage($"ModConfigManager: Loaded Assembly Plugin: {pluginInfo.ModName}, Version: {pluginInfo.Version}");
+                }
+            }
+            else
+            {
+                LuaCsSetup.PrintGenericError("ModConfigManager: ERROR: Unable to load plugins.");
+            }
+            AssemblyManager.OnAssemblyLoaded -= OnAssemblyLoadedHandle;
+        }
+    }
+
+    private static void OnAssemblyLoadedHandle(Assembly obj)
+    {
+        #warning TODO: Implement type registration for base game.
+        //reserved. For use when assembly registry PR to LuaCs is live.
     }
 }

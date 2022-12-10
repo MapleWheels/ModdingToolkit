@@ -18,6 +18,7 @@ public static class AssemblyManager
 {
     #region ExternalAPI
 
+    public static event System.Action<Assembly>? OnAssemblyLoaded; 
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
@@ -280,8 +281,7 @@ public static class AssemblyManager
 
                 foreach (Assembly aclAssembly in acl.Assemblies)
                 {
-                    #warning TODO: Remove debug statement.
-                    LuaCsSetup.PrintCsMessage($"AssemblyManager: Search AssemblyName {aclAssembly.FullName}");
+                    OnAssemblyLoaded?.Invoke(aclAssembly);
                     var r = GetPluginTypesFromAssembly(aclAssembly);
                     if (r is not null)
                         lc.PluginTypes?.AddRange(r);
@@ -514,7 +514,7 @@ public static class AssemblyManager
         protected override Assembly? Load(AssemblyName assemblyName)
         {
             if (IsResolving)
-                return null;    //circular loading fast exit.
+                return null;    //circular resolution fast exit.
             
             string? assPath = dependencyResolver.ResolveAssemblyToPath(assemblyName);
             if (assPath is not null)
