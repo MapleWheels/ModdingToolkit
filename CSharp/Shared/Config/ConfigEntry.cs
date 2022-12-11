@@ -47,6 +47,8 @@ public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         Name = name;
         ModName = modName;
         Value = newValue;
+
+        IsInitialized = true;
     }
 
     public bool Validate(T value) => _valueChangePredicate?.Invoke(value) ?? true;
