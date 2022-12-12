@@ -18,7 +18,31 @@ public static class AssemblyManager
 {
     #region ExternalAPI
 
-    public static event System.Action<Assembly>? OnAssemblyLoaded; 
+
+    /// <summary>
+    /// Called after a plugin has been loaded (OnLoadComplete executed on the plugin). 
+    /// </summary>
+    public static event System.Action<IAssemblyPlugin>? OnPluginLoaded;
+
+    /// <summary>
+    /// Called right before a plugin is about to be unloaded. Use this to cleanup any interop you have with the plugin.
+    /// </summary>
+    public static event System.Action<IAssemblyPlugin>? OnPluginUnloading; 
+    /// <summary>
+    /// Called when an assembly is loaded.
+    /// </summary>
+    public static event System.Action<Assembly>? OnAssemblyLoaded;
+    
+    /// <summary>
+    /// Called when an assembly is marked for unloading, before unloading begins. You should use this to cleanup
+    /// any references that you have to this assembly.
+    /// </summary>
+    public static event System.Action<Assembly>? OnAssemblyUnloading; 
+    
+    /// <summary>
+    /// Called whenever an exception is thrown. First arg is a formatted message, Second arg is the Exception.
+    /// </summary>
+    public static event System.Action<string, Exception>? OnException;
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
@@ -228,14 +252,23 @@ public static class AssemblyManager
         {
             return assembly.GetTypes();
         }
-        catch (ReflectionTypeLoadException e)
+        catch (ReflectionTypeLoadException re)
         {
-            DebugConsole.Log($"AsmPatcher: Error RE, unable to patch: {e.Message}.");
-            return e.Types.Where(x => x != null);
+            OnException?.Invoke($"AssemblyPatcher::GetSafeType() | Could not load types from reflection.", re);
+            try
+            {
+                return re.Types.Where(x => x != null)!;
+            }
+            catch (InvalidOperationException ioe)   
+            {
+                //This will happen if the assemblies are being unloaded while the above line is being executed.
+                OnException?.Invoke($"AssemblyPatcher::GetSafeType() | Assembly was modified/unloaded. Cannot continue", ioe);
+                return new List<Type>();
+            }
         }
         catch (Exception e)
         {
-            DebugConsole.Log($"AsmPatcher: Error E, unable to patch: {e.Message}.");
+            OnException?.Invoke($"AssemblyPatcher::GetSafeType() | General Exception. See exception obj. details.", e);
             return new List<Type>();
         }
     }
@@ -294,27 +327,27 @@ public static class AssemblyManager
         }
         catch (ArgumentNullException ane)
         {
-            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<ANE>: {ane.Message}");
+            OnException?.Invoke($"AssemblyManager::LoadAssembliesAndPluginsFromLocation() | EXCEPTION<ArgNull>.", ane);
             return AssemblyLoadingSuccessState.BadFilePath;
         }
         catch (ArgumentException ae)
         {
-            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<AE>: {ae.Message}");
+            OnException?.Invoke($"AssemblyManager::LoadAssembliesAndPluginsFromLocation() | EXCEPTION<Argument>.", ae);
             return AssemblyLoadingSuccessState.BadFilePath;
         }
         catch (FileLoadException fle)
         {
-            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<FLE>: {fle.Message}");
+            OnException?.Invoke($"AssemblyManager::LoadAssembliesAndPluginsFromLocation() | EXCEPTION<FileLoad>.", fle);
             return AssemblyLoadingSuccessState.CannotLoadFile;
         }
         catch (FileNotFoundException fne)
         {
-            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<FNE>: {fne.Message}");
+            OnException?.Invoke($"AssemblyManager::LoadAssembliesAndPluginsFromLocation() | EXCEPTION<FileNotFound>.", fne);
             return AssemblyLoadingSuccessState.NoAssemblyFound;
         }
         catch (BadImageFormatException bfe)
         {
-            LuaCsSetup.PrintCsError($"AssemblyManager: EXCEPTION<BFE>: {bfe.Message}");
+            OnException?.Invoke($"AssemblyManager::LoadAssembliesAndPluginsFromLocation() | EXCEPTION<BadAssemblyFile>.", bfe);
             return AssemblyLoadingSuccessState.InvalidAssembly;
         }
     }
@@ -348,6 +381,7 @@ public static class AssemblyManager
                 foreach (IAssemblyPlugin plugin in loadedAcl.Value.LoadedPlugins)
                 {
                     plugin.OnLoadCompleted();
+                    OnPluginLoaded?.Invoke(plugin);
                 }
             }
 
@@ -357,6 +391,11 @@ public static class AssemblyManager
         return true;
     }
 
+    /// <summary>
+    /// [BLOCKING]
+    /// Unloads all active plugins.
+    /// </summary>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.Synchronized)]
     internal static bool UnloadPlugins()
     {
@@ -369,6 +408,7 @@ public static class AssemblyManager
             {
                 foreach (IAssemblyPlugin plugin in loadedAcl.Value.LoadedPlugins)
                 {
+                    OnPluginUnloading?.Invoke(plugin);
                     plugin.Dispose();
                 }
                 loadedAcl.Value.LoadedPlugins.Clear();
@@ -397,6 +437,7 @@ public static class AssemblyManager
             {
                 foreach (IAssemblyPlugin plugin in loadedAcl.Value.LoadedPlugins)
                 {
+                    OnPluginUnloading?.Invoke(plugin);
                     plugin.Dispose();
                 }
 
@@ -405,6 +446,10 @@ public static class AssemblyManager
                 loadedAcl.Value.PluginTypes.Clear();
                 if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
                 {
+                    foreach (Assembly assembly in acl.Assemblies)
+                    {
+                        OnAssemblyUnloading?.Invoke(assembly);
+                    }
                     acl.Unloading += CleanupReference;
                     UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(acl, true));
                     acl.Unload();
@@ -481,12 +526,11 @@ public static class AssemblyManager
     {
         try
         {
-            return assembly.GetTypes().Where(t => typeof(IAssemblyPlugin).IsAssignableFrom(t)).ToList();
+            return assembly.GetSafeTypes().Where(t => typeof(IAssemblyPlugin).IsAssignableFrom(t)).ToList();
         }
         catch (Exception e)
         {
-            #warning TODO: Remove debug statements.
-            LuaCsSetup.PrintCsError($"AssemblyManager::GetPluginTypesFromAssembly() | ERROR: AssemblyName: {assembly.FullName} | ExceptionMessage: {e.Message}");
+            OnException?.Invoke($"AssemblyManager::GetPluginTypesFromAssembly() | ERROR: AssemblyName: {assembly.FullName}.", e);
             return null;
         }
     }

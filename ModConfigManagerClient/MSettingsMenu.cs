@@ -1,7 +1,6 @@
 ﻿using Barotrauma;
 using ModdingToolkit.Patches;
 
-[assembly: IgnoresAccessChecksTo("Barotrauma")]
 namespace ModdingToolkit;
 
 public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu

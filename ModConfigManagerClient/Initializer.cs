@@ -1,5 +1,8 @@
 ﻿using ModdingToolkit.Patches;
 
+
+[assembly: IgnoresAccessChecksTo("Barotrauma")]
+[assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModdingToolkit;
 
 public sealed class Initializer : IPatchable, IAssemblyPlugin
@@ -8,7 +11,13 @@ public sealed class Initializer : IPatchable, IAssemblyPlugin
     {
         return new List<PatchManager.PatchData>()
         {
-            /*new (
+            new (
+                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "Create"),
+                new HarmonyMethod(AccessTools.DeclaredMethod(
+                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
+                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Create))),
+                null),
+            new (
                 AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateAudioAndVCTab"),
                 new HarmonyMethod(AccessTools.DeclaredMethod(
                     typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
@@ -37,7 +46,7 @@ public sealed class Initializer : IPatchable, IAssemblyPlugin
                 new HarmonyMethod(AccessTools.DeclaredMethod(
                     typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
                     nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Close))),
-                null)*/
+                null)
         };
     }
 

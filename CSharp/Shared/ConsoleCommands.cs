@@ -2,26 +2,57 @@
 
 public static class ConsoleCommands
 {
-    private static readonly List<DebugConsole.Command> registeredCommands = new();
+    private record CommandBuilder(
+        string Name, string HelpText, 
+        LuaCsAction OnExecute, 
+        LuaCsFunc GetValidArgs,
+        bool IsCheat);
+    
+    private static readonly List<CommandBuilder> registeredCommands = new();
+    
+    public static bool IsLoaded { get; private set; } = false;
     
     public static void RegisterCommand(
         string command, 
         string helpText, 
-        System.Action<string[]> onCommandExecuted,
-        System.Func<string[][]>? getValidArgs = null,
+        LuaCsAction? onCommandExecuted,
+        LuaCsFunc? getValidArgs = null,
         bool isCheat = false)
     {
-        var c = new DebugConsole.Command(command, helpText, onCommandExecuted, getValidArgs, isCheat);
-        Barotrauma.DebugConsole.Commands.Add(c);
-        registeredCommands.Add(c); 
+        registeredCommands.Add(new CommandBuilder(command, helpText, onCommandExecuted, getValidArgs, isCheat));
     }
 
     public static void UnregisterAllCommands()
     {
-        foreach (DebugConsole.Command command in registeredCommands)
-        {
-            Barotrauma.DebugConsole.Commands.Remove(command);
-        }
+        if (IsLoaded)
+            UnloadAllCommands();
         registeredCommands.Clear();
     }
+
+    public static void ReloadAllCommands()
+    {
+        if (IsLoaded)
+            UnloadAllCommands();
+        foreach (CommandBuilder command in registeredCommands)
+        {
+            GameMain.LuaCs.Game.AddCommand(command.Name, command.HelpText, command.OnExecute, 
+                command.GetValidArgs, command.IsCheat);
+        }
+        IsLoaded = true;
+    }
+
+    public static void UnloadAllCommands()
+    {
+        if (!IsLoaded)
+            return;
+
+        foreach (CommandBuilder command in registeredCommands)
+        {
+            GameMain.LuaCs.Game.RemoveCommand(command.Name);
+        }
+        
+        IsLoaded = false;
+    }
+    
+    
 }

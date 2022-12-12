@@ -1,4 +1,5 @@
-﻿using ModdingToolkit.Patches;
+﻿using ModdingToolkit.Client;
+using ModdingToolkit.Patches;
 
 namespace ModdingToolkit;
 
@@ -10,14 +11,39 @@ internal sealed class Bootloader : ACsMod
     public Bootloader()
     {
         DebugConsole.LogError($"ModConfigManager: Starting...");
+        Init();
+    }
+
+    private void Init()
+    {
         PluginHelper.LoadAssemblies();
         LoadPatches();
+        RegisterCommands();
+        ConsoleCommands.ReloadAllCommands();
         IsLoaded = true;
     }
 
-    private void InitPluginSystem()
+    private void RegisterCommands()
     {
+        ConsoleCommands.RegisterCommand(
+            "cl_reloadassemblies", 
+            "Reloads all assemblies and their plugins.",
+            args =>
+            {
+                UnloadPatches();
+                PluginHelper.UnloadAssemblies();
+                PluginHelper.LoadAssemblies();
+                LoadPatches();
+            });
         
+        ConsoleCommands.RegisterCommand(
+            "cl_unloadassemblies", 
+            "Unloads all assemblies and their plugins.",
+            args =>
+            {
+                UnloadPatches();
+                PluginHelper.UnloadAssemblies();
+            });
     }
 
     private void LoadPatches()
@@ -46,6 +72,7 @@ internal sealed class Bootloader : ACsMod
 
     public override void Stop()
     {
+        ConsoleCommands.UnloadAllCommands();
         UnloadPatches();
         PluginHelper.UnloadAssemblies();
         IsLoaded = false;

@@ -7,6 +7,7 @@ public static class PluginHelper
 {
     public static readonly string PluginAsmFileSuffix = "*.plugin.dll";
     private static readonly object _OpsLock = new object();
+    public static bool IsInit { get; private set; } = false;
     
     public static List<string> FindAssembliesFilePaths(string rootPath)
     {
@@ -27,6 +28,8 @@ public static class PluginHelper
 
     public static List<string> GetAllAssemblyPathsInPackages(ApplicationMode mode)
     {
+        if (!IsInit)
+            InitHooks();
         LuaCsSetup.PrintCsMessage($"MCM: Scanning packages...");
         List<ContentPackage> scannedPackages = new();
         List<string> dllPaths = new();
@@ -68,7 +71,7 @@ public static class PluginHelper
             AssemblyManager.BeginDispose();
             while (!AssemblyManager.FinalizeDispose())
             {
-                Thread.Sleep(10);
+                System.Threading.Thread.Sleep(10);
             }
         }
     }
@@ -76,6 +79,9 @@ public static class PluginHelper
     [MethodImpl(MethodImplOptions.Synchronized | MethodImplOptions.NoInlining)]
     internal static void LoadAssemblies()
     {
+        if (!IsInit)
+            InitHooks();
+        
         lock (_OpsLock)
         {
             LuaCsSetup.PrintCsMessage("ModConfigManager: Loading Assembly Plugins...");
@@ -120,5 +126,26 @@ public static class PluginHelper
     {
         #warning TODO: Implement type registration for base game.
         //reserved. For use when assembly registry PR to LuaCs is live.
+    }
+
+    private static void InitHooks()
+    {
+        if (IsInit)
+            return;
+        AssemblyManager.OnException += AssemblyManagerOnException;
+        IsInit = true;
+    }
+
+    private static void ReleaseHooks()
+    {
+        if (!IsInit)
+            return;
+        AssemblyManager.OnException -= AssemblyManagerOnException;
+        IsInit = false;
+    }
+
+    private static void AssemblyManagerOnException(string arg1, Exception arg2)
+    {
+        LuaCsSetup.PrintCsError($"{arg1} | Exception Details: {arg2.Message}");
     }
 }
