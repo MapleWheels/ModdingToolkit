@@ -12,7 +12,6 @@ namespace ModdingToolkit;
 /// Provides functionality for the loading, unloading and management of plugins implementing IAssemblyPlugin.
 /// All plugins are loaded into their own AssemblyLoadContext along with their dependencies.
 /// WARNING: [BLOCKING] functions should not be extensively used in hot-path code as it's not performant.
-/// WARNING: [BLOCKING] functions can cause dead-lock if used together without allowing one to finish it's operations.
 /// </summary>
 public static class AssemblyManager
 {
@@ -43,6 +42,11 @@ public static class AssemblyManager
     /// Called whenever an exception is thrown. First arg is a formatted message, Second arg is the Exception.
     /// </summary>
     public static event System.Action<string, Exception>? OnException;
+
+    /// <summary>
+    /// For unloading issue debugging. Called whenever AssemblyContextLoader [load context] is unloaded. 
+    /// </summary>
+    public static event System.Action<string>? OnACLUnload; 
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
@@ -129,14 +133,15 @@ public static class AssemblyManager
     
     /// <summary>
     /// [BLOCKING]
-    /// Allows iteration over all types in all loaded assemblies in the AsmMgr that are assignable to the given type (IsAssignableFrom).
+    /// Allows iteration over all non-interface types in all loaded assemblies in the AsmMgr that are assignable to the given type (IsAssignableFrom).
     /// </summary>
     /// <typeparam name="T">The type to compare against</typeparam>
     /// <returns>An Enumerator for matching types.</returns>
-    public static IEnumerator<Type> GetSubTypesInLoadedAssemblies<T>()
+    public static IEnumerable<Type> GetSubTypesInLoadedAssemblies<T>()
     {
         Type targetType = typeof(T);
-        foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes().Where(t => targetType.IsAssignableFrom(t)))   
+        
+        foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes().Where(t => targetType.IsAssignableFrom(t) && !t.IsInterface))   
         {
             yield return type;
         }
@@ -149,7 +154,7 @@ public static class AssemblyManager
                 {
                     foreach (Assembly aclAssembly in acl.Assemblies)
                     {
-                        foreach (var type in aclAssembly.GetSafeTypes().Where(t => targetType.IsAssignableFrom(t)))
+                        foreach (var type in aclAssembly.GetSafeTypes().Where(t => targetType.IsAssignableFrom(t) && !t.IsInterface))
                         {
                             yield return type;
                         }
@@ -161,13 +166,13 @@ public static class AssemblyManager
     
     /// <summary>
     /// [BLOCKING]
-    /// Allows iteration over all types in all loaded assemblies in the AsmMgr who's names contain the string.
+    /// Allows iteration over all non-interface types in all loaded assemblies in the AsmMgr who's names contain the string.
     /// </summary>
     /// <param name="name">The string name of the type to search for</param>
     /// <returns>An Enumerator for matching types.</returns>
-    public static IEnumerator<Type> GetMatchingTypesInLoadedAssemblies(string name)
+    public static IEnumerable<Type> GetMatchingTypesInLoadedAssemblies(string name)
     {
-        foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes().Where(t => t.Name.Equals(name)))   
+        foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes().Where(t => t.Name.Equals(name) && !t.IsInterface))   
         {
             yield return type;
         }
@@ -180,7 +185,7 @@ public static class AssemblyManager
                 {
                     foreach (Assembly aclAssembly in acl.Assemblies)
                     {
-                        foreach (var type in aclAssembly.GetSafeTypes().Where(t => t.Name.Equals(name)))
+                        foreach (var type in aclAssembly.GetSafeTypes().Where(t => t.Name.Equals(name) && !t.IsInterface))
                         {
                             yield return type;
                         }
@@ -192,10 +197,10 @@ public static class AssemblyManager
 
     /// <summary>
     /// [BLOCKING]
-    /// Allows iteration over all types in all loaded assemblies managed by the AsmMgr.
+    /// Allows iteration over all types (including interfaces) in all loaded assemblies managed by the AsmMgr.
     /// </summary>
     /// <returns></returns>
-    public static IEnumerator<Type> GetAllTypesInLoadedAssemblies()
+    public static IEnumerable<Type> GetAllTypesInLoadedAssemblies()
     {
         foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes())   
         {
@@ -225,7 +230,7 @@ public static class AssemblyManager
     /// Allows iteration over the list of loaded plugins.
     /// </summary>
     /// <returns></returns>
-    public static IEnumerator<(PluginInfo, IAssemblyPlugin)> GetActivePlugins()
+    public static IEnumerable<(PluginInfo, IAssemblyPlugin)> GetActivePlugins()
     {
         lock (_OpsLock)
         {
@@ -433,7 +438,8 @@ public static class AssemblyManager
     {
         lock (_OpsLock)
         {
-            foreach (KeyValuePair<string,LoadedACL> loadedAcl in LoadedACLs)
+            var aclCopy = LoadedACLs.ToImmutableDictionary();
+            foreach (KeyValuePair<string,LoadedACL> loadedAcl in aclCopy)
             {
                 foreach (IAssemblyPlugin plugin in loadedAcl.Value.LoadedPlugins)
                 {
@@ -454,6 +460,7 @@ public static class AssemblyManager
                     UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(acl, true));
                     acl.Unload();
                 }
+                LoadedACLs.Remove(loadedAcl.Key);
             }
         }
     }
@@ -489,12 +496,14 @@ public static class AssemblyManager
                     return;
 
                 WeakReference<AssemblyContextLoader>? unloadingACLRef = null;
+                AssemblyContextLoader? aclRef = null;
                 foreach (WeakReference<AssemblyContextLoader> reference in UnloadingACLs)
                 {
                     if (reference.TryGetTarget(out var _acl))
                     {
                         if (acl.Equals(_acl))
                         {
+                            aclRef = _acl;
                             unloadingACLRef = reference;
                             break;
                         }
@@ -504,8 +513,13 @@ public static class AssemblyManager
                 if (unloadingACLRef is not null)
                 { 
                     UnloadingACLs.Remove(unloadingACLRef);
+                    if (aclRef is not null) // Turns out there's an edge case where this extra check is needed.
+                    {
+                        OnACLUnload?.Invoke($"AssemblyManager: Unloaded assembly context {aclRef.Name}");
+                    }
                 }
             }
+            
         }
     }
     

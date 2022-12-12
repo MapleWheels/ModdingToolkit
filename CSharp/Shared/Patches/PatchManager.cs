@@ -13,12 +13,35 @@ public static class PatchManager
     public static void AddPatchData(PatchData patchData) => PatchList.Add(patchData);
 
     /// <summary>
-    /// Clears all stored patches. WARNING: Unloads all patches first! 
+    /// Unloads all patches and clears them. 
     /// </summary>
     public static void ClearPatches()
     {
         Unload();
         PatchList.Clear();
+    }
+
+    /// <summary>
+    /// Searches all loaded assemblies for IPatchable Harmony patches and saves them for managed loading/unloading.
+    /// </summary>
+    public static void BuildPatchList()
+    {
+        if (IsLoaded)
+            Unload();
+        PatchList.Clear();
+        try
+        {
+            foreach (Type patchType in AssemblyUtils.GetSubTypesInLoadedAssemblies<IPatchable>())
+            {
+                IPatchable? p = (IPatchable?)Activator.CreateInstance(patchType);
+                if (p is not null)
+                    PatchList.AddRange(p.GetPatches());
+            }
+        }
+        catch (Exception e)
+        {
+            LuaCsSetup.PrintCsError($"PatchManager::BuildPatchList() | Could not load patches: {e.Message}");
+        }
     }
 
     public static void Load()

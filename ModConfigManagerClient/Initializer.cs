@@ -5,51 +5,8 @@
 [assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModdingToolkit;
 
-public sealed class Initializer : IPatchable, IAssemblyPlugin
+public sealed class Initializer : IAssemblyPlugin
 {
-    public List<PatchManager.PatchData> GetPatches()
-    {
-        return new List<PatchManager.PatchData>()
-        {
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "Create"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Create))),
-                null),
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateAudioAndVCTab"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_CreateAudioAndVCTab))),
-                null),
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateControlsTab"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_CreateControlsTab))),
-                null),
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateGameplayTab"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_CreateGameplayTab))),
-                null),
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "CreateGraphicsTab"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_CreateGraphicsTab))),
-                null),
-            new (
-                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "Close"),
-                new HarmonyMethod(AccessTools.DeclaredMethod(
-                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
-                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Close))),
-                null)
-        };
-    }
-
     public void Initialize()
     {
         LuaCsSetup.PrintCsMessage($"MCMC: Init called.");
@@ -69,5 +26,7 @@ public sealed class Initializer : IPatchable, IAssemblyPlugin
     public void Dispose()
     {
         LuaCsSetup.PrintCsMessage($"MCMC: Dispose called.");
+        Barotrauma.SettingsMenu.Instance?.Close();
+        Barotrauma.SettingsMenu.Instance = null;
     }
 }

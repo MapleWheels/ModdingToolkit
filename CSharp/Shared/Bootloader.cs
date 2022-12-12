@@ -49,6 +49,7 @@ internal sealed class Bootloader : ACsMod
     private void LoadPatches()
     {
         PatchManager.OnPatchStateUpdate += OnPatchStateUpdate;
+        PatchManager.BuildPatchList();
         PatchManager.Load();
     }
 
@@ -74,6 +75,7 @@ internal sealed class Bootloader : ACsMod
     {
         ConsoleCommands.UnloadAllCommands();
         UnloadPatches();
+        
         PluginHelper.UnloadAssemblies();
         IsLoaded = false;
     }

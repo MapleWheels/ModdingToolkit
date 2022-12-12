@@ -8,7 +8,8 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
         {
             Barotrauma.SettingsMenu.Instance?.Close();
             Barotrauma.SettingsMenu newInst
-                = Unsafe.As<SettingsMenu>(Activator.CreateInstance(typeof(T), new object[] { mainParent }))!;
+                = (SettingsMenu)Activator.CreateInstance(
+                    typeof(T), mainParent, null)!;
             Barotrauma.SettingsMenu.Instance = newInst;
             __result = newInst;
             return false;
@@ -19,8 +20,12 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
     
     public static bool Prefix_CreateControlsTab(Barotrauma.SettingsMenu __instance)
     {
+        #warning TODO: Remove debug statements.
+        Barotrauma.LuaCsSetup.PrintCsMessage("MCMC: CreateControlsTab.");
         if (__instance is T inst)
         {
+#warning TODO: Remove debug statements.
+            Barotrauma.LuaCsSetup.PrintCsMessage("MCMC: CCT Overridden.");
             inst.CreateControlsTab();
             return false;
         }
