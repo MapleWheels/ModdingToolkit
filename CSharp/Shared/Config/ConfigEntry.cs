@@ -1,19 +1,21 @@
 ﻿namespace ModdingToolkit.Config;
 
-public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
+public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
 {
     #region INTERNALS
 
-    private T _value;
-    private Func<T, bool> _valueChangePredicate;
-    private System.Action _onValueChanged;
+    protected T _value;
+    protected Func<T, bool> _valueChangePredicate;
+    protected System.Action _onValueChanged;
 
     #endregion
-    
+
     public string Name { get; private set; }
+
+    public Type SubTypeDef => typeof(T);
     public string ModName { get; private set; }
 
-    public T Value
+    public virtual T Value
     {
         get => _value;
         set
@@ -25,24 +27,27 @@ public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
             }
         }
     }
+
+    public T DefaultValue { get; private set; }
+
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
     public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
-    public bool SaveOnValueChanged { get; private set; }
+
     public bool IsInitialized { get; private set; } = false;
-    
-    public ConfigEntry(T defaultValue, 
-        IConfigEntry<T>.Category menuCategory = IConfigEntry<T>.Category.Gameplay, 
+
+    public ConfigEntry(T defaultValue,
+        IConfigEntry<T>.Category menuCategory = IConfigEntry<T>.Category.Gameplay,
         IConfigEntry<T>.NetworkSync netSync = IConfigEntry<T>.NetworkSync.NoSync)
     {
-        
+        DefaultValue = defaultValue;
     }
 
-    public void Initialize(string name, string modName, T newValue)
+    public virtual void Initialize(string name, string modName, T newValue)
     {
         if (name.Trim().IsNullOrEmpty())
-            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty");
+            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty.");
         if (modName.Trim().IsNullOrEmpty())
-            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | ModName is null or empty");
+            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | ModName is null or empty.");
 
         Name = name;
         ModName = modName;
@@ -51,7 +56,27 @@ public sealed class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         IsInitialized = true;
     }
 
-    public bool Validate(T value) => _valueChangePredicate?.Invoke(value) ?? true;
+    public virtual bool Validate(T value) => _valueChangePredicate?.Invoke(value) ?? true;
 
-    public string GetStringValue() => _value.ToString() ?? "";
+    public virtual string GetStringValue() => _value.ToString() ?? "";
+
+    public virtual void SetValueFromString(string value)
+    {
+        try
+        {
+            this.Value = (T)Convert.ChangeType(value, typeof(T));
+        }
+        catch (InvalidCastException ice)
+        {
+            LuaCsSetup.PrintCsError(
+                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from strong to {typeof(T)}");
+        }
+    }
+
+    public void SetValueAsDefault()
+    {
+        this.Value = DefaultValue;
+    }
+
+    public virtual IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.Standard;
 }

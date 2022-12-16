@@ -438,8 +438,7 @@ public static class AssemblyManager
     {
         lock (_OpsLock)
         {
-            var aclCopy = LoadedACLs.ToImmutableDictionary();
-            foreach (KeyValuePair<string,LoadedACL> loadedAcl in aclCopy)
+            foreach (KeyValuePair<string, LoadedACL> loadedAcl in LoadedACLs)
             {
                 foreach (IAssemblyPlugin plugin in loadedAcl.Value.LoadedPlugins)
                 {
@@ -460,8 +459,8 @@ public static class AssemblyManager
                     UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(acl, true));
                     acl.Unload();
                 }
-                LoadedACLs.Remove(loadedAcl.Key);
             }
+            LoadedACLs.Clear();
         }
     }
 
@@ -494,7 +493,7 @@ public static class AssemblyManager
             {
                 if (acl.Assemblies.Any())
                     return;
-
+                
                 WeakReference<AssemblyContextLoader>? unloadingACLRef = null;
                 AssemblyContextLoader? aclRef = null;
                 foreach (WeakReference<AssemblyContextLoader> reference in UnloadingACLs)
@@ -519,7 +518,6 @@ public static class AssemblyManager
                     }
                 }
             }
-            
         }
     }
     
@@ -530,6 +528,7 @@ public static class AssemblyManager
     private static readonly Dictionary<string, LoadedACL> LoadedACLs = new();
     private static readonly List<WeakReference<AssemblyContextLoader>> UnloadingACLs= new();
     // ReSharper disable once InconsistentNaming
+    #warning TODO: Replace locks with ReadWriterLock
     private static readonly object _OpsLock = new object();
 
     #endregion

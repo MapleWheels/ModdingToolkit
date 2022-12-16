@@ -11,5 +11,8 @@ global using Barotrauma;
 global using Barotrauma.Extensions;
 global using HarmonyLib;
 global using Microsoft.Xna.Framework;
+global using ModdingToolkit;
 
-namespace ModdingToolkit;
+[assembly: IgnoresAccessChecksTo("Barotrauma")]
+[assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
+namespace ModConfigManager;

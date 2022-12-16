@@ -66,6 +66,9 @@ public static class PluginHelper
     [MethodImpl(MethodImplOptions.Synchronized | MethodImplOptions.NoInlining)]
     internal static void UnloadAssemblies()
     {
+        if (!IsInit)
+            InitHooks();
+        
         lock (_OpsLock)
         {
             AssemblyManager.BeginDispose();
@@ -94,7 +97,6 @@ public static class PluginHelper
             {
                 LuaCsSetup.PrintCsMessage($"Found Assembly Path: {path}");
             }
-            AssemblyManager.OnAssemblyLoaded += OnAssemblyLoadedHandle;            
             List<AssemblyManager.LoadedACL> loadedAcls = new();
             foreach (string dllPath in pluginDllPaths)
             {
@@ -118,14 +120,12 @@ public static class PluginHelper
             {
                 LuaCsSetup.PrintGenericError("ModConfigManager: ERROR: Unable to load plugins.");
             }
-            AssemblyManager.OnAssemblyLoaded -= OnAssemblyLoadedHandle;
         }
     }
 
-    private static void OnAssemblyLoadedHandle(Assembly obj)
+    private static void OnAssemblyLoadedHandle(Assembly assembly)
     {
-        #warning TODO: Implement type registration for base game.
-        //reserved. For use when assembly registry PR to LuaCs is live.
+        Barotrauma.ReflectionUtils.AddNonAbstractAssemblyTypes(assembly);
     }
 
     private static void InitHooks()
@@ -133,13 +133,22 @@ public static class PluginHelper
         if (IsInit)
             return;
         AssemblyManager.OnException += AssemblyManagerOnException;
+        AssemblyManager.OnAssemblyLoaded += OnAssemblyLoadedHandle;
+        AssemblyManager.OnAssemblyUnloading += AssemblyManagerOnAssemblyUnloading;
         IsInit = true;
+    }
+
+    private static void AssemblyManagerOnAssemblyUnloading(Assembly assembly)
+    {
+        Barotrauma.ReflectionUtils.RemoveAssemblyFromCache(assembly);
     }
 
     private static void ReleaseHooks()
     {
         if (!IsInit)
             return;
+        AssemblyManager.OnAssemblyUnloading -= AssemblyManagerOnAssemblyUnloading;
+        AssemblyManager.OnAssemblyLoaded -= OnAssemblyLoadedHandle;
         AssemblyManager.OnException -= AssemblyManagerOnException;
         IsInit = false;
     }

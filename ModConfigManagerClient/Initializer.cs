@@ -1,9 +1,6 @@
-﻿using ModdingToolkit.Patches;
-
-
-[assembly: IgnoresAccessChecksTo("Barotrauma")]
+﻿[assembly: IgnoresAccessChecksTo("Barotrauma")]
 [assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
-namespace ModdingToolkit;
+namespace ModConfigManager;
 
 public sealed class Initializer : IAssemblyPlugin
 {

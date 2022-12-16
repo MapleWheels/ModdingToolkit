@@ -1,5 +1,5 @@
 ﻿
-namespace ModdingToolkit.Patches;
+namespace ModConfigManager;
 
 public interface ISettingsMenu
 {

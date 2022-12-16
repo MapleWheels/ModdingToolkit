@@ -1,5 +1,4 @@
-﻿using ModdingToolkit;
-using ModdingToolkit.Patches;
+﻿using ModdingToolkit.Patches;
 
 namespace ModConfigManager;
 
