@@ -14,15 +14,26 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
     {
         if (typeof(Barotrauma.SettingsMenu).IsAssignableFrom(typeof(T)))
         {
+            LuaCsSetup.PrintCsMessage("MCMC: Create Called.");
             if (!HCall_Create)
-            {
+            { 
                 HCall_Create = true;
-                SettingsMenu.Instance?.Close();
-                SettingsMenu newInst
-                    = (SettingsMenu)Activator.CreateInstance(
-                        typeof(T), mainParent, null)!;
-                SettingsMenu.Instance = newInst;
-                __result = newInst;
+                MethodInfo? mi = AccessTools.DeclaredMethod(typeof(T), "Create");
+                if (mi is not null)
+                {
+                    try
+                    {
+                        __result = Unsafe.As<Barotrauma.SettingsMenu>(mi.Invoke(null, new object?[]
+                        {
+                            mainParent
+                        }))!;
+                    }
+                    catch (Exception e)
+                    {
+                        LuaCsSetup.PrintCsMessage($"MCMC: Create Err: MSG: {e.Message}. Inner: {e.InnerException.Message}. Stack: {e.StackTrace}");
+                    }
+                }
+                
                 HCall_Create = false;
                 return false;
             }

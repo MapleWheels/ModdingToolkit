@@ -1,4 +1,5 @@
 ﻿using ModdingToolkit.Client;
+using ModdingToolkit.Config;
 using ModdingToolkit.Patches;
 
 namespace ModdingToolkit;
@@ -30,6 +31,8 @@ internal sealed class Bootloader : ACsMod
             "Reloads all assemblies and their plugins.",
             args =>
             {
+                ConfigManager.Dispose();
+                XMLDocumentHelper.UnloadCache();
                 UnloadPatches();
                 PluginHelper.UnloadAssemblies();
                 PluginHelper.LoadAssemblies();
@@ -41,6 +44,8 @@ internal sealed class Bootloader : ACsMod
             "Unloads all assemblies and their plugins.",
             args =>
             {
+                ConfigManager.Dispose();
+                XMLDocumentHelper.UnloadCache();
                 UnloadPatches();
                 PluginHelper.UnloadAssemblies();
             });
@@ -73,9 +78,10 @@ internal sealed class Bootloader : ACsMod
 
     public override void Stop()
     {
+        ConfigManager.Dispose();
+        XMLDocumentHelper.UnloadCache();
         ConsoleCommands.UnloadAllCommands();
         UnloadPatches();
-        
         PluginHelper.UnloadAssemblies();
         IsLoaded = false;
     }

@@ -16,10 +16,14 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
     {
     }
 
+#warning MSettingsMenu: Fix APPLY and RESET button behaviour.
+
     private static void Init()
     {
         foreach (IConfigBase.Category category in Enum.GetValues<IConfigBase.Category>())
         {
+            if (!PerMenuConfig.ContainsKey(category))
+                PerMenuConfig.Add(category, new List<IConfigBase>());
             if (PerMenuConfig[category] is null)
                 PerMenuConfig[category] = new List<IConfigBase>();
             else
@@ -37,6 +41,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
     
     public new static Barotrauma.SettingsMenu Create(RectTransform mainParent)
     {
+        LuaCsSetup.PrintCsMessage("MCMC: Create Invoke.");
         Instance?.Close();
         Init();
         Instance = new MSettingsMenu(mainParent);
@@ -288,11 +293,14 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                     currentRow,
                     $"{input.ModName}: {input.Name}",
                     () => new RawLString(input.GetStringValue()),
-                    (kom => input.Value = kom)
-                    );
+                    kom =>
+                    {
+                        input.Value = new KeyOrMouse(kom.Key);
+                        input.Value.MouseButton = kom.MouseButton;
+                    });
             }
         }
-
+        
         GUILayoutGroup resetControlsHolder =
             new GUILayoutGroup(new RectTransform((1.75f, 0.1f), layout.RectTransform), isHorizontal: true, childAnchor: Anchor.Center)
             {

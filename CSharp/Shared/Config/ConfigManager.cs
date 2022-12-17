@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Xml.Linq;
 using Microsoft.Xna.Framework.Input;
+using ModdingToolkit;
 
 namespace ModdingToolkit.Config;
 
@@ -12,8 +13,12 @@ namespace ModdingToolkit.Config;
 public static class ConfigManager
 {
     #region Events
-    
-    // None.
+
+    /// <summary>
+    /// All public API consumers should use this to cleanup their references before unloading and do any saving needed.
+    /// NOTE: This method will automatically unsubscribe you after it has been called as part of cleanup.
+    /// </summary>
+    public static event System.Action? OnDispose;
     
     #endregion
     
@@ -54,6 +59,23 @@ public static class ConfigManager
         return CreateIConfigControl(name, modName, defaultValue, menuCategory, networkSync, onValueChanged);
     }
 
+    /// <summary>
+    /// [NOT IMPLEMENTED]
+    /// [IGNORE]
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="modName"></param>
+    /// <param name="defaultValue"></param>
+    /// <param name="minValue"></param>
+    /// <param name="maxValue"></param>
+    /// <param name="stepValue"></param>
+    /// <param name="menuCategory"></param>
+    /// <param name="networkSync"></param>
+    /// <param name="onValueChanged"></param>
+    /// <param name="validateNewInput"></param>
+    /// <param name="filePath"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
     public static IConfigRangeBase<double> AddConfigRangeDoubleEntry(string name,
         string modName,
         double defaultValue,
@@ -69,6 +91,23 @@ public static class ConfigManager
         throw new NotImplementedException();
     }
     
+    /// <summary>
+    /// [NOT IMPLEMENTED]
+    /// [IGNORE]
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="modName"></param>
+    /// <param name="defaultValue"></param>
+    /// <param name="minValue"></param>
+    /// <param name="maxValue"></param>
+    /// <param name="stepValue"></param>
+    /// <param name="menuCategory"></param>
+    /// <param name="networkSync"></param>
+    /// <param name="onValueChanged"></param>
+    /// <param name="validateNewInput"></param>
+    /// <param name="filePath"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
     public static IConfigRangeBase<int> AddConfigRangeIntEntry(string name,
         string modName,
         int defaultValue,
@@ -112,10 +151,19 @@ public static class ConfigManager
         return false;
     }
 
-    public static void ReloadAllFromFiles()
+    public static bool ReloadAllValuesForModFromFiles(string modName)
     {
-        throw new NotImplementedException();
+        if (!LoadedConfigEntries.ContainsKey(modName))
+            return false;
+        foreach (var pair in LoadedConfigEntries[modName].ToImmutableDictionary())
+        {
+            LoadData(pair.Value, null, true, true);
+        }
+
+        return true;
     }
+
+    
 
     public static IEnumerable<IConfigBase> GetConfigMembers(IConfigBase.Category category)
     {
@@ -199,7 +247,20 @@ public static class ConfigManager
 
 
     #region Internal_Func
+    
+    internal static bool ReloadAllValueFromFiles()
+    {
+        XMLDocumentHelper.UnloadCache();
+        bool success = true;
+        foreach (var cList in LoadedConfigEntries.ToImmutableDictionary())
+        {
+            if (!ReloadAllValuesForModFromFiles(cList.Key))
+                success = false;
+        }
 
+        return success;
+    }
+    
     internal static void SaveAll()
     {
         foreach (var configDictL in LoadedConfigEntries)
@@ -213,6 +274,8 @@ public static class ConfigManager
 
     internal static void Dispose()
     {
+        OnDispose?.Invoke();
+        
         foreach (ConfigIndex configIndex in Indexer_AllLoadedEntries.ToImmutableList())
         {
             RemoveConfigFromLists(LoadedConfigEntries[configIndex.ModName][configIndex.Name]);
@@ -223,6 +286,26 @@ public static class ConfigManager
         Indexer_MenuCategory.Clear();
         Indexer_NetSync.Clear();
         Indexer_AllLoadedEntries.Clear();
+        
+        CleanupEvents();
+    }
+
+    private static void CleanupEvents()
+    {
+        try
+        {
+            if (OnDispose is not null)
+            {
+                foreach (Delegate del in OnDispose.GetInvocationList())
+                {
+                    OnDispose -= (System.Action)del;
+                }
+            }
+        }
+        finally
+        {
+            OnDispose = null;
+        }
     }
 
     private static bool SaveData(IConfigBase config)
@@ -272,7 +355,7 @@ public static class ConfigManager
         return true;
     }
 
-    private static bool LoadData(IConfigBase config, string? filePath = null, bool overwriteBadXMLFile = true)
+    private static bool LoadData(IConfigBase config, string? filePath = null, bool overwriteBadXMLFile = true, bool overrideExisting = false)
     {
         string? fp = filePath;
         bool b = true;
@@ -281,19 +364,28 @@ public static class ConfigManager
 
         if (b)
         {
-            string? key = XMLDocumentHelper.LoadOrCreateDocToCache(fp!, true, true);
-            if (key is null)
-                return false;
+            string? key;
+            if (!XMLDocumentHelper.LoadOrCreateDocToCache(fp!, out key, true, true))
+            {
+                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Failed to load existing data. | Config: {config.ModName}, {config.Name}");
+            }
             string? lxkey = GenerateXDocKey(config);
             if (lxkey is null)
             {
                 LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Unable to create lxkey.");
                 return false;
             }
-            if (!LoadedXDocKeys.ContainsKey(lxkey))
+            if (LoadedXDocKeys.ContainsKey(lxkey))
             {
-                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
-                return false;
+                if (overrideExisting)
+                {
+                    LoadedXDocKeys.Remove(lxkey);
+                }
+                else
+                {
+                    LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
+                    return false;
+                }
             }
             LoadedXDocKeys.Add(lxkey, key);
 
@@ -308,10 +400,10 @@ public static class ConfigManager
                 Debug.Assert(doc != null, "doc != null");
                 Debug.Assert(doc.Root != null, "doc.Root != null");
                 
-                configRoot = doc.Root.Descendants(nameof(ConfigManager)).FirstOrDefault(defaultValue: null);
+                configRoot = doc.Root.DescendantsAndSelf(nameof(ConfigManager)).FirstOrDefault(defaultValue: null);
                 configModData = configRoot?.Descendants(config.ModName).FirstOrDefault(defaultValue: null) ?? null;
-                configVarData = configRoot?.Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
-            }
+                configVarData = configModData?.Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
+            } 
 
             if (doc is null || configRoot is null || configModData is null || configVarData is null)
             {
@@ -324,9 +416,10 @@ public static class ConfigManager
                             new XDeclaration("1.0", "utf-8", "true"),
                             new XComment("Generated by ModdingToolkit::ConfigManager"),
                             configRoot = new XElement(nameof(ConfigManager),
-                                configModData = new XElement(config.ModName),
-                                configVarData = new XElement(config.Name, config.GetStringValue())
-                            )
+                                configModData = new XElement(config.ModName, 
+                                    configVarData = new XElement(config.Name, 
+                                        config.GetStringValue()))
+                                )
                         );
                     }
 
@@ -344,8 +437,15 @@ public static class ConfigManager
                             configVarData = new XElement(config.Name, config.GetStringValue()));
                     }
 
-                    XMLDocumentHelper.TrySetRefLoadedXmlDoc(key, doc);
-                    XMLDocumentHelper.SaveLoadedDocToDisk(key);
+                    if (XMLDocumentHelper.TrySetRefLoadedXmlDoc(key, doc, true))
+                    {
+                        if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IOActionResultState.Success)
+                        {
+                            LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
+                        }
+                    }
+                    else
+                        LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                 }
             }
             else
@@ -425,8 +525,7 @@ public static class ConfigManager
             LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
             return false;
         }
-        fp = Path.Combine(BaseConfigDir, Utils.SanitizePath(config.ModName),
-            Utils.SanitizeFileName(config.ModName + ".xml"));
+        fp = Path.Combine(BaseConfigDir, Utils.SanitizePath(config.ModName), Utils.SanitizeFileName(config.ModName) + ".xml");
         return true;
     }
 

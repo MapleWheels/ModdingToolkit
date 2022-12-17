@@ -1,27 +1,26 @@
-﻿using System.Text;
-using System.Xml;
+﻿using System.Xml;
 using System.Xml.Linq;
 
-namespace ModdingToolkit.Config;
+namespace ModdingToolkit;
 
 public static class XMLDocumentHelper
 {
     private static Dictionary<string, XDocument?> LoadedDocs = new();
 
-    public static string? LoadOrCreateDocToCache(string filePath, bool reload = false, bool overwriteOnFail = false)
+    public static bool LoadOrCreateDocToCache(string filePath, out string? fp, bool reload = false, bool overwriteOnFail = false)
     {
-        string? fp = Utils.PrepareFilePathString(Path.GetDirectoryName(filePath)!, Path.GetFileName(filePath));
+        fp = Utils.PrepareFilePathString(Path.GetDirectoryName(filePath)!, Path.GetFileName(filePath));
         
         if (fp is null)
         {
-            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadDocument() | Unable to parse file path.");
-            return null;
+            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Unable to parse file path.");
+            return false;
         }
 
         if (!fp.EndsWith(".xml"))
         {
-            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadDocument() | Filetype is not an XML document.");
-            return null;
+            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Filetype is not an XML document. | FP: {fp}");
+            return false;
         }
         
         if (!LoadedDocs.ContainsKey(fp) || reload)
@@ -34,7 +33,8 @@ public static class XMLDocumentHelper
                         LoadedDocs[fp] = XDocument.Parse(data!);
                     else
                     {
-                        LoadedDocs[fp] = new XDocument();
+                        LoadedDocs[fp] = new XDocument(
+                            new XDeclaration("1.0", "utf-8", "true")); 
                         if (overwriteOnFail)
                         {
                             SaveLoadedDocToDisk(fp);
@@ -43,14 +43,14 @@ public static class XMLDocumentHelper
                 }
                 catch (XmlException xme)
                 {
-                    LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadDocument() | XML data is not valid.");
+                    LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | XML data is not valid. | FP: {fp}");
                     LoadedDocs.Remove(fp);
-                    return null;
+                    return false;
                 }
             }
         }
 
-        return fp;
+        return true;
     }
 
     internal static bool UnloadCache(bool saveToDisk = false, bool force = false)
@@ -89,11 +89,14 @@ public static class XMLDocumentHelper
         return true;
     }
     
-    public static bool TrySetRefLoadedXmlDoc(string sanitizedFilePath, XDocument document)
+    public static bool TrySetRefLoadedXmlDoc(string sanitizedFilePath, in XDocument document, bool addIfMissing = false)
     {
         if (!LoadedDocs.ContainsKey(sanitizedFilePath))
         {
-            return false;
+            if (addIfMissing)
+                LoadedDocs.Add(sanitizedFilePath, document);
+            else
+                return false;
         }
         LoadedDocs[sanitizedFilePath] = document;
         return true;
@@ -116,7 +119,7 @@ public static class XMLDocumentHelper
             }
             catch (Exception e)
             {
-                LuaCsSetup.PrintCsError($"XMLDocumentHelper::SaveLoadedDocToDisk() | Unknown error. Exception: {e.Message}");
+                LuaCsSetup.PrintCsError($"XMLDocumentHelper::SaveLoadedDocToDisk() | Unknown error. Exception: {e.Message} | SFP: {sfp}");
                 return Utils.IOActionResultState.UnknownError;
             }
         }

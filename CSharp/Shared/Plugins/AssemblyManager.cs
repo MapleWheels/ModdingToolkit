@@ -17,7 +17,6 @@ public static class AssemblyManager
 {
     #region ExternalAPI
 
-
     /// <summary>
     /// Called after a plugin has been loaded (OnLoadComplete executed on the plugin). 
     /// </summary>
