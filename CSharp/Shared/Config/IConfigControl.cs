@@ -8,6 +8,6 @@ public interface IConfigControl : IConfigBase //, ISerializable, IDisposable
     KeyOrMouse? Value { get; set; }
     KeyOrMouse? DefaultValue { get; }
     bool SaveOnValueChanged { get; }
-    void Initialize(string name, string modName, KeyOrMouse currentValue, KeyOrMouse? defaultValue);
+    void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged);
     bool Validate(KeyOrMouse newValue);
 }

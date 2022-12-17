@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsClient", "WindowsCli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModConfigManagerClient", "ModConfigManagerClient\ModConfigManagerClient.csproj", "{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModdingToolkitTestPlugin", "ModdingToolkitTestPlugin\ModdingToolkitTestPlugin.csproj", "{C42C3C4C-88AC-4D71-88FC-7BF55437A9F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{000F7C69-67B5-4CD6-ACF2-0E250C9589B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C42C3C4C-88AC-4D71-88FC-7BF55437A9F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C42C3C4C-88AC-4D71-88FC-7BF55437A9F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C42C3C4C-88AC-4D71-88FC-7BF55437A9F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C42C3C4C-88AC-4D71-88FC-7BF55437A9F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

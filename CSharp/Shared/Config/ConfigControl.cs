@@ -1,4 +1,6 @@
-﻿namespace ModdingToolkit.Config;
+﻿using Microsoft.Xna.Framework.Input;
+
+namespace ModdingToolkit.Config;
 
 public sealed class ConfigControl : IConfigControl
 {
@@ -8,14 +10,21 @@ public sealed class ConfigControl : IConfigControl
     public string Name { get; set; }
     public Type SubTypeDef => typeof(KeyOrMouse);
     public string ModName { get; set; }
+    public IConfigBase.Category MenuCategory => IConfigBase.Category.Ignore;
+    public IConfigBase.NetworkSync NetSync => IConfigBase.NetworkSync.NoSync;
+
     public string GetStringValue()
     {
-        return Value.ToString();
+        return Value?.Key.ToString() ?? DefaultValue?.Key.ToString() ?? Keys.A.ToString();
     }
 
     public void SetValueFromString(string value)
     {
-        LuaCsSetup.PrintCsError($"ConfigControl::SetValueFromString() | This functionality is not implemented! ControlName: {Name}. ModName: {ModName}");
+        if (Enum.IsDefined(typeof(Keys), value))
+        {
+            Keys k = Enum.Parse<Keys>(value);
+            this.Value = new KeyOrMouse(k);
+        }
     }
 
     public void SetValueAsDefault()
@@ -38,7 +47,7 @@ public sealed class ConfigControl : IConfigControl
     public KeyOrMouse DefaultValue { get; set; }
     public bool SaveOnValueChanged { get; }
     
-    public void Initialize(string name, string modName, KeyOrMouse currentValue, KeyOrMouse? defaultValue)
+    public void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigControl::Initialize() | Name is null or empty.");

@@ -51,16 +51,19 @@
     <ItemGroup>
       <Compile Remove="SettingsMenuPatcher\**" />
       <Compile Remove="ModConfigManagerClient\**" />
+      <Compile Remove="ModdingToolkitTestPlugin\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="SettingsMenuPatcher\**" />
       <EmbeddedResource Remove="ModConfigManagerClient\**" />
+      <EmbeddedResource Remove="ModdingToolkitTestPlugin\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="SettingsMenuPatcher\**" />
       <None Remove="ModConfigManagerClient\**" />
+      <None Remove="ModdingToolkitTestPlugin\**" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

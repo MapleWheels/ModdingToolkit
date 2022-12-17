@@ -5,6 +5,8 @@ public interface IConfigBase
     string Name { get; }
     Type SubTypeDef { get; }
     string ModName { get; }
+    public Category MenuCategory { get; }
+    public NetworkSync NetSync { get; }
     string GetStringValue();
     void SetValueFromString(string value);
     void SetValueAsDefault();
@@ -12,7 +14,7 @@ public interface IConfigBase
     
     public enum Category
     {
-        Audio, Gameplay, Graphics    
+        Audio, Gameplay, Graphics, Ignore    
     }
 
     public enum NetworkSync
