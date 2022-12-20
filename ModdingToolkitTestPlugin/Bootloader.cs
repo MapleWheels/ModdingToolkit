@@ -21,7 +21,7 @@ public class Bootloader : IAssemblyPlugin
 
     public void OnLoadCompleted()
     {
-        LuaCsSetup.PrintCsError($"MTTP: KeyBind value: {cc?.Value?.Key.ToString()}");
+        LuaCsSetup.PrintCsError($"MTTP: KeyBind value: {cc?.GetStringValue()}");
     }
 
     public PluginInfo GetPluginInfo()

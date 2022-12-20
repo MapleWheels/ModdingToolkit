@@ -41,10 +41,10 @@ public static class ConfigManager
         IConfigBase.NetworkSync networkSync,
         Action onValueChanged,
         Func<T, bool> validateNewInput,
-        string? filePath = null) where T : IConvertible
+        string? filePathOverride = null) where T : IConvertible
     {
-        return CreateIConfigEntryInst<T>(name, modName, defaultValue, menuCategory, networkSync, onValueChanged,
-            validateNewInput, filePath);
+        return CreateIConfigEntry<T>(name, modName, defaultValue, menuCategory, networkSync, onValueChanged,
+            validateNewInput, filePathOverride);
     }
 
     public static IConfigControl AddConfigKeyOrMouseBind(
@@ -53,74 +53,25 @@ public static class ConfigManager
         KeyOrMouse defaultValue,
         IConfigBase.Category menuCategory,
         IConfigBase.NetworkSync networkSync,
-        Action onValueChanged
+        Action onValueChanged,
+        string? filePathOverride = null
     )
     {
-        return CreateIConfigControl(name, modName, defaultValue, menuCategory, networkSync, onValueChanged);
-    }
-
-    /// <summary>
-    /// [NOT IMPLEMENTED]
-    /// [IGNORE]
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="modName"></param>
-    /// <param name="defaultValue"></param>
-    /// <param name="minValue"></param>
-    /// <param name="maxValue"></param>
-    /// <param name="stepValue"></param>
-    /// <param name="menuCategory"></param>
-    /// <param name="networkSync"></param>
-    /// <param name="onValueChanged"></param>
-    /// <param name="validateNewInput"></param>
-    /// <param name="filePath"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
-    public static IConfigRangeBase<double> AddConfigRangeDoubleEntry(string name,
-        string modName,
-        double defaultValue,
-        double minValue,
-        double maxValue,
-        double stepValue,
-        IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
-        Action onValueChanged,
-        Func<double, bool> validateNewInput,
-        string? filePath = null)
-    {
-        throw new NotImplementedException();
+        return CreateIConfigControl(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, filePathOverride);
     }
     
-    /// <summary>
-    /// [NOT IMPLEMENTED]
-    /// [IGNORE]
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="modName"></param>
-    /// <param name="defaultValue"></param>
-    /// <param name="minValue"></param>
-    /// <param name="maxValue"></param>
-    /// <param name="stepValue"></param>
-    /// <param name="menuCategory"></param>
-    /// <param name="networkSync"></param>
-    /// <param name="onValueChanged"></param>
-    /// <param name="validateNewInput"></param>
-    /// <param name="filePath"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
-    public static IConfigRangeBase<int> AddConfigRangeIntEntry(string name,
-        string modName,
-        int defaultValue,
-        int minValue,
-        int maxValue,
-        int stepValue,
-        IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
-        Action onValueChanged,
-        Func<int, bool> validateNewInput,
-        string? filePath = null)
+    public static IConfigList<T> AddConfigList<T>(
+        string name, string modName, 
+        T defaultValue,
+        List<T> valueList,
+        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
+        Func<T, bool>? valueChangePredicate = null,
+        Action? onValueChanged = null,
+        string? filePathOverride = null) where T : IConvertible
     {
-        throw new NotImplementedException();
+        return CreateIConfigList<T>(name, modName, defaultValue, valueList, sync, 
+            menuCategory, valueChangePredicate, onValueChanged, filePathOverride);
     }
 
     public static bool Save(IConfigBase configEntry)
@@ -308,6 +259,55 @@ public static class ConfigManager
             OnDispose = null;
         }
     }
+    
+    private static IConfigControl CreateIConfigControl(
+        string name,
+        string modName,
+        KeyOrMouse defaultValue,
+        IConfigBase.Category menuCategory,
+        IConfigBase.NetworkSync networkSync,
+        Action onValueChanged,
+        string? filePathOverride = null)
+    {
+        ConfigControl cc = new();
+        cc.Initialize(name, modName, null, defaultValue, onValueChanged);
+        AddConfigToLists(cc);
+        LoadData(cc, filePathOverride);
+        return cc;
+    }
+
+    private static IConfigEntry<T> CreateIConfigEntry<T>(
+        string name,
+        string modName,
+        T defaultValue,
+        IConfigBase.Category menuCategory,
+        IConfigBase.NetworkSync networkSync,
+        Action onValueChanged,
+        Func<T, bool> validateNewInput,
+        string? filePathOverride = null
+        ) where T : IConvertible
+    {
+        ConfigEntry<T> ce = new();
+        ce.Initialize(name, modName, default!, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
+        AddConfigToLists(ce);
+        LoadData(ce, filePathOverride);
+        return ce;
+    }
+
+    private static IConfigList<T> CreateIConfigList<T>(string name, string modName, T defaultValue,
+        List<T> valueList,
+        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
+        Func<T, bool>? valueChangePredicate = null,
+        Action? onValueChanged = null,
+        string? filePathOverride = null) where T : IConvertible
+    {
+        ConfigList<T> cl = new();
+        cl.Initialize(name, modName, default!, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
+        AddConfigToLists(cl);
+        LoadData(cl, filePathOverride);
+        return cl;
+    }
 
     private static bool SaveData(IConfigBase config)
     {
@@ -335,25 +335,9 @@ public static class ConfigManager
             LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot load XDocument!");
             return false;
         }
-        
-        #warning Remove debug message.
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | XDOC: {doc?.Root?.ToString() ?? "null"}");
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | CNFG: {config.ModName}:{config.Name}");
 
-        XElement? ce = doc?.Root ?? null;
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC1: {ce?.ToString() ?? "null"}");
-
-        XElement? ce2 = ce?.Element("ConfigManager");
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC2: {ce2?.ToString() ?? "null"}");
-
-        XElement? ce3 = ce2?.Descendants(config.ModName).FirstOrDefault(defaultValue: null);
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC3: {ce3?.ToString() ?? "null"}");
-
-        XElement? ce4 = ce3?.Descendants(config.Name).FirstOrDefault(defaultValue: null);
-        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC4: {ce4?.ToString() ?? "null"}");
-        
         XElement? configElement = doc?.Root?
-            .Descendants(nameof(ConfigManager)).FirstOrDefault(defaultValue: null)?
+            .DescendantsAndSelf(nameof(ConfigManager)).FirstOrDefault(defaultValue: null)?
             .Descendants(config.ModName).FirstOrDefault(defaultValue: null)?
             .Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
         if (configElement is null)
@@ -410,8 +394,7 @@ public static class ConfigManager
             XElement? configRoot = null;
             XElement? configModData = null;
             XElement? configVarData = null;
-            config.SetValueAsDefault();
-            
+
             if (XMLDocumentHelper.TryGetLoadedXmlDoc(key, out doc))
             {
                 Debug.Assert(doc != null, "doc != null");
@@ -495,39 +478,7 @@ public static class ConfigManager
         return config.ModName + "::" + config.Name;
     }
     
-    private static IConfigControl CreateIConfigControl(
-        string name,
-        string modName,
-        KeyOrMouse defaultValue,
-        IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
-        Action onValueChanged,
-        string? filePathOverride = null)
-    {
-        ConfigControl cc = new ConfigControl();
-        cc.Initialize(name, modName, null, defaultValue, onValueChanged);
-        AddConfigToLists(cc);
-        LoadData(cc, filePathOverride);
-        return cc;
-    }
-
-    private static IConfigEntry<T> CreateIConfigEntryInst<T>(
-        string name,
-        string modName,
-        T defaultValue,
-        IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
-        Action onValueChanged,
-        Func<T, bool> validateNewInput,
-        string? filePath = null
-        ) where T : IConvertible
-    {
-        ConfigEntry<T> ce = new ConfigEntry<T>(defaultValue, menuCategory, networkSync);
-        ce.Initialize(name, modName, defaultValue);
-        AddConfigToLists(ce);
-        LoadData(ce, null, true);
-        return ce;
-    }
+    
 
     private static bool GetDefaultFilePath(IConfigBase config, out string? fp)
     {

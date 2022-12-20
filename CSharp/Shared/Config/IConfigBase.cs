@@ -12,10 +12,14 @@ public interface IConfigBase
     void SetValueFromString(string value);
     void SetValueAsDefault();
     DisplayType GetDisplayType();
+    bool ValidateString(string value);
     
     public enum Category
     {
-        Audio, Gameplay, Graphics, Ignore    
+        Gameplay, 
+        Ignore,    
+        Audio_NOTIMPL,
+        Graphics_NOTIMPL
     }
 
     public enum NetworkSync
@@ -25,6 +29,6 @@ public interface IConfigBase
 
     public enum DisplayType
     {
-        Dropdown, KeyOrMouse, Slider, Standard
+        DropdownEnum, DropdownList, KeyOrMouse, Standard
     }
 }

@@ -15,13 +15,15 @@ public sealed class ConfigControl : IConfigControl
 
     public string GetStringValue()
     {
-        if (Value is null)
+        if (this.Value is null)
             return GetStringDefaultValue();
-        return Value.MouseButton == MouseButton.None ? Value.Key.ToString() : Value.MouseButton.ToString();
+        return this.Value.MouseButton == MouseButton.None 
+            ? this.Value.Key.ToString() : this.Value.MouseButton.ToString();
     }
 
-    public string GetStringDefaultValue() => DefaultValue.MouseButton == MouseButton.None 
-        ? DefaultValue.Key.ToString() : DefaultValue.MouseButton.ToString();
+    public string GetStringDefaultValue() => this.DefaultValue.MouseButton == MouseButton.None 
+        ? this.DefaultValue.Key.ToString() 
+        : this.DefaultValue.MouseButton.ToString();
     
     public void SetValueFromString(string value)
     {
@@ -39,7 +41,10 @@ public sealed class ConfigControl : IConfigControl
 
     public void SetValueAsDefault()
     {
-        this.Value = DefaultValue;
+        if (DefaultValue.MouseButton == MouseButton.None)
+            this.Value = new KeyOrMouse(DefaultValue.Key);
+        else
+            this.Value = new KeyOrMouse(DefaultValue.MouseButton);
     }
 
     public IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.KeyOrMouse;
@@ -47,14 +52,17 @@ public sealed class ConfigControl : IConfigControl
     private KeyOrMouse? _value;
     public KeyOrMouse? Value
     {
-        get => _value;
+        get => this._value;
         set
         {
             if (Validate(value))
-                _value = value;
+            {
+                this._value = value;
+                this._onValueChanged?.Invoke();
+            }
         }
     }
-    public KeyOrMouse DefaultValue { get; set; }
+    public KeyOrMouse DefaultValue { get; private set; }
     public bool SaveOnValueChanged { get; }
     
     public void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged)
@@ -64,17 +72,26 @@ public sealed class ConfigControl : IConfigControl
         if (modName.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigControl::Initialize() | ModName is null or empty.");
 
-        Name = name;
-        ModName = modName;
-        Value = currentValue;
+        this.Name = name;
+        this.ModName = modName;
+        this.Value = currentValue;
         if (defaultValue is not null)
-            DefaultValue = defaultValue;
+            this.DefaultValue = defaultValue;
     }
 
     public bool Validate(KeyOrMouse? newValue)
     {
         if (newValue is null)
             return false;
-        return _validateInput?.Invoke(newValue) ?? true;
+        return this._validateInput?.Invoke(newValue) ?? true;
+    }
+
+    public bool ValidateString(string value)
+    {
+        if (Enum.IsDefined(typeof(Keys), value))
+            return true;
+        if (Enum.IsDefined(typeof(MouseButton), value))
+            return true;
+        return false;
     }
 }
