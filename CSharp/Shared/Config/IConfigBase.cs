@@ -29,6 +29,6 @@ public interface IConfigBase
 
     public enum DisplayType
     {
-        DropdownEnum, DropdownList, KeyOrMouse, Standard
+        DropdownEnum, DropdownList, KeyOrMouse, Number, Slider, Standard, Tickbox
     }
 }

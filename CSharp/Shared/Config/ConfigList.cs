@@ -1,22 +1,22 @@
 ﻿namespace ModdingToolkit.Config;
 
-public class ConfigList<T> : IConfigList<T> where T : IConvertible
+public class ConfigList : IConfigList
 {
     #region INTERNALS
 
-    protected T _value;
-    protected ImmutableList<T> _valueList;
-    protected Func<T, bool> _valueChangePredicate;
+    protected string _value;
+    protected ImmutableList<string> _valueList;
+    protected Func<string, bool> _valueChangePredicate;
     protected System.Action _onValueChanged;
 
     #endregion
 
     public string Name { get; private set; }
 
-    public Type SubTypeDef => typeof(T);
+    public Type SubTypeDef => typeof(string);
     public string ModName { get; private set; }
 
-    public virtual T Value
+    public virtual string Value
     {
         get => this._value;
         set
@@ -29,18 +29,18 @@ public class ConfigList<T> : IConfigList<T> where T : IConvertible
         }
     }
 
-    public T DefaultValue { get; private set; }
+    public string DefaultValue { get; private set; }
     
-    public ref readonly ImmutableList<T> GetReadonlyList() => ref _valueList;
+    public ref readonly ImmutableList<string> GetReadOnlyList() => ref _valueList;
 
-    public void Initialize(string name, string modName, T newValue, T defaultValue, List<T> valueList,
+    public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
         IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<T, bool>? valueChangePredicate = null, Action? onValueChanged = null)
+        Func<string, bool>? valueChangePredicate = null, Action? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
-            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty.");
+            throw new ArgumentNullException($"ConfigEntry<string>::Initialize() | Name is null or empty.");
         if (modName.Trim().IsNullOrEmpty())
-            throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | ModName is null or empty.");
+            throw new ArgumentNullException($"ConfigEntry<string>::Initialize() | ModName is null or empty.");
 
         this.Name = name;
         this.ModName = modName;
@@ -62,12 +62,12 @@ public class ConfigList<T> : IConfigList<T> where T : IConvertible
         this.IsInitialized = true;
     }
 
-    public IConfigEntry<T>.Category MenuCategory { get; private set; }
-    public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
+    public IConfigEntry<string>.Category MenuCategory { get; private set; }
+    public IConfigEntry<string>.NetworkSync NetSync { get; private set; }
 
     public bool IsInitialized { get; private set; } = false;
 
-    public virtual bool Validate(T value) => this._valueList.Contains(value) && (this._valueChangePredicate?.Invoke(value) ?? true);
+    public virtual bool Validate(string value) => this._valueList.Contains(value) && (this._valueChangePredicate?.Invoke(value) ?? true);
 
     public virtual string GetStringValue() => this._value.ToString() ?? "";
 
@@ -75,15 +75,7 @@ public class ConfigList<T> : IConfigList<T> where T : IConvertible
 
     public virtual void SetValueFromString(string value)
     {
-        try
-        {
-            this.Value = (T)Convert.ChangeType(value, typeof(T));
-        }
-        catch (InvalidCastException ice)
-        {
-            LuaCsSetup.PrintCsError(
-                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
-        }
+        this.Value = value;
     }
 
     public void SetValueAsDefault()
@@ -94,14 +86,6 @@ public class ConfigList<T> : IConfigList<T> where T : IConvertible
     public virtual IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.DropdownList;
     public bool ValidateString(string value)
     {
-        try
-        {
-            var k = (T)Convert.ChangeType(value, typeof(T));
-            return Validate(k);
-        }
-        catch (Exception e)
-        {
-            return false;
-        }
+        return Validate(value);
     }
 }

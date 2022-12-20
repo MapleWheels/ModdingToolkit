@@ -375,6 +375,19 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         ValuesToSave.Add((newVal, config));
     }
 
+    public object? GetUnsavedValue(IConfigBase config)
+    {
+        foreach ((object, IConfigBase) tuple in ValuesToSave)
+        {
+            if (tuple.Item2.Equals(config))
+            {
+                return tuple.Item1;
+            }
+        }
+
+        return null;
+    }
+
     public new void CreateGameplayTab()
     {
         GUIFrame content = CreateNewContentFrame(Tab.Gameplay);
@@ -470,6 +483,19 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
         #region RIGHT_FRAME
 
+        if (PerMenuConfig[IConfigBase.Category.Gameplay] is null)
+            return;
+        List<IConfigBase> cfgList = PerMenuConfig[IConfigBase.Category.Gameplay]!;
+        
+        int groupCount = cfgList.GroupBy(x => x.ModName).Count();
+        int entryCount = cfgList.Count;
+        float size = Math.Max(1.0f, groupCount * 0.3f + entryCount * 0.2f);
+        
+        var organizedList = cfgList
+            .OrderBy(x => x.ModName)
+            .ThenBy(x => x.Name)
+            .ToList();
+        
         GUIListBox rightListBox = new GUIListBox(
             new RectTransform((1.0f, 1.0f), right.RectTransform),
             false,
@@ -482,8 +508,125 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             OnSelected = (_, _) => false
         };
 
-        
+        GUIFrame testFrame = new GUIFrame(
+            new RectTransform((1.0f, size), rightListBox.Content.RectTransform),
+            "", Color.DarkOliveGreen);
 
+        GUILayoutGroup contentGroup = new GUILayoutGroup(
+            new RectTransform((1.0f, 1.0f), testFrame.RectTransform),
+            false);
+
+        string _header = string.Empty;
+        Vector2 scaleR = new Vector2(1.0f, 1.0f / size);
+
+        foreach (IConfigBase configBase in organizedList)
+        {
+            if (!_header.Equals(configBase.ModName))
+            {
+                _header = configBase.ModName;
+                Label(contentGroup, $"{_header} Settings", GUIStyle.SubHeadingFont);
+            }
+            AddListEntry(contentGroup, configBase, scaleR);
+        }
+        
+        void AddListEntry(GUILayoutGroup layoutGroup, IConfigBase entry, Vector2 scaleRatio)
+        {
+            Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont);
+            if (entry.GetDisplayType() == IConfigBase.DisplayType.Tickbox)
+            {
+                Tickbox(layoutGroup, "??", "??",
+                    (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
+                    (v) => AddOrUpdateUnsavedChange(v.ToString(), entry));
+            }
+            else if (entry.GetDisplayType() == IConfigBase.DisplayType.DropdownList
+                     && entry is IConfigList icl)
+            {
+                Dropdown<string>(layoutGroup, s => "", s => "",
+                    icl.GetReadOnlyList(), icl.Value, 
+                    s => AddOrUpdateUnsavedChange(s, icl));
+            }
+            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Slider)
+            {
+                if (entry is IConfigRangeFloat icf)
+                {
+                    float cv;
+                    try
+                    {
+                        cv = (float)Convert.ChangeType(GetUnsavedValue(icf), TypeCode.Single)!;
+                    }
+                    catch
+                    {
+                        cv = icf.Value;
+                    }
+
+                    Slider(layoutGroup,
+                        new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
+                        f => f.ToString(), cv, 
+                        f => AddOrUpdateUnsavedChange(f.ToString(), entry));
+                }
+                else if (entry is IConfigRangeInt ici)
+                {
+                    int cv;
+                    try
+                    {
+                        cv = (int)Convert.ChangeType(GetUnsavedValue(ici), TypeCode.Int32)!;
+                    }
+                    catch
+                    {
+                        cv = ici.Value;
+                    }
+
+                    Slider(layoutGroup,
+                        new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
+                        f => f.ToString(), cv, 
+                        f => AddOrUpdateUnsavedChange(f.ToString(), entry));
+                }
+            }
+            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Number)
+            {
+                var numInput = new GUINumberInput(
+                    new RectTransform(scaleRatio, layoutGroup.RectTransform),
+                    NumberType.Float)
+                {
+                    OnValueChanged = input => AddOrUpdateUnsavedChange(input.ToString(), entry),
+                };
+                if (float.TryParse(entry.GetStringValue(), out var v))
+                {
+                    numInput.floatValue = v;
+                }
+            }
+            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Standard)
+            {
+                var textBox = new GUITextBox(
+                    new RectTransform(scaleRatio, layoutGroup.RectTransform),
+                    entry.GetStringValue(),
+                    createPenIcon: false
+                )
+                {
+                    OnEnterPressed = (box, text) =>
+                    {
+                        if (entry.ValidateString(text))
+                            AddOrUpdateUnsavedChange(text, entry);
+                        else
+                        {
+                            string s = String.Empty;
+                            try
+                            {
+                                s = (string)Convert.ChangeType(GetUnsavedValue(entry), TypeCode.String)!;
+                            }
+                            catch
+                            {
+                                s = entry.GetStringValue();
+                            }
+
+                            box.Text = s;
+                        }
+                        return true;
+                    }
+                };
+            }
+        }
+        
         #endregion
     }
 

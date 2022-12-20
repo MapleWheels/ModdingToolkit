@@ -5,8 +5,14 @@ namespace ModdingToolkitTestPlugin;
 
 public class Bootloader : IAssemblyPlugin
 {
-    private ModdingToolkit.Config.IConfigControl? cc;
-    
+    private IConfigControl? cc;
+    private IConfigEntry<string> ce_string;
+    private IConfigEntry<float> ce_float;
+    private IConfigEntry<int> ce_int;
+    private IConfigList cl;
+    private IConfigRangeInt icri;
+    private IConfigRangeFloat icrf;
+
     public void Initialize()
     {
         cc = ConfigManager.AddConfigKeyOrMouseBind(
@@ -17,6 +23,43 @@ public class Bootloader : IAssemblyPlugin
             IConfigBase.NetworkSync.NoSync,
             () => {}
             );
+
+        ce_float = ConfigManager.AddConfigEntry(
+            "TestEntry00",
+            "ModdingTK",
+            20.0f
+        );
+        
+        ce_int = ConfigManager.AddConfigEntry(
+            "TestEntry01",
+            "ModdingTK",
+            20
+        );
+        
+        ce_string = ConfigManager.AddConfigEntry(
+            "TestEntry02",
+            "ModdingTK",
+            "MyValue"
+        );
+
+        cl = ConfigManager.AddConfigList(
+            "TestEntry03",
+            "ModdingTK",
+            "03",
+            new List<string> { "01", "02", "03", "04", "05" }
+        );
+
+        icri = ConfigManager.AddConfigRangeInt(
+            "TestEntry03",
+            "ModdingTK",
+            10, 0, 20, 21
+            );
+
+        icrf = ConfigManager.AddConfigRangeFloat(
+            "TestEntry03",
+            "ModdingTK",
+            10f, 0f, 100f, 101
+        );
     }
 
     public void OnLoadCompleted()

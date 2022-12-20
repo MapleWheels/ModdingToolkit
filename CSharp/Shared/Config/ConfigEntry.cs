@@ -85,7 +85,13 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     }
 
     public virtual IConfigBase.DisplayType GetDisplayType() =>
-        typeof(T).IsEnum ? IConfigBase.DisplayType.DropdownEnum : IConfigBase.DisplayType.Standard;
+        typeof(T) switch
+        {
+            { IsEnum: true } => IConfigBase.DisplayType.DropdownEnum,
+            { Name: nameof(Boolean) } => IConfigBase.DisplayType.Tickbox,
+            { IsPrimitive: true } => IConfigBase.DisplayType.Number,
+            _ => IConfigBase.DisplayType.Standard
+        };
 
     public bool ValidateString(string value)
     {
