@@ -6,9 +6,7 @@ namespace ModdingToolkit.Config;
 public sealed class ConfigControl : IConfigControl
 {
     private event System.Func<KeyOrMouse, bool>? _validateInput;
-    private event System.Action? _onValueChanged; 
-    private static readonly Regex rg = new Regex(@"^D{1,}[0-9]$");
-    
+    private event System.Action? _onValueChanged;
     public string Name { get; set; }
     public Type SubTypeDef => typeof(KeyOrMouse);
     public string ModName { get; set; }
@@ -17,18 +15,25 @@ public sealed class ConfigControl : IConfigControl
 
     public string GetStringValue()
     {
-        string r = Value?.Key.ToString() ?? DefaultValue.Key.ToString();
-        if (rg.IsMatch(r))
-            r = r.Replace("D", "");
-        return r;
+        if (Value is null)
+            return GetStringDefaultValue();
+        return Value.MouseButton == MouseButton.None ? Value.Key.ToString() : Value.MouseButton.ToString();
     }
 
+    public string GetStringDefaultValue() => DefaultValue.MouseButton == MouseButton.None 
+        ? DefaultValue.Key.ToString() : DefaultValue.MouseButton.ToString();
+    
     public void SetValueFromString(string value)
     {
         if (Enum.IsDefined(typeof(Keys), value))
         {
             Keys k = Enum.Parse<Keys>(value);
             this.Value = new KeyOrMouse(k);
+        }
+        else if (Enum.IsDefined(typeof(MouseButton), value))
+        {
+            MouseButton mb = Enum.Parse<MouseButton>(value);
+            this.Value = new KeyOrMouse(mb);
         }
     }
 

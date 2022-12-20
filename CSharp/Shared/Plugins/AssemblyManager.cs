@@ -41,6 +41,27 @@ public static class AssemblyManager
     /// For unloading issue debugging. Called whenever AssemblyContextLoader [load context] is unloaded. 
     /// </summary>
     public static event System.Action<string>? OnACLUnload; 
+    
+    #if DEBUG
+
+    public static ImmutableList<WeakReference<AssemblyContextLoader>> StillUnloadingACLs
+    {
+        get
+        {
+            OpsLockUnloaded.EnterReadLock();
+            try
+            {
+                return UnloadingACLs.ToImmutableList();
+            }
+            finally
+            {
+                OpsLockUnloaded.ExitReadLock();
+            }
+        }
+    }
+
+    #endif
+    
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
@@ -649,7 +670,7 @@ public static class AssemblyManager
         List<IAssemblyPlugin> LoadedPlugins,
         WeakReference<AssemblyContextLoader> Alc);
     
-    internal sealed class AssemblyContextLoader : AssemblyLoadContext
+    public sealed class AssemblyContextLoader : AssemblyLoadContext
     {
         private AssemblyDependencyResolver dependencyResolver;
         private bool IsResolving = false;   //this is to avoid circular dependency lookup.

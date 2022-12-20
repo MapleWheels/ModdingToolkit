@@ -133,6 +133,7 @@ public static class ConfigManager
         if (LoadedConfigEntries.ContainsKey(modName)
             && LoadedConfigEntries[modName].ContainsKey(name)) 
             return SaveData(LoadedConfigEntries[modName][name]);
+        LuaCsSetup.PrintCsError($"ConfigManager: Tried to save a config: {modName}:{name} does not exist in the dictionary!");
         return false;
     }
 
@@ -334,11 +335,27 @@ public static class ConfigManager
             LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot load XDocument!");
             return false;
         }
+        
+        #warning Remove debug message.
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | XDOC: {doc?.Root?.ToString() ?? "null"}");
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | CNFG: {config.ModName}:{config.Name}");
 
-        XElement? configElement = doc.Root?
+        XElement? ce = doc?.Root ?? null;
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC1: {ce?.ToString() ?? "null"}");
+
+        XElement? ce2 = ce?.Element("ConfigManager");
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC2: {ce2?.ToString() ?? "null"}");
+
+        XElement? ce3 = ce2?.Descendants(config.ModName).FirstOrDefault(defaultValue: null);
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC3: {ce3?.ToString() ?? "null"}");
+
+        XElement? ce4 = ce3?.Descendants(config.Name).FirstOrDefault(defaultValue: null);
+        LuaCsSetup.PrintCsMessage($"ConfigManager::SaveData() | DESC4: {ce4?.ToString() ?? "null"}");
+        
+        XElement? configElement = doc?.Root?
             .Descendants(nameof(ConfigManager)).FirstOrDefault(defaultValue: null)?
             .Descendants(config.ModName).FirstOrDefault(defaultValue: null)?
-            .Descendants(config.Name).FirstOrDefault(defaultValue: null);
+            .Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
         if (configElement is null)
         {
             LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | XDocument does not contain an entry for this config!");

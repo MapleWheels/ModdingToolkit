@@ -60,6 +60,8 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
 
     public virtual string GetStringValue() => _value.ToString() ?? "";
 
+    public virtual string GetStringDefaultValue() => DefaultValue.ToString() ?? "";
+
     public virtual void SetValueFromString(string value)
     {
         try
@@ -69,7 +71,7 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         catch (InvalidCastException ice)
         {
             LuaCsSetup.PrintCsError(
-                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from strong to {typeof(T)}");
+                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
         }
     }
 

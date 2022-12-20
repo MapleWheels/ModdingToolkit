@@ -8,4 +8,5 @@ public interface ISettingsMenu
     void CreateGameplayTab();
     void CreateGraphicsTab();
     void Close();
+    void ApplyInstalledModChanges();
 }

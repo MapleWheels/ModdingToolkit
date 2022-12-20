@@ -115,7 +115,7 @@ public static class XMLDocumentHelper
         {
             try
             {
-                LoadedDocs[sfp!]?.Save(sfp!, SaveOptions.None);
+                LoadedDocs[sanitizedFilePath]?.Save(sanitizedFilePath, SaveOptions.None);
             }
             catch (Exception e)
             {

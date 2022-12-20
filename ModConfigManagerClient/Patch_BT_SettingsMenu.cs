@@ -9,6 +9,7 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
     private static bool HCall_Graphics = false;
     private static bool HCall_Audio = false;
     private static bool HCall_Close = false;
+    private static bool HCall_ApplyModSettings = false;
     
     public static bool Prefix_Create(ref Barotrauma.SettingsMenu __result, RectTransform mainParent)
     {
@@ -119,6 +120,21 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
                 HCall_Close = true;
                 inst.Close();
                 HCall_Close = false;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static bool Prefix_ApplyInstalledModChanges(Barotrauma.SettingsMenu __instance)
+    {
+        if (__instance is T inst)
+        {
+            if (!HCall_ApplyModSettings)
+            {
+                HCall_ApplyModSettings = true;
+                inst.ApplyInstalledModChanges();
+                HCall_ApplyModSettings = false;
                 return false;
             }
         }

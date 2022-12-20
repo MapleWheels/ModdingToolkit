@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using Barotrauma.Networking;
+using Barotrauma.Steam;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ModdingToolkit.Config;
@@ -10,6 +12,8 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 {
     private static readonly Dictionary<IConfigBase.Category, List<IConfigBase>?> PerMenuConfig = new();
     private static readonly List<IConfigControl?> ControlsMenuConfig = new();
+    private static readonly List<(object, IConfigBase)> ValuesToSave = new();
+
     public readonly Dictionary<GUIButton, Func<LocalizedString>> CustomInputValueNameGetters = new();
 
     public MSettingsMenu(RectTransform mainParent, GameSettings.Config setConfig = default) : base(mainParent, setConfig)
@@ -84,7 +88,8 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         inputButtonValueNameGetters.Clear();
         CustomInputValueNameGetters.Clear();
         Action<KeyOrMouse>? currentSetter = null;
-        void addInputToRow(GUILayoutGroup currRow, LocalizedString labelText, Func<LocalizedString> valueNameGetter, Action<KeyOrMouse> valueSetter, bool isLegacyBind = false)
+        void addInputToRow(GUILayoutGroup currRow, LocalizedString labelText, 
+            Func<LocalizedString> valueNameGetter, Action<KeyOrMouse> valueSetter, bool isLegacyBind = false)
         {
             var inputFrame = new GUIFrame(new RectTransform((0.5f, 1.0f), currRow.RectTransform),
                 style: null);
@@ -138,7 +143,8 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             var label = new GUITextBlock(new RectTransform((0.6f, 1.0f), inputFrame.RectTransform), labelText,
                 font: GUIStyle.SmallFont) {ForceUpperCase = ForceUpperCase.Yes};
             var inputBox = new GUIButton(
-                new RectTransform((0.4f, 1.0f), inputFrame.RectTransform, Anchor.TopRight, Pivot.TopRight),
+                new RectTransform((0.4f, 1.0f), 
+                    inputFrame.RectTransform, Anchor.TopRight, Pivot.TopRight),
                 valueNameGetter(), style: "GUITextBoxNoIcon")
             {
                 OnClicked = (btn, obj) =>
@@ -289,14 +295,30 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                     break;
 
                 var input = ControlsMenuConfig[currentIndex];
+                if (input is null)
+                    continue;
+                
                 addInputToRowCustom(
                     currentRow,
                     $"{input.ModName}: {input.Name}",
-                    () => new RawLString(input.GetStringValue()),
+                    () =>
+                    {
+                        foreach ((object, IConfigBase) tuple in ValuesToSave)
+                        {
+                            if (tuple.Item2 is IConfigControl icc
+                                && icc == input
+                                && tuple.Item1 is KeyOrMouse km)
+                            {
+                                return km.MouseButton == MouseButton.None
+                                    ? new RawLString(FormatControlString(km.Key.ToString()))
+                                    : new RawLString(km.Key.ToString());
+                            }
+                        }
+                        return new RawLString(FormatControlString(input.GetStringValue()));
+                    },
                     kom =>
                     {
-                        input.Value = new KeyOrMouse(kom.Key);
-                        input.Value.MouseButton = kom.MouseButton;
+                        AddOrUpdateUnsavedChange(kom, input);
                     });
             }
         }
@@ -316,9 +338,12 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 {
                     unsavedConfig.InventoryKeyMap = GameSettings.Config.InventoryKeyMapping.GetDefault();
                     unsavedConfig.KeyMap = GameSettings.Config.KeyMapping.GetDefault();
+                    ValuesToSave.Clear();
                     foreach (IConfigControl? control in ControlsMenuConfig)
                     {
-                        control?.SetValueAsDefault();
+                        if (control is null)
+                            continue;
+                        AddOrUpdateUnsavedChange(control.GetStringDefaultValue(), control);
                     }
                     
                     foreach (var btn in inputButtonValueNameGetters.Keys)
@@ -334,6 +359,12 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                     return true; 
                 }
             };
+    }
+
+    public void AddOrUpdateUnsavedChange(object newVal, IConfigBase config)
+    {
+        ValuesToSave.RemoveAll(tuple => tuple.Item2.Equals(config));
+        ValuesToSave.Add((newVal, config));
     }
 
     public new void CreateGameplayTab()
@@ -362,7 +393,12 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         }
         
         Label(left, TextManager.Get("Resolution"), GUIStyle.SubHeadingFont);
-        Dropdown(left, (m) => $"{m.Width}x{m.Height}", null, supportedResolutions, currentResolution,
+        Dropdown(
+            left, 
+            (m) => $"{m.Width}x{m.Height}", 
+            null, 
+            supportedResolutions, 
+            currentResolution,
             (res) =>
             {
                 unsavedConfig.Graphics.Width = res.Width;
@@ -396,12 +432,98 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         Label(right, TextManager.Get("ParticleLimit"), GUIStyle.SubHeadingFont);
         Slider(right, (100, 1500), 15, v => Round(v).ToString(), unsavedConfig.Graphics.ParticleLimit, v => unsavedConfig.Graphics.ParticleLimit = Round(v));
         Spacer(right);
+        
+        #warning Remove experimentation code.
+        // Test
+        List<string> listOfItemsA = new()
+        {
+            "MenuItem00"
+            /*,"MenuItem01",
+            "MenuItem02",
+            "MenuItem03",
+            "MenuItem04",
+            "MenuItem05",
+            "MenuItem06",
+            "MenuItem07",
+            "MenuItem08",
+            "MenuItem09",
+            "MenuItem11",
+            "MenuItem12",
+            "MenuItem13",
+            "MenuItem14",
+            "MenuItem15",
+            "MenuItem16"*/
+        };
+
+        Spacer(left);
+        GUIListBox testGuiListBox = new GUIListBox(
+            new RectTransform((1.0f, 0.6f), left.rectTransform),
+            false,
+            Color.White,
+            "",
+            true,
+            false
+        )
+        {
+            OnSelected = (a, b) =>
+            {
+               LuaCsSetup.PrintCsMessage($"TESTING: GUICOMPONENT={a?.ToString() ?? "null"}|OBJ={b?.ToString() ?? "null"}");
+               return true;
+            },
+            CanBeFocused = false
+        };
+
+        foreach (string s in listOfItemsA)
+        {
+            var frame = new GUILayoutGroup(new RectTransform((1.0f, 0.1f), 
+                testGuiListBox.Content.RectTransform), 
+                isHorizontal: true);
+            var textBox = new GUITextBox(
+                new RectTransform((0.5f, 1.0f), frame.RectTransform),
+                $"Option: {s}",
+                font: GUIStyle.SmallFont,
+                createPenIcon: false
+            );
+            /*var valueText = new GUIButton(
+                new RectTransform(
+                    (0.5f, 1.0f),
+                    frame.RectTransform,
+                    Anchor.TopRight,
+                    Pivot.TopRight),
+                new RawLString(s),
+                Alignment.Center,
+                "GUITextBoxNoIcon"
+            )
+            {
+                OnClicked = (button, o) =>
+                {
+                    LuaCsSetup.PrintCsMessage($"MenuTest: Pressed! | Button: {button?.Text ?? "null"} | obj: {o?.ToString() ?? "null"}");
+                    return true;
+                }
+            };*/
+            var sldierTest = Slider(
+                new GUILayoutGroup(new RectTransform((0.5f, 1.0f), frame.RectTransform)),
+                new Vector2(0.0f, 1.0f),
+                10,
+                (fl) => fl.ToString(),
+                testVal,
+                (f => testVal = f)
+            );
+
+        }
+        
+        
+        // End Test
+
     }
+
+    public float testVal = 0.2f;
 
     public new void Close()
     {
         ControlsMenuConfig.Clear();
         PerMenuConfig.Clear();
+        ValuesToSave.Clear();
 
         if (GameMain.Client is null || GameSettings.CurrentConfig.Audio.VoiceSetting == VoiceMode.Disabled)
         {
@@ -411,5 +533,38 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         if (Instance == this) { Instance = null; }
 
         GUI.SettingsMenuOpen = false;
+    }
+    
+    public new void ApplyInstalledModChanges()
+    {
+        GameSettings.SetCurrentConfig(unsavedConfig);
+        
+        foreach ((object, IConfigBase) tuple in ValuesToSave)
+        {
+            if (tuple.Item1 is string { } s)
+                tuple.Item2.SetValueFromString(s);
+            else if (
+                tuple.Item1 is KeyOrMouse { } kom 
+                && tuple.Item2 is IConfigControl { } icc)
+                icc.Value = kom;
+            bool save = ConfigManager.Save(tuple.Item2);
+            LuaCsSetup.PrintCsMessage($"Saving Config: {tuple.Item2.ModName}:{tuple.Item2.Name}. Success: {save}");
+        }
+        ValuesToSave.Clear();
+        
+        if (WorkshopMenu is MutableWorkshopMenu mutableWorkshopMenu &&
+            mutableWorkshopMenu.CurrentTab == MutableWorkshopMenu.Tab.InstalledMods)
+        {
+            mutableWorkshopMenu.Apply();
+        }
+        GameSettings.SaveCurrentConfig();
+    }
+
+    private static readonly Regex rg = new Regex(@"^D{1,}[0-9]$");
+    protected string FormatControlString(string s)
+    {
+        if (rg.IsMatch(s))
+            s = s.Replace("D", "");
+        return s;
     }
 }

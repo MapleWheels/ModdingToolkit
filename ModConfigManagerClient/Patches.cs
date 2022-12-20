@@ -44,6 +44,12 @@ public sealed class Patches : IPatchable
                 new HarmonyMethod(AccessTools.DeclaredMethod(
                     typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
                     nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_Close))),
+                null),
+            new (
+                AccessTools.DeclaredMethod(typeof(Barotrauma.SettingsMenu), "ApplyInstalledModChanges"),
+                new HarmonyMethod(AccessTools.DeclaredMethod(
+                    typeof(Patch_BT_SettingsMenu<MSettingsMenu>),
+                    nameof(Patch_BT_SettingsMenu<MSettingsMenu>.Prefix_ApplyInstalledModChanges))),
                 null)
         };
     }

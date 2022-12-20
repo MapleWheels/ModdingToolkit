@@ -8,6 +8,7 @@ public interface IConfigBase
     public Category MenuCategory { get; }
     public NetworkSync NetSync { get; }
     string GetStringValue();
+    string GetStringDefaultValue();
     void SetValueFromString(string value);
     void SetValueAsDefault();
     DisplayType GetDisplayType();
