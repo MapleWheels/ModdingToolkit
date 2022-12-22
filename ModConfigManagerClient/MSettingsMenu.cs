@@ -578,7 +578,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             ModdingToolkit.Client.GUIUtil.Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont, yAdjustRatio);
             if (entry.GetDisplayType() == IConfigBase.DisplayType.Tickbox)
             {
-                var tickbox = ModdingToolkit.Client.GUIUtil.Tickbox(layoutGroup, "??", "??",
+                var tickbox = ModdingToolkit.Client.GUIUtil.Tickbox(layoutGroup, "", "",
                     (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
                     (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), yAdjustRatio);
                 return () =>

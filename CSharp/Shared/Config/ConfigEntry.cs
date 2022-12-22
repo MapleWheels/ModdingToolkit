@@ -72,7 +72,7 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         {
             this.Value = (T)Convert.ChangeType(value, typeof(T));
         }
-        catch (InvalidCastException ice)
+        catch (Exception ice)
         {
             LuaCsSetup.PrintCsError(
                 $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
