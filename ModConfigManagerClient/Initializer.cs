@@ -1,4 +1,6 @@
-﻿[assembly: IgnoresAccessChecksTo("Barotrauma")]
+﻿using ModdingToolkit.Patches;
+
+[assembly: IgnoresAccessChecksTo("Barotrauma")]
 [assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModConfigManager;
 
@@ -7,6 +9,7 @@ public sealed class Initializer : IAssemblyPlugin
     public void Initialize()
     {
         LuaCsSetup.PrintCsMessage($"MCMC: Init called.");
+        PatchManager.RegisterPatches(Patches.GetPatches());
     }
 
     public void OnLoadCompleted()

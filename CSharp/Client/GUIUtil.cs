@@ -16,7 +16,7 @@ namespace ModdingToolkit.Client;
 /// <summary>
 /// A collection of helper GUI functions. Mostly ripped from "Barotrauma/ClientSource/Settings/SettingsMenu.cs"
 /// </summary>
-internal class GUIUtil
+public class GUIUtil
 {
     public static (GUILayoutGroup Left, GUILayoutGroup Right) CreateSidebars(GUIFrame parent, bool split = false)
     {
@@ -41,22 +41,22 @@ internal class GUIUtil
     public static GUILayoutGroup CreateCenterLayout(GUIFrame parent)
         => new GUILayoutGroup(new RectTransform((0.5f, 1.0f), parent.RectTransform, Anchor.TopCenter, Pivot.TopCenter)) { ChildAnchor = Anchor.TopCenter };
 
-    public static RectTransform NewItemRectT(GUILayoutGroup parent)
-        => new RectTransform((1.0f, 0.06f), parent.RectTransform, Anchor.CenterLeft);
+    public static RectTransform NewItemRectT(GUILayoutGroup parent, float YAdjustRatio = 1.0f)
+        => new RectTransform((1.0f, 0.06f * YAdjustRatio), parent.RectTransform, Anchor.CenterLeft);
     
-    public static void Spacer(GUILayoutGroup parent) 
-        => new GUIFrame(new RectTransform((1.0f, 0.03f), parent.RectTransform, Anchor.CenterLeft), style: null);
+    public static void Spacer(GUILayoutGroup parent, float yAdjustRatio = 1.0f) 
+        => new GUIFrame(new RectTransform((1.0f, 0.03f * yAdjustRatio), parent.RectTransform, Anchor.CenterLeft), style: null);
     
-    public static GUITextBlock Label(GUILayoutGroup parent, LocalizedString str, GUIFont font)
-        => new GUITextBlock(NewItemRectT(parent), str, font: font);
+    public static GUITextBlock Label(GUILayoutGroup parent, LocalizedString str, GUIFont font, float yAdjustRatio = 1.0f)
+        => new GUITextBlock(NewItemRectT(parent, yAdjustRatio), str, font: font);
     
-    public static void DropdownEnum<T>(GUILayoutGroup parent, Func<T, LocalizedString> textFunc, Func<T, LocalizedString>? tooltipFunc, T currentValue,
-            Action<T> setter) where T : Enum
-            => Dropdown(parent, textFunc, tooltipFunc, (T[])Enum.GetValues(typeof(T)), currentValue, setter);
+    public static GUIDropDown DropdownEnum<T>(GUILayoutGroup parent, Func<T, LocalizedString> textFunc, Func<T, LocalizedString>? tooltipFunc, T currentValue,
+            Action<T> setter, float yAdjustRatio = 1.0f) where T : Enum
+            => Dropdown(parent, textFunc, tooltipFunc, (T[])Enum.GetValues(typeof(T)), currentValue, setter, yAdjustRatio);
         
-    public static void Dropdown<T>(GUILayoutGroup parent, Func<T, LocalizedString> textFunc, Func<T, LocalizedString>? tooltipFunc, IReadOnlyList<T> values, T currentValue, Action<T> setter)
+    public static GUIDropDown Dropdown<T>(GUILayoutGroup parent, Func<T, LocalizedString> textFunc, Func<T, LocalizedString>? tooltipFunc, IReadOnlyList<T> values, T currentValue, Action<T> setter, float yAdjustRatio = 1.0f)
     {
-        var dropdown = new GUIDropDown(NewItemRectT(parent));
+        var dropdown = new GUIDropDown(NewItemRectT(parent, yAdjustRatio));
         values.ForEach(v => dropdown.AddItem(text: textFunc(v), userData: v, toolTip: tooltipFunc?.Invoke(v) ?? null));
         int childIndex = values.IndexOf(currentValue);
         dropdown.Select(childIndex);
@@ -67,11 +67,12 @@ internal class GUIUtil
             setter((T)obj);
             return true;
         };
+        return dropdown;
     }
 
-    public static void Slider(GUILayoutGroup parent, Vector2 range, int steps, Func<float, string> labelFunc, float currentValue, Action<float> setter, LocalizedString? tooltip = null)
+    public static (GUIScrollBar, GUITextBlock) Slider(GUILayoutGroup parent, Vector2 range, int steps, Func<float, string> labelFunc, float currentValue, Action<float> setter, LocalizedString? tooltip = null, float LayoutYAdjust = 1.0f)
     {
-        var layout = new GUILayoutGroup(NewItemRectT(parent), isHorizontal: true);
+        var layout = new GUILayoutGroup(NewItemRectT(parent, LayoutYAdjust), isHorizontal: true);
         var slider = new GUIScrollBar(new RectTransform((0.72f, 1.0f), layout.RectTransform), style: "GUISlider")
         {
             Range = range,
@@ -91,11 +92,12 @@ internal class GUIUtil
             setter(sb.BarScrollValue);
             return true;
         };
+        return (slider, label);
     }
 
-    public static void Tickbox(GUILayoutGroup parent, LocalizedString label, LocalizedString tooltip, bool currentValue, Action<bool> setter)
+    public static GUITickBox Tickbox(GUILayoutGroup parent, LocalizedString label, LocalizedString tooltip, bool currentValue, Action<bool> setter, float yAdjustRatio = 1.0f)
     {
-        var tickbox = new GUITickBox(NewItemRectT(parent), label)
+        var tickbox = new GUITickBox(NewItemRectT(parent, yAdjustRatio), label)
         {
             Selected = currentValue,
             ToolTip = tooltip,
@@ -105,6 +107,7 @@ internal class GUIUtil
                 return true;
             }
         };
+        return tickbox;
     }
     
     public static string Percentage(float v) => ToolBox.GetFormattedPercentage(v);

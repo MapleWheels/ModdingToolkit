@@ -11,4 +11,5 @@ public interface IConfigList : IConfigBase
         Func<string, bool>? valueChangePredicate = null,
         Action? onValueChanged = null);
     bool Validate(string value);
+    public int GetDefaultValueIndex();
 }

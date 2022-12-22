@@ -21,6 +21,16 @@ public static class PatchManager
         PatchList.Clear();
     }
 
+    public static void RegisterPatches(List<PatchData> pdata)
+    {
+        PatchList.AddRange(pdata);
+    }
+
+    public static void RegisterPatch(PatchData pdata)
+    {
+        PatchList.Add(pdata);
+    }
+
     /// <summary>
     /// Searches all loaded assemblies for IPatchable Harmony patches and saves them for managed loading/unloading.
     /// </summary>
@@ -28,7 +38,6 @@ public static class PatchManager
     {
         if (IsLoaded)
             Unload();
-        PatchList.Clear();
         try
         {
             foreach (Type patchType in AssemblyUtils.GetSubTypesInLoadedAssemblies<IPatchable>())
@@ -64,5 +73,11 @@ public static class PatchManager
         Instance?.UnpatchAll();
         IsLoaded = false;
         OnPatchStateUpdate?.Invoke(IsLoaded);
+    }
+
+    public static void Dispose()
+    {
+        Unload();
+        PatchList.Clear();
     }
 }

@@ -22,6 +22,6 @@ public class ConfigRangeFloat : ConfigEntry<float>, IConfigRangeFloat
         base.Initialize(name, modName, newValue, defaultValue, sync, menuCategory, valueChangePredicate, onValueChanged);
     }
 
-    public override bool Validate(float value) => value >= MinValue && value <= MaxValue && Validate(value);
+    public override bool Validate(float value) => value >= MinValue && value <= MaxValue && base.Validate(value);
     public override IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.Slider;
 }

@@ -2,9 +2,11 @@
 
 namespace ModConfigManager;
 
-public sealed class Patches : IPatchable
+//public sealed class Patches : IPatchable // interface search not working.
+public static class Patches 
 {
-    public List<PatchManager.PatchData> GetPatches()
+    //public List<PatchManager.PatchData> GetPatches()
+    public static List<PatchManager.PatchData> GetPatches()
     {
         Barotrauma.LuaCsSetup.PrintCsMessage("MCMC: Patches loading.");
         return new List<PatchManager.PatchData>()

@@ -68,6 +68,17 @@ public class ConfigList : IConfigList
     public bool IsInitialized { get; private set; } = false;
 
     public virtual bool Validate(string value) => this._valueList.Contains(value) && (this._valueChangePredicate?.Invoke(value) ?? true);
+    public int GetDefaultValueIndex()
+    {
+        if (_valueList.Count < 1)
+            return -1;
+        for (int i = 0; i < _valueList.Count; i++)
+        {
+            if (_valueList[i] == DefaultValue)
+                return i;
+        }
+        return 0;
+    }
 
     public virtual string GetStringValue() => this._value.ToString() ?? "";
 

@@ -1,5 +1,6 @@
 ﻿using System.Xml;
 using System.Xml.Linq;
+using ModdingToolkit.Config;
 
 namespace ModdingToolkit;
 
@@ -7,7 +8,7 @@ public static class XMLDocumentHelper
 {
     private static Dictionary<string, XDocument?> LoadedDocs = new();
 
-    public static bool LoadOrCreateDocToCache(string filePath, out string? fp, bool reload = false, bool overwriteOnFail = false)
+    public static bool LoadOrCreateDocToCache(string filePath, out string? fp, bool reload = false, bool overwriteOnFail = false, Func<string>? generateNewDocString = null)
     {
         fp = Utils.PrepareFilePathString(Path.GetDirectoryName(filePath)!, Path.GetFileName(filePath));
         
@@ -29,23 +30,23 @@ public static class XMLDocumentHelper
             {
                 try
                 {
-                    if (!data.IsNullOrWhiteSpace())
-                        LoadedDocs[fp] = XDocument.Parse(data!);
-                    else
-                    {
-                        LoadedDocs[fp] = new XDocument(
-                            new XDeclaration("1.0", "utf-8", "true")); 
-                        if (overwriteOnFail)
-                        {
-                            SaveLoadedDocToDisk(fp);
-                        }
-                    }
+                    LoadedDocs[fp] = XDocument.Parse(data!);
                 }
-                catch (XmlException xme)
+                catch
                 {
-                    LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | XML data is not valid. | FP: {fp}");
-                    LoadedDocs.Remove(fp);
-                    return false;
+                    LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Failed to load data, generating new.");
+                    try
+                    {
+                        LoadedDocs[fp] = XDocument.Parse(generateNewDocString?.Invoke() ?? throw new Exception());
+                        if (overwriteOnFail)
+                            SaveLoadedDocToDisk(fp);
+                    }
+                    catch
+                    {
+                        LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | XML data is not valid. | FP: {fp}");
+                        LoadedDocs.Remove(fp);
+                        return false;
+                    }
                 }
             }
         }

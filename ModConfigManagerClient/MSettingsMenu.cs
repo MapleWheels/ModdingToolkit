@@ -13,8 +13,12 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
     private static readonly Dictionary<IConfigBase.Category, List<IConfigBase>?> PerMenuConfig = new();
     private static readonly List<IConfigControl?> ControlsMenuConfig = new();
     private static readonly List<(object, IConfigBase)> ValuesToSave = new();
+    private List<IConfigBase> OrganizedList = new();
 
     public readonly Dictionary<GUIButton, Func<LocalizedString>> CustomInputValueNameGetters = new();
+
+    private record ResetHandle(string id, System.Action handle);
+    private readonly Dictionary<IConfigBase.Category, List<ResetHandle>> PerMenuResetHandles = new();
 
     public MSettingsMenu(RectTransform mainParent, GameSettings.Config setConfig = default) : base(mainParent, setConfig)
     {
@@ -483,21 +487,36 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
         #region RIGHT_FRAME
 
+        if (!PerMenuResetHandles.ContainsKey(IConfigBase.Category.Gameplay))
+            PerMenuResetHandles.Add(IConfigBase.Category.Gameplay, new List<ResetHandle>());
+        else
+            PerMenuResetHandles[IConfigBase.Category.Gameplay].Clear();
+        
         if (PerMenuConfig[IConfigBase.Category.Gameplay] is null)
             return;
         List<IConfigBase> cfgList = PerMenuConfig[IConfigBase.Category.Gameplay]!;
         
         int groupCount = cfgList.GroupBy(x => x.ModName).Count();
         int entryCount = cfgList.Count;
-        float size = Math.Max(1.0f, groupCount * 0.3f + entryCount * 0.2f);
-        
-        var organizedList = cfgList
+        Vector2 entrySize = (1.0f, 0.119f);
+        float size = Math.Max(1.0f, groupCount * 0.2f + entryCount * entrySize.Y);
+
+        OrganizedList = cfgList
             .OrderBy(x => x.ModName)
             .ThenBy(x => x.Name)
             .ToList();
         
+        #warning Remove Debug Messages
+        LuaCsSetup.PrintCsMessage($"MENUDEV: GrpCnt={groupCount}, entryCnt={entryCount}, size={size}");
+        foreach (IConfigBase configBase in OrganizedList)
+        {
+            LuaCsSetup.PrintCsMessage($"MENUDEV-LOOP: ModName={configBase.ModName}, Name={configBase.Name}");
+        }
+
+        Label(right, "Please note: You must press ENTER in the value textbox\nfor the new value to be registered!",
+            GUIStyle.SmallFont);
         GUIListBox rightListBox = new GUIListBox(
-            new RectTransform((1.0f, 1.0f), right.RectTransform),
+            new RectTransform((1.0f, 0.9f), right.RectTransform),
             false,
             Color.DarkOliveGreen,
             "",
@@ -508,44 +527,94 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             OnSelected = (_, _) => false
         };
 
+        GUIButton resetAllVars = new GUIButton(new RectTransform((0.5f, 0.1f), right.RectTransform),
+            "Reset", color: Color.Beige)
+        {
+            OnClicked = (button, o) =>
+            {
+                if (PerMenuResetHandles.ContainsKey(IConfigBase.Category.Gameplay))
+                {
+                    foreach (var resetHandle in PerMenuResetHandles[IConfigBase.Category.Gameplay])
+                    {
+                        resetHandle.handle?.Invoke();
+                    }
+                }
+                return false;
+            },
+            OnAddedToGUIUpdateList = component =>
+            {
+                component.Enabled = CurrentTab == Tab.Gameplay;
+            }
+        };
+
         GUIFrame testFrame = new GUIFrame(
-            new RectTransform((1.0f, size), rightListBox.Content.RectTransform),
-            "", Color.DarkOliveGreen);
+        new RectTransform((1.0f, size), rightListBox.Content.RectTransform),
+        "", Color.DarkOliveGreen);
 
         GUILayoutGroup contentGroup = new GUILayoutGroup(
             new RectTransform((1.0f, 1.0f), testFrame.RectTransform),
             false);
 
         string _header = string.Empty;
-        Vector2 scaleR = new Vector2(1.0f, 1.0f / size);
 
-        foreach (IConfigBase configBase in organizedList)
+        foreach (IConfigBase configBase in OrganizedList)
         {
             if (!_header.Equals(configBase.ModName))
             {
                 _header = configBase.ModName;
-                Label(contentGroup, $"{_header} Settings", GUIStyle.SubHeadingFont);
+                ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
+                ModdingToolkit.Client.GUIUtil.Label(contentGroup, $"{_header} Settings", GUIStyle.LargeFont, 1f/size);
+                ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
             }
-            AddListEntry(contentGroup, configBase, scaleR);
+
+            PerMenuResetHandles[IConfigBase.Category.Gameplay].Add(new ResetHandle(
+                configBase.ModName+configBase.Name,
+                AddListEntry(contentGroup, configBase, (1.0f, entrySize.Y/size), 1f/size))
+            );
         }
         
-        void AddListEntry(GUILayoutGroup layoutGroup, IConfigBase entry, Vector2 scaleRatio)
+        System.Action AddListEntry(GUILayoutGroup layoutGroup, IConfigBase entry, Vector2 scaleRatio, float yAdjustRatio = 1.0f)
         {
-            Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont);
+            ModdingToolkit.Client.GUIUtil.Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont, yAdjustRatio);
             if (entry.GetDisplayType() == IConfigBase.DisplayType.Tickbox)
             {
-                Tickbox(layoutGroup, "??", "??",
+                var tickbox = ModdingToolkit.Client.GUIUtil.Tickbox(layoutGroup, "??", "??",
                     (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
-                    (v) => AddOrUpdateUnsavedChange(v.ToString(), entry));
+                    (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), yAdjustRatio);
+                return () =>
+                {
+                    bool b;
+                    try
+                    {
+                        b = (bool)Convert.ChangeType(entry.GetStringDefaultValue(), TypeCode.Boolean);
+                    }
+                    catch
+                    {
+                        b = false;
+                    }
+
+                    tickbox.Selected = b;
+                    AddOrUpdateUnsavedChange(b.ToString(), entry);
+                };
             }
-            else if (entry.GetDisplayType() == IConfigBase.DisplayType.DropdownList
+            if (entry.GetDisplayType() == IConfigBase.DisplayType.DropdownList
                      && entry is IConfigList icl)
             {
-                Dropdown<string>(layoutGroup, s => "", s => "",
+                var dropdown = ModdingToolkit.Client.GUIUtil.Dropdown<string>(layoutGroup, 
+                    s => new RawLString(s), 
+                    s => new RawLString(s),
                     icl.GetReadOnlyList(), icl.Value, 
-                    s => AddOrUpdateUnsavedChange(s, icl));
+                    s => AddOrUpdateUnsavedChange(s, icl), yAdjustRatio);
+                return () =>
+                {
+                    int index = icl.GetDefaultValueIndex();
+                    if (index < 0)
+                        return;
+                    dropdown.Select(index);
+                    AddOrUpdateUnsavedChange(icl.GetStringDefaultValue(), icl);
+                };
             }
-            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Slider)
+            if (entry.GetDisplayType() == IConfigBase.DisplayType.Slider)
             {
                 if (entry is IConfigRangeFloat icf)
                 {
@@ -559,12 +628,18 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                         cv = icf.Value;
                     }
 
-                    Slider(layoutGroup,
+                    var (slider, label) = ModdingToolkit.Client.GUIUtil.Slider(layoutGroup,
                         new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
                         f => f.ToString(), cv, 
-                        f => AddOrUpdateUnsavedChange(f.ToString(), entry));
+                        f => AddOrUpdateUnsavedChange(f.ToString(), entry), LayoutYAdjust: yAdjustRatio);
+                    return () =>
+                    {
+                        slider.BarScrollValue = icf.DefaultValue;
+                        label.Text = (RichString)slider.BarScrollValue.ToString();
+                        AddOrUpdateUnsavedChange(icf.DefaultValue.ToString(), icf);
+                    };
                 }
-                else if (entry is IConfigRangeInt ici)
+                if (entry is IConfigRangeInt ici)
                 {
                     int cv;
                     try
@@ -576,26 +651,50 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                         cv = ici.Value;
                     }
 
-                    Slider(layoutGroup,
+                    var (slider, label) = ModdingToolkit.Client.GUIUtil.Slider(layoutGroup,
                         new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
                         f => f.ToString(), cv, 
-                        f => AddOrUpdateUnsavedChange(f.ToString(), entry));
+                        f => AddOrUpdateUnsavedChange(f.ToString(), entry), LayoutYAdjust: yAdjustRatio);
+                    
+                    return () =>
+                    {
+                        slider.BarScrollValue = ici.DefaultValue;
+                        label.Text = (RichString)slider.BarScrollValue.ToString();
+                        AddOrUpdateUnsavedChange(ici.DefaultValue.ToString(), ici);
+                    };
                 }
+
+                return () => { };
             }
-            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Number)
+            //GUINumberInput breaks formatting, includes unknown padding
+            /*if (entry.GetDisplayType() == IConfigBase.DisplayType.Number)
             {
-                var numInput = new GUINumberInput(
+                var numInput = new ModConfigManager.CustomGUI.GUINumberInput(
                     new RectTransform(scaleRatio, layoutGroup.RectTransform),
-                    NumberType.Float)
+                    NumberType.Float, yAdjustRatio: yAdjustRatio)
                 {
-                    OnValueChanged = input => AddOrUpdateUnsavedChange(input.ToString(), entry),
+                    OnValueChanged = input =>
+                    {
+                        AddOrUpdateUnsavedChange(input.FloatValue.ToString(), entry);
+                    }
                 };
+                
                 if (float.TryParse(entry.GetStringValue(), out var v))
                 {
-                    numInput.floatValue = v;
+                    numInput.FloatValue = v;
                 }
-            }
-            else if (entry.GetDisplayType() == IConfigBase.DisplayType.Standard)
+
+                return () =>
+                {
+                    if (float.TryParse(entry.GetStringDefaultValue(), out var fl))
+                    {
+                        numInput.FloatValue = fl;
+                        AddOrUpdateUnsavedChange(entry.GetStringDefaultValue(), entry);
+                    }
+                };
+            }*/
+            if (entry.GetDisplayType() == IConfigBase.DisplayType.Standard
+                     || entry.GetDisplayType() == IConfigBase.DisplayType.Number)
             {
                 var textBox = new GUITextBox(
                     new RectTransform(scaleRatio, layoutGroup.RectTransform),
@@ -624,7 +723,15 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                         return true;
                     }
                 };
+                return () =>
+                {
+                    string s = entry.GetStringDefaultValue();
+                    textBox.Text = s;
+                    AddOrUpdateUnsavedChange(s, entry);
+                };
             }
+
+            return () => { };
         }
         
         #endregion

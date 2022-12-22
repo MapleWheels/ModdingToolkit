@@ -50,16 +50,37 @@ public class Bootloader : IAssemblyPlugin
         );
 
         icri = ConfigManager.AddConfigRangeInt(
-            "TestEntry03",
+            "TestEntry04",
             "ModdingTK",
             10, 0, 20, 21
             );
 
         icrf = ConfigManager.AddConfigRangeFloat(
-            "TestEntry03",
+            "TestEntry05",
             "ModdingTK",
             10f, 0f, 100f, 101
         );
+
+        for (int i = 6; i < 50; i++)
+        {
+            ConfigManager.AddConfigRangeFloat(
+                $"TestEntry{i:D2}",
+                "ModdingTK",
+                10f, 0f, 100f, 101
+            );
+        }
+
+        for (int j = 0; j < 20; j++)
+        {
+            for (int i = 0; i < 50; i++)
+            {
+                ConfigManager.AddConfigRangeFloat(
+                    $"TestEntry{i:D2}",
+                    $"ModdingTK{j:D2}",
+                    10f, 0f, 100f, 101
+                );
+            }
+        }
     }
 
     public void OnLoadCompleted()
