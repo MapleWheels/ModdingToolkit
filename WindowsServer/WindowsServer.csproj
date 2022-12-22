@@ -120,10 +120,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="..\ModdingToolkit\CSharp\Server">
+        <Link>Server</Link>
+      </Folder>
       <Folder Include="..\ModdingToolkit\CSharp\Shared\Networking">
         <Link>Shared\Networking</Link>
       </Folder>
-      <Folder Include="Server" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
