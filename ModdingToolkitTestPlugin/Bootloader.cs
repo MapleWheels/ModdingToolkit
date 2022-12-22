@@ -63,27 +63,6 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry06",
             "ModdingTK",
             false);
-
-        for (int i = 7; i < 20; i++)
-        {
-            ConfigManager.AddConfigRangeFloat(
-                $"TestEntry{i:D2}",
-                "ModdingTK",
-                10f, 0f, 100f, 101
-            );
-        }
-
-        for (int j = 0; j < 5; j++)
-        {
-            for (int i = 0; i < 11; i++)
-            {
-                ConfigManager.AddConfigRangeFloat(
-                    $"TestEntry{i:D2}",
-                    $"ModdingTK{j:D2}",
-                    10f, 0f, 100f, 101
-                );
-            }
-        }
     }
 
     public void OnLoadCompleted()

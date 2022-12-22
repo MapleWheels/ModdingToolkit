@@ -14,7 +14,7 @@ Readme is WIP.
 
 ☑ Configuration Loading/Saving
 
-☑ Settings Menu Integration (requires SettingsMenu plugin)
+☑ Settings Menu Integration (requires SettingsMenu plugin, included on Steam Workshop)
 
 ☑ Automatic Dependency Resolution 
 
@@ -99,6 +99,8 @@ You can manipulate these vars using the following Console Commands:
 - `cl_cfgsetvar <ModName> <VarName> <NewValue>` : Sets the var to a new value (use quotes for entries with spaces)
 - `cl_cfgsaveall` : Saves all loaded vars to disk.
 
+
+#### Example:
 ```csharp
 void Initialize()
 {
@@ -110,7 +112,19 @@ void Initialize()
         false           // [REQUIRED] Default value.
     );
     
-    
+    //Set your value
+    mySimpleVar.Value = true;
+    //Access your value
+    LuaCsSetup.PrintCsMessage($"MySimpleVar={mySimpleVar.Value}");
+    //Save your value to file/disk
+    ConfigManager.Save(mySimpleVar);
+ }
+```
+
+#### More Examples:
+```csharp
+void Initialize()
+{
     // Availability: CLIENT AND SERVER
     // T implements IConvertible: Primitive variable (bool, int, float, etc) and string, enum.
     IConfigEntry<int> myConfigvar = ConfigManager.AddConfigEntry<int>(
@@ -152,7 +166,21 @@ void Initialize()
         }
     );
     
+    // Availability: CLIENT AND SERVER
+    // Displays as a Slider in the Settings Menu: Gameplay Tab 
+    // Creates a limited range variable, only available as INT or FLOAT.    
+    // FOR FLOAT: IConfigRangeFloat => ConfigManager.AddConfigRangeFloat() 
+    IConfigRangeInt icri = ConfigManager.AddConfigRangeInt(
+        "TestEntry04",  // [REQUIRED] Variable name
+        "ModdingTK",    // [REQUIRED] Mod name, used for the config file name.
+        10,             // [REQUIRED] Default value.
+        0,              // [REQUIRED] Minimum value.
+        20,             // [REQUIRED] Maximum value.
+        21              // [REQUIRED] Steps on the Slider. Should be ((Max - Min)/IncrementPerStep) + 1
+    );
+    
     // Availability: CLIENT ONLY
+    // Creates a Key/Mouse Bind in the Settings Menu: Controls Tab
     IControlConfig myKeybind = ConfigManage.AddConfigKeyOrMouseBind(
         "MyListVar4",           // [REQUIRED] Variable name
         "MyModName",            // [REQUIRED] Mod name, used for the config file name.

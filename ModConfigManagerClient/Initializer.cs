@@ -8,18 +8,15 @@ public sealed class Initializer : IAssemblyPlugin
 {
     public void Initialize()
     {
-        LuaCsSetup.PrintCsMessage($"MCMC: Init called.");
         PatchManager.RegisterPatches(Patches.GetPatches());
     }
 
     public void OnLoadCompleted()
     {
-        LuaCsSetup.PrintCsMessage($"MCMC: OnLoadCompleted called.");
     }
 
     public PluginInfo GetPluginInfo()
     {
-        LuaCsSetup.PrintCsMessage($"MCMC: GetPluginInfo called.");
         return new PluginInfo("ModConfigManagerClient", "0.0.0.0", ImmutableArray<string>.Empty);
     }
 
