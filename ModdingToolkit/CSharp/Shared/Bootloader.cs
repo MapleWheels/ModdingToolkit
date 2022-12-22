@@ -7,6 +7,7 @@ namespace ModdingToolkit;
 internal sealed class Bootloader : ACsMod
 {
     // ReSharper disable once MemberCanBePrivate.Global
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsLoaded { get; private set; }
 
     public Bootloader()
@@ -29,7 +30,7 @@ internal sealed class Bootloader : ACsMod
         ConsoleCommands.RegisterCommand(
             "cl_reloadassemblies", 
             "Reloads all assemblies and their plugins.",
-            args =>
+            _ =>
             {
                 ConfigManager.Dispose();
                 XMLDocumentHelper.UnloadCache();
@@ -43,7 +44,7 @@ internal sealed class Bootloader : ACsMod
         ConsoleCommands.RegisterCommand(
             "cl_unloadassemblies", 
             "Unloads all assemblies and their plugins.",
-            args =>
+            _ =>
             {
                 ConfigManager.Dispose();
                 XMLDocumentHelper.UnloadCache();
@@ -69,19 +70,25 @@ internal sealed class Bootloader : ACsMod
                     && args[1] is { } name
                     && args[2] is { } newvalue)
                 {
-                    UpdateConfigVarByString(modname, name, newvalue);
                     if (ConfigManager.GetConfigMember(modname, name) is { } icb)
                     {
+                        if (!icb.ValidateString(newvalue))
+                        {
+                            LuaCsSetup.PrintCsMessage($"ConfigManager: The value of \"{newvalue}\" is not valid for the Type {icb.SubTypeDef}");
+                            return;
+                        }
+                        icb.SetValueFromString(newvalue);
                         LuaCsSetup.PrintCsMessage($"ConfigManager: ModName={modname}, Name={name}, NewValue={icb.GetStringValue()}");
+                        return;
                     }
-                    return;
+                    LuaCsSetup.PrintCsMessage($"ConfigManager: Could not find a cvar by the name of {modname} : {name}.");
                 }
             });
         
         ConsoleCommands.RegisterCommand(
             "cl_cfglistvars",
             "Prints a list of all config members",
-            args =>
+            _ =>
             {
                 PrintAllConfigVars();   
             });
@@ -106,7 +113,7 @@ internal sealed class Bootloader : ACsMod
                     {
                         LuaCsSetup.PrintCsMessage($"ConfigManager: ModName={modname}, Name={name}, Value={icb.GetStringValue()}");
                     }
-                    return;
+                    LuaCsSetup.PrintCsMessage($"ConfigManager: Could not find a cvar by the name of {modname} : {name}.");
                 }
             }
         );
@@ -114,7 +121,7 @@ internal sealed class Bootloader : ACsMod
         ConsoleCommands.RegisterCommand(
             "cl_cfgsaveall", 
             "Save all config variables to file.",
-            args =>
+            _ =>
             {
                 ConfigManager.SaveAll();
             });
@@ -135,6 +142,7 @@ internal sealed class Bootloader : ACsMod
         }
     }
 
+    // ReSharper disable once UnusedMember.Local
     private void UpdateConfigVarByString(string modname, string name, string newValue)
     {
         IConfigBase? entry = ConfigManager.GetConfigMember(modname, name);

@@ -3,17 +3,17 @@
 public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
 {
     #region INTERNALS
-
-    protected T _value;
-    protected Func<T, bool> _valueChangePredicate;
-    protected System.Action _onValueChanged;
+    
+    protected T _value = default!;
+    protected Func<T, bool>? _valueChangePredicate;
+    protected System.Action? _onValueChanged;
 
     #endregion
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(T);
-    public string ModName { get; private set; }
+    public string ModName { get; private set; } = String.Empty;
 
     public virtual T Value
     {
@@ -28,11 +28,12 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         }
     }
 
-    public T DefaultValue { get; private set; }
+    public T DefaultValue { get; private set; } = default!;
 
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
     public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
 
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsInitialized { get; private set; } = false;
 
     public virtual void Initialize(string name, string modName, T newValue, T defaultValue, 
@@ -72,7 +73,7 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         {
             this.Value = (T)Convert.ChangeType(value, typeof(T));
         }
-        catch (Exception ice)
+        catch (Exception)
         {
             LuaCsSetup.PrintCsError(
                 $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
@@ -100,7 +101,7 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
             _ = (T)Convert.ChangeType(value, typeof(T));    //try to convert & cast.
             return true;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
         }

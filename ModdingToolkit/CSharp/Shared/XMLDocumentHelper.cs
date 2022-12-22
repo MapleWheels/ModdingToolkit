@@ -111,7 +111,7 @@ public static class XMLDocumentHelper
         if (!LoadedDocs.ContainsKey(sfp) || LoadedDocs[sfp] is null)
             return Utils.IOActionResultState.EntryMissing;
         
-        var result = Utils.CreateFilePath(sfp, out sfp);
+        var result = Utils.CreateFilePath(sfp, out sfp!);
         if (result == Utils.IOActionResultState.Success)
         {
             try

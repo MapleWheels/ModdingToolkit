@@ -40,24 +40,31 @@ public static class PluginHelper
             if (scannedPackages.Contains(package))
                 continue;
             scannedPackages.Add(package);
-            string baseForcedSearchPath = Path.GetFullPath(
-                Path.Combine(
-                    Path.GetDirectoryName(package.Path),
-                    GetApplicationModSubDir(mode), 
-                    "Forced")
-                );
-            string baseStandardSearchPath = Path.GetFullPath(
-                Path.Combine(
-                    Path.GetDirectoryName(package.Path),
-                    GetApplicationModSubDir(mode), 
-                    "Standard")
-            );
-            // Add always load packages
-            dllPaths.AddRange(FindAssembliesFilePaths(baseForcedSearchPath));
-            // Add enabled-only load packages
-            if (ContentPackageManager.EnabledPackages.All.Contains(package))
+            try
             {
-                dllPaths.AddRange(FindAssembliesFilePaths(baseStandardSearchPath));
+                string baseForcedSearchPath = Path.GetFullPath(
+                    Path.Combine(
+                        Path.GetDirectoryName(package.Path)!,
+                        GetApplicationModSubDir(mode),
+                        "Forced")
+                );
+                string baseStandardSearchPath = Path.GetFullPath(
+                    Path.Combine(
+                        Path.GetDirectoryName(package.Path)!,
+                        GetApplicationModSubDir(mode),
+                        "Standard")
+                );
+                // Add always load packages
+                dllPaths.AddRange(FindAssembliesFilePaths(baseForcedSearchPath));
+                // Add enabled-only load packages
+                if (ContentPackageManager.EnabledPackages.All.Contains(package))
+                {
+                    dllPaths.AddRange(FindAssembliesFilePaths(baseStandardSearchPath));
+                }
+            }
+            catch(Exception e)
+            {
+                LuaCsSetup.PrintCsError($"PluginHelper::GetAllAssemblyPathsInPackages() | Unable to parse the package: {package.Name} | Details: {e.Message}");
             }
         }
         return dllPaths;

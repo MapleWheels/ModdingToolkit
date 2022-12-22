@@ -6,12 +6,12 @@ namespace ModdingToolkitTestPlugin;
 public class Bootloader : IAssemblyPlugin
 {
     private IConfigControl? cc;
-    private IConfigEntry<string> ce_string;
-    private IConfigEntry<float> ce_float;
-    private IConfigEntry<int> ce_int;
-    private IConfigList cl;
-    private IConfigRangeInt icri;
-    private IConfigRangeFloat icrf;
+    private IConfigEntry<string>? ce_string;
+    private IConfigEntry<float>? ce_float;
+    private IConfigEntry<int>? ce_int;
+    private IConfigList? cl;
+    private IConfigRangeInt? icri;
+    private IConfigRangeFloat? icrf;
 
     public void Initialize()
     {

@@ -7,9 +7,9 @@ public sealed class ConfigControl : IConfigControl
 {
     private event System.Func<KeyOrMouse, bool>? _validateInput;
     private event System.Action? _onValueChanged;
-    public string Name { get; set; }
+    public string Name { get; set; } = String.Empty;
     public Type SubTypeDef => typeof(KeyOrMouse);
-    public string ModName { get; set; }
+    public string ModName { get; set; } = String.Empty;
     public IConfigBase.Category MenuCategory => IConfigBase.Category.Ignore;
     public IConfigBase.NetworkSync NetSync => IConfigBase.NetworkSync.NoSync;
 
@@ -62,9 +62,9 @@ public sealed class ConfigControl : IConfigControl
             }
         }
     }
-    public KeyOrMouse DefaultValue { get; private set; }
-    public bool SaveOnValueChanged { get; }
-    
+
+    public KeyOrMouse DefaultValue { get; private set; } = new KeyOrMouse(Keys.NumLock);
+
     public void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged)
     {
         if (name.Trim().IsNullOrEmpty())

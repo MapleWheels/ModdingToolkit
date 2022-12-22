@@ -4,17 +4,17 @@ public class ConfigList : IConfigList
 {
     #region INTERNALS
 
-    protected string _value;
-    protected ImmutableList<string> _valueList;
-    protected Func<string, bool> _valueChangePredicate;
-    protected System.Action _onValueChanged;
+    protected string _value = String.Empty;
+    protected ImmutableList<string> _valueList = ImmutableList<string>.Empty;
+    protected Func<string, bool>? _valueChangePredicate = null;
+    protected System.Action? _onValueChanged;
 
     #endregion
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(string);
-    public string ModName { get; private set; }
+    public string ModName { get; private set; } = String.Empty;
 
     public virtual string Value
     {
@@ -29,7 +29,7 @@ public class ConfigList : IConfigList
         }
     }
 
-    public string DefaultValue { get; private set; }
+    public string DefaultValue { get; private set; } = String.Empty;
     
     public ref readonly ImmutableList<string> GetReadOnlyList() => ref _valueList;
 

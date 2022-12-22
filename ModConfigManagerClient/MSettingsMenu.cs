@@ -55,14 +55,6 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         return Instance;
     }
 
-    public new void CreateAudioAndVCTab()
-    {
-#warning TODO: Implement custom menu.
-        base.CreateAudioAndVCTab();
-    }
-    
-    
-    
     public new void CreateControlsTab()
     {
         //Note: Keep this code close to vanilla for easy porting of new features.
@@ -505,13 +497,6 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             .OrderBy(x => x.ModName)
             .ThenBy(x => x.Name)
             .ToList();
-        
-        #warning Remove Debug Messages
-        LuaCsSetup.PrintCsMessage($"MENUDEV: GrpCnt={groupCount}, entryCnt={entryCount}, size={size}");
-        foreach (IConfigBase configBase in OrganizedList)
-        {
-            LuaCsSetup.PrintCsMessage($"MENUDEV-LOOP: ModName={configBase.ModName}, Name={configBase.Name}");
-        }
 
         Label(right, "Please note: You must press ENTER in the value textbox\nfor the new value to be registered!",
             GUIStyle.SmallFont);

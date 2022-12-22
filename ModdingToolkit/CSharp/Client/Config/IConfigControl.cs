@@ -2,12 +2,10 @@
 
 namespace ModdingToolkit.Config;
 
-public interface IConfigControl : IConfigBase //, ISerializable, IDisposable
+public interface IConfigControl : IConfigBase
 {
-    #warning TODO: Implement ISerializable, IDisposable intefaces.
     KeyOrMouse? Value { get; set; }
-    KeyOrMouse? DefaultValue { get; }
-    bool SaveOnValueChanged { get; }
+    KeyOrMouse DefaultValue { get; }
     void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged);
     bool Validate(KeyOrMouse newValue);
 }

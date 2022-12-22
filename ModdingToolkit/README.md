@@ -1,6 +1,8 @@
 A toolkit providing GUI, configuration, networking and Assembly-based plugin system for Barotrauma.
 Currently in Alpha. Incomplete.
 
+Readme is WIP.
+
 [Steam Workshop]()
 
 ## Feature List
@@ -24,6 +26,8 @@ Currently in Alpha. Incomplete.
 ## For C# Developers: How to Use - Assembly Plugin System.
 
 #### Note: this mod requires [LuaCsForBarotrauma](https://steamcommunity.com/workshop/filedetails/?id=2559634234) installed with Client-Side Lua enabled.
+#### NOTE2: Not all features are implemented, see beginning of this README for details.
+
 
 1. Download a copy of the Release Assemblies package.  
 2. Create a CSharp Solution in the IDE of your Choice with two projects, one for the Client and one for the Server. This project should be setup as described in the [CsForBarotrauma](https://evilfactory.github.io/LuaCsForBarotrauma/cs-docs/html/index.html) documentation.
@@ -83,13 +87,13 @@ public class MyPlugin : IAssemblyPlugin
 #### NOTE: You do NOT need to use the Assembly Plugin system in order to use the below. You can make use of this as a regular LuaCs mod.
 #### NOTE2: Not all features are implemented, see beginning of this README for details.
 
-All configuration variables are stored under `<Game_Root>/Config/<ModName>/<ModName>.xml`.
+All configuration variables are stored under `<Game_Root>/Config/<ModName>/<ModName>.xml`. ModName is the sanitized version of the Mod Name value so they may not match.
 
 To create a configuration var simply use the API as per the below examples. The API is defined in the `ConfigManager` class (in `/Client` and `/Shared`).
 
 You can manipulate these vars using the following Console Commands:
 
-- `cl_cfglistvars` : Lists all defined vars' their type and their value.
+- `cl_cfglistvars` : Lists all defined vars, their types and their values.
 - `cl_cfggetvar <ModName> <VarName>` : Prints out the data for this value.
 - `cl_cfgsetvar <ModName> <VarName> <NewValue>` : Sets the var to a new value (use quotes for entries with spaces)
 - `cl_cfgsaveall` : Saves all loaded vars to disk.

@@ -31,7 +31,7 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
                     }
                     catch (Exception e)
                     {
-                        LuaCsSetup.PrintCsMessage($"MCMC: Create Err: MSG: {e.Message}. Inner: {e.InnerException.Message}. Stack: {e.StackTrace}");
+                        LuaCsSetup.PrintCsMessage($"MCMC: Create Err: MSG: {e.Message}. Inner: {e.InnerException?.Message}. Stack: {e.StackTrace}");
                     }
                 }
                 
@@ -45,15 +45,11 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
     
     public static bool Prefix_CreateControlsTab(Barotrauma.SettingsMenu __instance)
     {
-        #warning TODO: Remove debug statements.
-        Barotrauma.LuaCsSetup.PrintCsMessage("MCMC: CreateControlsTab.");
         if (__instance is T inst)
         {
             if (!HCall_Controls)
             {
-#warning TODO: Remove debug statements.
                 HCall_Controls = true;
-                LuaCsSetup.PrintCsMessage("MCMC: CCT Overridden.");
                 inst.CreateControlsTab();
                 HCall_Controls = false;
                 return false;
@@ -79,15 +75,11 @@ public static class Patch_BT_SettingsMenu<T> where T : class, ISettingsMenu
     
     public static bool Prefix_CreateGraphicsTab(Barotrauma.SettingsMenu __instance)
     {
-#warning TODO: Remove debug statements.
-        Barotrauma.LuaCsSetup.PrintCsMessage("MCMC: CreateControlsTab.");
         if (__instance is T inst)
         {
             if (!HCall_Graphics)
             {
-#warning TODO: Remove debug statements.
                 HCall_Graphics = true;
-                LuaCsSetup.PrintCsMessage("MCMC: CCT Overridden.");
                 inst.CreateGraphicsTab();
                 HCall_Graphics = false;
                 return false;

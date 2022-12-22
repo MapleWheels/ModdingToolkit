@@ -4,8 +4,8 @@ public static class ConsoleCommands
 {
     private record CommandBuilder(
         string Name, string HelpText, 
-        LuaCsAction OnExecute, 
-        LuaCsFunc GetValidArgs,
+        LuaCsAction? OnExecute, 
+        LuaCsFunc? GetValidArgs,
         bool IsCheat);
     
     private static readonly List<CommandBuilder> registeredCommands = new();

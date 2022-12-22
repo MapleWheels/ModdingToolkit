@@ -190,7 +190,9 @@ public class GUINumberInput : GUIComponent
     private readonly float pressedDelay = 0.5f;
     private bool IsPressedTimerRunning { get { return pressedTimer > 0; } }
 
+#pragma warning disable CS8618
     public GUINumberInput(RectTransform rectT, NumberType inputType, string style = "", Alignment textAlignment = Alignment.Center, float? relativeButtonAreaWidth = null, bool hidePlusMinusButtons = false, float yAdjustRatio = 1.0f) : base(style, rectT)
+#pragma warning restore CS8618
     {
         LayoutGroup = new GUILayoutGroup(new RectTransform((1f, 1f*yAdjustRatio), rectT), isHorizontal: true, childAnchor: Anchor.CenterLeft) { Stretch = true };
 
@@ -410,7 +412,7 @@ public class GUINumberInput : GUIComponent
         {
             floatValue = 
                 WrapAround && MinValueFloat.HasValue && floatValue < MinValueFloat.Value ? 
-                MaxValueFloat.Value : 
+                MaxValueFloat!.Value : 
                 Math.Max(floatValue, MinValueFloat.Value);
             MinusButton.Enabled = WrapAround || floatValue > MinValueFloat;
         }
@@ -418,7 +420,7 @@ public class GUINumberInput : GUIComponent
         {
             floatValue =
                 WrapAround && MaxValueFloat.HasValue && floatValue > MaxValueFloat.Value ?
-                MinValueFloat.Value : 
+                MinValueFloat!.Value : 
                 Math.Min(floatValue, MaxValueFloat.Value);
             PlusButton.Enabled = WrapAround || floatValue < MaxValueFloat;
         }

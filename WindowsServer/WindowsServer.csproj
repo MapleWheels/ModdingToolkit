@@ -126,4 +126,8 @@
       <Folder Include="Server" />
     </ItemGroup>
 
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="xcopy &quot;$(ProjectDir)$(OutDir)$(TargetFileName)&quot; &quot;$(SolutionDir)\Refs\Server\$(TargetFileName)*&quot; /y /s" />
+    </Target>
+
 </Project>

@@ -76,7 +76,7 @@ public static class AssemblyManager
             {
                 return UnloadingACLs.Any();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }

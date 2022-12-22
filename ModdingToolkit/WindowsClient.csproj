@@ -71,7 +71,7 @@
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="xcopy &quot;$(ProjectDir)\CSharp\&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModSettingsManager\CSharp\&quot; /y /s" />
+      <Exec Command="xcopy &quot;$(ProjectDir)\CSharp\&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModSettingsManager\CSharp\&quot; /y /s /i&#xA;&#xA;xcopy &quot;$(ProjectDir)$(OutDir)$(TargetFileName)&quot; &quot;$(SolutionDir)\Refs\Client\$(TargetFileName)*&quot; /y /s" />
     </Target>
 
 </Project>

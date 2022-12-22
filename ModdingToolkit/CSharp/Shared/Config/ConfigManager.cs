@@ -462,12 +462,13 @@ public static partial class ConfigManager
                     return false;
                 }
             }
+            Debug.Assert(key is not null);
             LoadedXDocKeys.Add(lxkey, key);
 
             if (XMLDocumentHelper.TryGetLoadedXmlDoc(key, out doc))
             {
-                Debug.Assert(doc != null, "doc != null");
-                Debug.Assert(doc.Root != null, "doc.Root != null");
+                Debug.Assert(doc != null);
+                Debug.Assert(doc.Root != null);
                 
                 configRoot = doc.Root.DescendantsAndSelf(nameof(ConfigManager)).FirstOrDefault(defaultValue: null);
                 configModData = configRoot?.Descendants(config.ModName).FirstOrDefault(defaultValue: null) ?? null;
