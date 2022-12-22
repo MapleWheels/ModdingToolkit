@@ -18,6 +18,7 @@ internal sealed class Bootloader : ACsMod
 
     private void Init()
     {
+        RegisterLua();
         PluginHelper.LoadAssemblies();
         LoadPatches();
         RegisterCommands();
@@ -135,6 +136,94 @@ internal sealed class Bootloader : ACsMod
         PatchManager.Load();
     }
 
+    private void RegisterLua()
+    {
+        // Interfaces
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigBase>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<bool>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<byte>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<short>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<int>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<sbyte>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<ushort>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<uint>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<ulong>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<long>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<float>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<double>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<decimal>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<string>>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigList>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigRangeFloat>();
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigRangeInt>();
+        
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<bool>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<byte>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<short>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<int>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<sbyte>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<ushort>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<uint>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<ulong>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<long>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<float>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<double>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<decimal>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<string>>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigList>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigRangeFloat>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigRangeInt>();
+        
+#if CLIENT
+        MoonSharp.Interpreter.UserData.RegisterType<IConfigControl>();
+        MoonSharp.Interpreter.UserData.RegisterType<ConfigControl>();
+#endif
+    }
+
+    private void DeregisterLua()
+    {
+        // Deregister in reverse order
+#if CLIENT
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigControl>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigControl>();
+#endif
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigList>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigRangeFloat>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigRangeInt>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<bool>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<byte>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<short>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<int>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<sbyte>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<ushort>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<uint>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<ulong>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<long>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<float>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<double>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<decimal>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<string>>();
+        
+        
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigList>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigRangeFloat>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigRangeInt>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<bool>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<byte>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<short>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<int>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<sbyte>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<ushort>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<uint>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<ulong>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<long>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<float>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<double>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<decimal>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<string>>();
+        MoonSharp.Interpreter.UserData.UnregisterType<IConfigBase>();
+    }
+
     private void PrintAllConfigVars()
     {
         foreach (var configVar in ConfigManager.GetAllConfigMembers())
@@ -186,6 +275,7 @@ internal sealed class Bootloader : ACsMod
         UnloadPatches();
         PatchManager.Dispose();
         PluginHelper.UnloadAssemblies();
+        DeregisterLua();
         IsLoaded = false;
     }
 }

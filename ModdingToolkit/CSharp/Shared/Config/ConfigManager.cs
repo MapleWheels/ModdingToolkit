@@ -33,6 +33,20 @@ public static partial class ConfigManager
     public static readonly string BaseConfigDir = Path.Combine(Directory.GetCurrentDirectory(), "Config");
 
     
+    /// <summary>
+    /// [CanBeNull]
+    /// Registers a new Config Member and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
+    /// </summary>
+    /// <param name="name">Name of your config variable</param>
+    /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
+    /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
+    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
+    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
+    /// <param name="validateNewInput">Allows you to validate any potential changes to the Value. Return false to deny.</param>
+    /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <typeparam name="T">The Value's Type</typeparam>
+    /// <returns>[CanBeNull] Returns the Config Member instance or null if failed.</returns>
     public static IConfigEntry<T> AddConfigEntry<T>(
         string name,
         string modName,
@@ -47,51 +61,108 @@ public static partial class ConfigManager
             validateNewInput, filePathOverride);
     }
 
+    /// <summary>
+    /// [CanBeNull]
+    /// Registers a new Config Member List[string] and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
+    /// </summary>
+    /// <param name="name">Name of your config variable</param>
+    /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
+    /// <param name="defaultValue">The default string value if one cannot be loaded from file. Must exist in the List or the first entry in the list will be used.</param>
+    /// <param name="valueList">A list of string values.</param>
+    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
+    /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
+    /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
+    /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <returns>[CanBeNull] Returns the Config Member instance or null if failed.</returns>
     public static IConfigList AddConfigList(
         string name, string modName, 
         string defaultValue,
         List<string> valueList,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
         string? filePathOverride = null)
     {
-        return CreateIConfigList(name, modName, defaultValue, valueList, sync, 
+        return CreateIConfigList(name, modName, defaultValue, valueList, networkSync, 
             menuCategory, valueChangePredicate, onValueChanged, filePathOverride);
     }
 
+    /// <summary>
+    /// [CanBeNull]
+    /// Registers a new Config Member Range Int and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
+    /// </summary>
+    /// <param name="name">Name of your config variable</param>
+    /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
+    /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
+    /// <param name="minValue">The minimum value.</param>
+    /// <param name="maxValue">The maximum value.</param>
+    /// <param name="steps">The number of steps in the Slider in the menu.</param>
+    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
+    /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
+    /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
+    /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <returns>[CanBeNull] Returns the Config Member instance or null if failed.</returns>
     public static IConfigRangeInt AddConfigRangeInt(
         string name, string modName,
         int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
         string? filePathOverride = null)
     {
-        return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, sync, menuCategory,
+        return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
             valueChangePredicate, onValueChanged, filePathOverride);
     }
     
+    /// <summary>
+    /// [CanBeNull]
+    /// Registers a new Config Member Range Float and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
+    /// </summary>
+    /// <param name="name">Name of your config variable</param>
+    /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
+    /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
+    /// <param name="minValue">The minimum value.</param>
+    /// <param name="maxValue">The maximum value.</param>
+    /// <param name="steps">The number of steps in the Slider in the menu.</param>
+    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
+    /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
+    /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
+    /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <returns>[CanBeNull] Returns the Config Member instance or null if failed.</returns>
     public static IConfigRangeFloat AddConfigRangeFloat(
         string name, string modName,
         float defaultValue, float minValue, float maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
         string? filePathOverride = null)
     {
-        return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, sync, menuCategory,
+        return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
             valueChangePredicate, onValueChanged, filePathOverride);
     }
 
+    /// <summary>
+    /// Saves the config member to disk.
+    /// </summary>
+    /// <param name="configEntry">Instance to save.</param>
+    /// <returns>Whether or not the operation was successful.</returns>
     public static bool Save(IConfigBase configEntry)
     {
         return SaveData(configEntry);
     }
 
+    /// <summary>
+    /// Saves the config member with the given ModName and Name to disk.
+    /// </summary>
+    /// <param name="modName">The ModName of the member.</param>
+    /// <param name="name">The Name of the member.</param>
+    /// <returns>Whether or not the operation was successful.</returns>
     public static bool Save(string modName, string name)
     {
         if (LoadedConfigEntries.ContainsKey(modName)
@@ -101,6 +172,11 @@ public static partial class ConfigManager
         return false;
     }
 
+    /// <summary>
+    /// Saves all config members with a given ModName to disk.
+    /// </summary>
+    /// <param name="modName">The ModName of the members.</param>
+    /// <returns>Whether or not the operation was successful.</returns>
     public static bool SaveAllFromMod(string modName)
     {
         if (LoadedConfigEntries.ContainsKey(modName))
@@ -116,6 +192,11 @@ public static partial class ConfigManager
         return false;
     }
 
+    /// <summary>
+    /// Reloads the values from disk for all config members with the given ModName.
+    /// </summary>
+    /// <param name="modName">The ModName of the members.</param>
+    /// <returns>Whether or not the operation was successful.</returns>
     public static bool ReloadAllValuesForModFromFiles(string modName)
     {
         if (!LoadedConfigEntries.ContainsKey(modName))
@@ -132,11 +213,11 @@ public static partial class ConfigManager
     }
 
     /// <summary>
-    /// Returns the Config Entry instance if found. 
+    /// Returns the config member instance with the given ModName and Name if found. 
     /// </summary>
-    /// <param name="modName"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
+    /// <param name="modName">The ModName of the member.</param>
+    /// <param name="name">The Name of the member.</param>
+    /// <returns>[CanBeNull] Returns the instance or null if not found.</returns>
     public static IConfigBase? GetConfigMember(string modName, string name)
     {
         if (LoadedConfigEntries.ContainsKey(modName))
@@ -146,9 +227,10 @@ public static partial class ConfigManager
     }
 
     /// <summary>
-    /// [NOT THREAD-SAFE]
+    /// [NOT CONCURRENCY SAFE]
+    /// Allows enumeration over all instanced config members.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Enumerator for iteration.</returns>
     public static IEnumerable<IConfigBase> GetAllConfigMembers()
     {
         foreach (ConfigIndex index in Indexer_AllLoadedEntries)
@@ -157,6 +239,11 @@ public static partial class ConfigManager
         }
     }
 
+    /// <summary>
+    /// Returns a collection of config members under a given menu category.
+    /// </summary>
+    /// <param name="category">The menu category.</param>
+    /// <returns>Enumerator for iteration.</returns>
     public static IEnumerable<IConfigBase> GetConfigMembers(IConfigBase.Category category)
     {
         if (!Indexer_MenuCategory.ContainsKey(category))
@@ -173,6 +260,11 @@ public static partial class ConfigManager
         return members;
     }
 
+    /// <summary>
+    /// Returns a collection of config members under a given network sync category.
+    /// </summary>
+    /// <param name="networkSync">The sync setting.</param>
+    /// <returns>Enumerator for iteration.</returns>
     public static IEnumerable<IConfigBase> GetConfigMembers(IConfigBase.NetworkSync networkSync)
     {
         if (!Indexer_NetSync.ContainsKey(networkSync))

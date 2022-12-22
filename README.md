@@ -23,6 +23,34 @@ Readme is WIP.
 ☐ Network Sync
 
 
+## For Lua Developers: How to Use - Config Variables (C# Developers look further down)
+
+#### NOTE: Not all features are implemented, see beginning of this README for details.
+#### NOTE2: As Lua doesn't handle Generic method calls without mess, the only C# function you CANNOT use is `AddConfigEntry<T>()`, please make use of the helper extensions below. Everything else should follow the C# Config Var instructions further down (but written in Lua Syntax obviously).
+
+```lua
+-- Availability: CLIENT AND SERVER
+-- Simplest verion
+local mySimpleVar = ModdingToolkit.Config.ConfigManager.AddConfigBool(
+    "MyVarName1",   -- [REQUIRED] Variable name
+    "MyModName",    -- [REQUIRED] Mod name, used for the config file name.
+    false           -- [REQUIRED] Default value.
+)
+
+-- Set your value
+mySimpleVar.Value = true
+
+-- Access your value
+print(mySimpleVar.Value)
+
+-- Save your value to file/disk
+ModdingToolkit.Config.ConfigManager.Save(mySimpleVar)
+
+-- Want to access it somewhere else?
+local myVar2 = ModdingToolkit.Config.ConfigManager.GetConfigMember("MyModName","MyVarName1")
+```
+
+
 ## For C# Developers: How to Use - Assembly Plugin System.
 
 #### Note: this mod requires [LuaCsForBarotrauma](https://steamcommunity.com/workshop/filedetails/?id=2559634234) installed with Client-Side Lua enabled.
@@ -44,6 +72,8 @@ Readme is WIP.
 
 Example:
 ```csharp
+using ModdingToolkit;
+
 namespace MyMod;
 
 public class MyPlugin : IAssemblyPlugin
@@ -56,6 +86,9 @@ public class MyPlugin : IAssemblyPlugin
     void OnLoadCompleted()
     {
         //Called once ALL plugins have had their Initialize() functions called.
+        
+        //Searching all loaded assemblies
+        List<MyType> typeList = AssemblyManager.GetSubTypesInLoadedAssemblies<MyType>().ToList();   //Uses yield so call .ToList()
     }
     
     PluginInfo GetPluginInfo()
@@ -67,6 +100,7 @@ public class MyPlugin : IAssemblyPlugin
     void Dispose()
     {
         //Called before your mod is unloaded. YOU MUST cleanup all references and instances stored by code from the main game!
+        //Any references that persist will halt unloading of your assembly!
     }
 }
 ```
@@ -102,6 +136,8 @@ You can manipulate these vars using the following Console Commands:
 
 #### Example:
 ```csharp
+using ModdingToolkit.Config;
+//...
 void Initialize()
 {
     // Availability: CLIENT AND SERVER
@@ -123,6 +159,8 @@ void Initialize()
 
 #### More Examples:
 ```csharp
+using ModdingToolkit.Config;
+//...
 void Initialize()
 {
     // Availability: CLIENT AND SERVER

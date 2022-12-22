@@ -44,6 +44,10 @@ public static class AssemblyManager
     
     #if DEBUG
 
+    /// <summary>
+    /// [DEBUG ONLY]
+    /// Returns a list of the current unloading ACLs. 
+    /// </summary>
     public static ImmutableList<WeakReference<AssemblyContextLoader>> StillUnloadingACLs
     {
         get
@@ -241,7 +245,7 @@ public static class AssemblyManager
     /// <summary>
     /// Allows iteration over all types (including interfaces) in all loaded assemblies managed by the AsmMgr.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>An Enumerator for iteration.</returns>
     public static IEnumerable<Type> GetAllTypesInLoadedAssemblies()
     {
         foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes())   
