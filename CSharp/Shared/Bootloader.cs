@@ -110,6 +110,14 @@ internal sealed class Bootloader : ACsMod
                 }
             }
         );
+        
+        ConsoleCommands.RegisterCommand(
+            "cl_cfgsaveall", 
+            "Save all config variables to file.",
+            args =>
+            {
+                ConfigManager.SaveAll();
+            });
     }
 
     private void LoadPatches()
