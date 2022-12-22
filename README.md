@@ -3,7 +3,7 @@ Currently in Alpha. Incomplete.
 
 Readme is WIP.
 
-[Steam Workshop]()
+[Steam Workshop](https://steamcommunity.com/sharedfiles/itemedittext/?id=2905307454)
 
 ## Feature List
 
