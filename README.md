@@ -77,6 +77,7 @@ public class MyPlugin : IAssemblyPlugin
 - `<ContentPackageRoot>/bin/Client/Forced` will load your mod on the CLIENT always, even if the ContentPackage is disabled.
 - `<ContentPackageRoot>/bin/Server/Standard` will load your mod on the SERVER only if the ContentPackage is ENABLED.
 - `<ContentPackageRoot>/bin/Server/Forced` will load your mod on the SERVER always, even if the ContentPackage is disabled.
+8. And finally, if using the Steam Workshop, add this mod as a Workshop Dependency.
 
 #### NOTE: You can use the following Console Commands to unload/reload plugins:
 - `cl_unloadassemblies`
