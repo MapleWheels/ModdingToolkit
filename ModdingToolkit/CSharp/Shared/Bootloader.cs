@@ -124,6 +124,7 @@ internal sealed class Bootloader : ACsMod
             _ =>
             {
                 ConfigManager.SaveAll();
+                LuaCsSetup.PrintCsMessage($"ConfigManager: All files saved to disk.");
             });
     }
 
