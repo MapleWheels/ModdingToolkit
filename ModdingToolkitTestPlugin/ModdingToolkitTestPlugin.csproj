@@ -20,28 +20,28 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="0Harmony">
-        <HintPath>..\..\Refs\0Harmony.dll</HintPath>
-      </Reference>
-      <Reference Include="Barotrauma">
-        <HintPath>..\..\Refs\Barotrauma.dll</HintPath>
-      </Reference>
-      <Reference Include="Mono.Cecil">
-        <HintPath>..\..\Refs\Mono.Cecil.dll</HintPath>
-      </Reference>
-      <Reference Include="MonoGame.Framework.Windows.NetStandard">
-        <HintPath>..\..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
-      </Reference>
-      <Reference Include="MonoMod.Common">
-        <HintPath>..\..\Refs\MonoMod.Common.dll</HintPath>
-      </Reference>
-      <Reference Include="XNATypes">
-        <HintPath>..\..\Refs\XNATypes.dll</HintPath>
-      </Reference>
+      <ProjectReference Include="..\ModdingToolkit\WindowsClient.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\WindowsClient.csproj" />
+      <Reference Include="0Harmony">
+        <HintPath>..\Refs\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="Barotrauma">
+        <HintPath>..\Refs\Barotrauma.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Cecil">
+        <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework.Windows.NetStandard">
+        <HintPath>..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Common">
+        <HintPath>..\Refs\MonoMod.Common.dll</HintPath>
+      </Reference>
+      <Reference Include="XNATypes">
+        <HintPath>..\Refs\XNATypes.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

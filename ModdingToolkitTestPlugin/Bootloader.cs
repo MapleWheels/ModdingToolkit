@@ -19,8 +19,6 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry", 
             "ModdingTK",
             new KeyOrMouse(Keys.A),
-            IConfigBase.Category.Ignore,
-            IConfigBase.NetworkSync.NoSync,
             () => {}
             );
 

@@ -1,0 +1,129 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>NetScriptAssembly</AssemblyName>
+        <RootNamespace>ModdingToolkit</RootNamespace>
+        <Company>TBN_MapleWheels</Company>
+        <Product>ModdingToolkit</Product>
+        <AssemblyVersion>0.0.0.0</AssemblyVersion>
+        <FileVersion>0.0.0.0</FileVersion>
+        <NeutralLanguage>en-US</NeutralLanguage>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACE,SERVER</DefineConstants>
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>x64</PlatformTarget>
+      <DefineConstants>TRACE,SERVER</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="0Harmony">
+        <HintPath>..\Refs\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="DedicatedServer">
+        <HintPath>..\Refs\DedicatedServer.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Cecil">
+        <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework.Windows.NetStandard">
+        <HintPath>..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Common">
+        <HintPath>..\Refs\MonoMod.Common.dll</HintPath>
+      </Reference>
+      <Reference Include="XNATypes">
+        <HintPath>..\Refs\XNATypes.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\ApplicationMode.cs">
+        <Link>Shared\ApplicationMode.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Bootloader.cs">
+        <Link>Shared\Bootloader.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigEntry.cs">
+        <Link>Shared\Config\ConfigEntry.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigList.cs">
+        <Link>Shared\Config\ConfigList.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigManager.cs">
+        <Link>Shared\Config\ConfigManager.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigRangeFloat.cs">
+        <Link>Shared\Config\ConfigRangeFloat.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigRangeInt.cs">
+        <Link>Shared\Config\ConfigRangeInt.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigBase.cs">
+        <Link>Shared\Config\IConfigBase.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigEntry.cs">
+        <Link>Shared\Config\IConfigEntry.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigList.cs">
+        <Link>Shared\Config\IConfigList.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigRangeFloat.cs">
+        <Link>Shared\Config\IConfigRangeFloat.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigRangeInt.cs">
+        <Link>Shared\Config\IConfigRangeInt.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\ConsoleCommands.cs">
+        <Link>Shared\ConsoleCommands.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\global.cs">
+        <Link>Shared\global.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Patches\IPatchable.cs">
+        <Link>Shared\Patches\IPatchable.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Patches\PatchManager.cs">
+        <Link>Shared\Patches\PatchManager.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Plugins\AssemblyManager.cs">
+        <Link>Shared\Plugins\AssemblyManager.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Plugins\AssemblyUtils.cs">
+        <Link>Shared\Plugins\AssemblyUtils.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Plugins\IAssemblyPlugin.cs">
+        <Link>Shared\Plugins\IAssemblyPlugin.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Plugins\PluginHelper.cs">
+        <Link>Shared\Plugins\PluginHelper.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Plugins\PluginInfo.cs">
+        <Link>Shared\Plugins\PluginInfo.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\ReflectionsBinder.cs">
+        <Link>Shared\ReflectionsBinder.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Utils.cs">
+        <Link>Shared\Utils.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\XMLDocumentHelper.cs">
+        <Link>Shared\XMLDocumentHelper.cs</Link>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="..\ModdingToolkit\CSharp\Shared\Networking">
+        <Link>Shared\Networking</Link>
+      </Folder>
+      <Folder Include="Server" />
+    </ItemGroup>
+
+</Project>
