@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using Barotrauma.Networking;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit;
-
-
 
 public static class Utils
 {
@@ -204,9 +204,31 @@ public static class Utils
             if (type == typeof(float)) return msg.ReadSingle();
             if (type == typeof(double)) return msg.ReadDouble();
             if (type == typeof(string)) return msg.ReadString();
+            if (type == typeof(NetworkingManager.NetworkEventId)) return (NetworkingManager.NetworkEventId)msg.ReadByte();
+            if (type.IsEnum)
+            {
+                try
+                {
+                    var etype = (EnumNetworkType)msg.ReadByte();
+                    switch (etype)
+                    {
+                        case EnumNetworkType.Byte: return msg.ReadByte();
+                        case EnumNetworkType.Short: return msg.ReadInt16();
+                        case EnumNetworkType.Int: return msg.ReadInt32();
+                        case EnumNetworkType.Long: return msg.ReadInt64();
+                        case EnumNetworkType.String: return msg.ReadString();
+                        default: return 0;
+                    }
+                }
+                catch (Exception e)
+                {
+                    LuaCsSetup.PrintCsError(e);
+                    return 0;
+                }
+            }
 
             LuaCsSetup.PrintCsError(
-                $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
+            $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return 0;
         }
         
@@ -226,13 +248,35 @@ public static class Utils
             if (type == typeof(float)) return (T)(dynamic)msg.ReadSingle();
             if (type == typeof(double)) return (T)(dynamic)msg.ReadDouble();
             if (type == typeof(string)) return (T)(dynamic)msg.ReadString();
+            if (type == typeof(NetworkingManager.NetworkEventId)) return (T)(dynamic)msg.ReadByte();
+            if (type.IsEnum)
+            {
+                try
+                {
+                    var etype = (EnumNetworkType)msg.ReadByte();
+                    switch (etype)
+                    {
+                        case EnumNetworkType.Byte: return (T)(dynamic)msg.ReadByte();
+                        case EnumNetworkType.Short: return (T)(dynamic)msg.ReadInt16();
+                        case EnumNetworkType.Int: return (T)(dynamic)msg.ReadInt32();
+                        case EnumNetworkType.Long: return (T)(dynamic)msg.ReadInt64();
+                        case EnumNetworkType.String: return (T)(dynamic)msg.ReadString();
+                        default: return default!;
+                    }
+                }
+                catch (Exception e)
+                {
+                    LuaCsSetup.PrintCsError(e);
+                    return default!;
+                }
+            }
 
             LuaCsSetup.PrintCsError(
                 $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return default!;
         }
 
-        public static void WriteNetValueFromType(IWriteMessage msg, Type type, object value)
+        public static void WriteNetValueFromType(IWriteMessage msg, Type type, dynamic value)
         {
             if (type == typeof(bool)) msg.WriteBoolean((bool)value);
             else if (type == typeof(byte)) msg.WriteByte((byte)value);
@@ -247,7 +291,71 @@ public static class Utils
             else if (type == typeof(float)) msg.WriteSingle((float)value);
             else if (type == typeof(double)) msg.WriteDouble((double)value);
             else if (type == typeof(string)) msg.WriteString((string)value);
+            else if (type == typeof(NetworkingManager.NetworkEventId)) msg.WriteByte((byte)value);
+            else if (type.IsEnum)
+            {
+                // try to find the smallest signed data type we can pack the Enum into. Default to string on failure.
+                bool err = false;
+                long min = 0, max = 0;
+                foreach (object o in Enum.GetValues(type))
+                {
+                    try
+                    {
+                        long v = (long)Convert.ChangeType(o, TypeCode.UInt64);
+                        if (max < v)
+                            max = v;
+                        else if (v < min)
+                            min = v;
+                    }
+                    catch
+                    {
+                        err = true;
+                        break;
+                    }
+                }
 
+                try
+                {
+                    if (err)    //default to string transmission
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.String);
+                        msg.WriteString((string)Convert.ChangeType(value, TypeCode.String));
+                        return;
+                    }
+
+                    if (byte.MinValue <= min && max <= byte.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Byte);
+                        msg.WriteByte((byte)Convert.ChangeType(value, TypeCode.Byte));
+                        return;
+                    }
+                
+                    if (short.MinValue <= min && max <= short.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Short);
+                        msg.WriteInt16((short)Convert.ChangeType(value, TypeCode.Int16));
+                        return;
+                    }
+                
+                    if (int.MinValue <= min && max <= int.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Int);
+                        msg.WriteInt32((int)Convert.ChangeType(value, TypeCode.Int32));
+                        return;
+                    }
+                
+                    msg.WriteByte((byte)EnumNetworkType.Short);
+                    msg.WriteInt64((long)Convert.ChangeType(value, TypeCode.Int64));
+                    return;
+                }
+                catch
+                {
+                    msg.WriteByte((byte)EnumNetworkType.String);
+                    msg.WriteString(value.ToString());
+                    return;
+                }
+            }
+            
             LuaCsSetup.PrintCsError(
                 $"Utils::WriteNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
         }
@@ -268,9 +376,78 @@ public static class Utils
             else if (type == typeof(float)) msg.WriteSingle((float)(dynamic)value);
             else if (type == typeof(double)) msg.WriteDouble((double)(dynamic)value);
             else if (type == typeof(string)) msg.WriteString((string)(dynamic)value);
+            else if (type == typeof(NetworkingManager.NetworkEventId)) msg.WriteByte((byte)(dynamic)value);
+            else if (type.IsEnum)
+            {
+                // try to find the smallest signed data type we can pack the Enum into. Default to string on failure.
+                bool err = false;
+                long min = 0, max = 0;
+                foreach (object o in Enum.GetValues(type))
+                {
+                    try
+                    {
+                        long v = (long)Convert.ChangeType(o, TypeCode.UInt64);
+                        if (max < v)
+                            max = v;
+                        else if (v < min)
+                            min = v;
+                    }
+                    catch
+                    {
+                        err = true;
+                        break;
+                    }
+                }
+
+                try
+                {
+                    if (err)    //default to string transmission
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.String);
+                        msg.WriteString((string)Convert.ChangeType(value, TypeCode.String));
+                        return;
+                    }
+
+                    if (byte.MinValue <= min && max <= byte.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Byte);
+                        msg.WriteByte((byte)Convert.ChangeType(value, TypeCode.Byte));
+                        return;
+                    }
+                
+                    if (short.MinValue <= min && max <= short.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Short);
+                        msg.WriteInt16((short)Convert.ChangeType(value, TypeCode.Int16));
+                        return;
+                    }
+                
+                    if (int.MinValue <= min && max <= int.MaxValue)
+                    {
+                        msg.WriteByte((byte)EnumNetworkType.Int);
+                        msg.WriteInt32((int)Convert.ChangeType(value, TypeCode.Int32));
+                        return;
+                    }
+                
+                    msg.WriteByte((byte)EnumNetworkType.Short);
+                    msg.WriteInt64((long)Convert.ChangeType(value, TypeCode.Int64));
+                    return;
+                }
+                catch
+                {
+                    msg.WriteByte((byte)EnumNetworkType.String);
+                    msg.WriteString(value.ToString());
+                    return;
+                }
+            }
 
             LuaCsSetup.PrintCsError(
                 $"Utils::WriteNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
+        }
+
+        public enum EnumNetworkType
+        {
+            Byte = 0, Short, Int, Long, String
         }
     }
 }

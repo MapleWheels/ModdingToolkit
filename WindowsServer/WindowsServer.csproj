@@ -107,6 +107,9 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetConfigEntry.cs">
         <Link>Shared\Networking\INetConfigEntry.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetworkingManager.cs">
+        <Link>Shared\Networking\NetworkingManager.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Patches\IPatchable.cs">
         <Link>Shared\Patches\IPatchable.cs</Link>
       </Compile>

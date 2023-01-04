@@ -2,9 +2,9 @@
 
 namespace ModdingToolkit.Networking;
 
-internal static partial class NetworkingManager
+public static partial class NetworkingManager
 {
-    public static void SendMsg(IWriteMessage msg) => GameMain.LuaCs.Networking.Send(msg, null, DeliveryMethod.Reliable);
+    public static void SendMsg(IWriteMessage msg, NetworkConnection? conn = null) => GameMain.LuaCs.Networking.Send(msg, conn, DeliveryMethod.Reliable);
     
     private static void ReceiveMessage(IReadMessage msg, Barotrauma.Networking.Client? client)
     {

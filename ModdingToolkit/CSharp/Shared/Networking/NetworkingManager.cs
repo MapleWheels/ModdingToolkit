@@ -3,7 +3,7 @@ using ModdingToolkit.Config;
 
 namespace ModdingToolkit.Networking;
 
-internal static partial class NetworkingManager
+public static partial class NetworkingManager
 {
     
     #region INTERNAL_API
@@ -82,7 +82,8 @@ internal static partial class NetworkingManager
     private static IWriteMessage WriteMessageHeaders(NetworkEventId eventId)
     {
         var msg = GameMain.LuaCs.Networking.Start(NetworkingManager.NetMsgId);
-        msg.WriteByte((byte)eventId);
+        //msg.WriteByte((byte)eventId);
+        Utils.Networking.WriteNetValueFromType(msg, eventId);
         return msg;
     }
 
