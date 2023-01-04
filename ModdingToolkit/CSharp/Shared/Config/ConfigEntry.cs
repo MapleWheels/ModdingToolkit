@@ -1,18 +1,22 @@
-﻿namespace ModdingToolkit.Config;
+﻿using ModdingToolkit.Networking;
 
-public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
+namespace ModdingToolkit.Config;
+
+public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where T : IConvertible
 {
     #region INTERNALS
     
     protected T _value = default!;
     protected Func<T, bool>? _valueChangePredicate;
     protected System.Action? _onValueChanged;
+    protected System.Action<uint, T>? _onNetworkEvent;
 
     #endregion
 
     public string Name { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(T);
+    public Type NetSyncVarTypeDef => typeof(T);
     public string ModName { get; private set; } = String.Empty;
 
     public virtual T Value
@@ -20,10 +24,11 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         get => this._value;
         set
         {
-            if (Validate(value))
+            if (Validate(value) && NetAuthorityValidate())
             {
                 this._value = value;
                 this._onValueChanged?.Invoke();
+                this._onNetworkEvent?.Invoke(NetId,_value);
             }
         }
     }
@@ -33,6 +38,13 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
     public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
 
+    public void SetNetworkingId(uint id)
+    {
+        NetId = id;
+    }
+
+    public uint NetId { get; private set; }
+    
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsInitialized { get; private set; } = false;
 
@@ -98,12 +110,52 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     {
         try
         {
-            _ = (T)Convert.ChangeType(value, typeof(T));    //try to convert & cast.
-            return true;
+            var a = (T)Convert.ChangeType(value, typeof(T));    //try to convert & cast.
+            return Validate(a);
         }
         catch (Exception)
         {
             return false;
         }
     }
+
+    public bool SetStringValueFromNetwork(string value)
+    {
+        if (!ValidateString(value))
+            return false;
+        try
+        {
+            this._value = (T)Convert.ChangeType(value, typeof(T));
+            this._onValueChanged?.Invoke();
+            return true;
+        }
+        catch (Exception)
+        {
+            LuaCsSetup.PrintCsError($"ConfigEntry<{typeof(T)}>::SetStringValueFromNetwork() | Unable to convert string to Native type. StringValue={value}, CName={ModName}::{Name}");
+            return false;
+        }
+    }
+
+    public string GetStringNetworkValue() => GetStringValue();
+
+    public bool SetNativeValueFromNetwork(T value)
+    {
+        if (!Validate(value))
+            return false;
+        this._value = value;
+        this._onValueChanged?.Invoke();
+        return true;
+    }
+
+    public void SubscribeToNetEvents(Action<uint, T> evtHandle)
+    {
+        this._onNetworkEvent += evtHandle;
+    }
+
+    public void UnsubscribeFromNetEvents(Action<uint, T> evtHandle)
+    {
+        this._onNetworkEvent -= evtHandle;
+    }
+
+    public T GetNetworkValue() => this._value;
 }

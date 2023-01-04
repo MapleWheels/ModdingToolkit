@@ -10,7 +10,7 @@ public static class XMLDocumentHelper
 
     public static bool LoadOrCreateDocToCache(string filePath, out string? fp, bool reload = false, bool overwriteOnFail = false, Func<string>? generateNewDocString = null)
     {
-        fp = Utils.PrepareFilePathString(Path.GetDirectoryName(filePath)!, Path.GetFileName(filePath));
+        fp = Utils.IO.PrepareFilePathString(Path.GetDirectoryName(filePath)!, Path.GetFileName(filePath));
         
         if (fp is null)
         {
@@ -26,7 +26,7 @@ public static class XMLDocumentHelper
         
         if (!LoadedDocs.ContainsKey(fp) || reload)
         {
-            if (Utils.GetFileText(fp, out string? data) == Utils.IOActionResultState.Success)
+            if (Utils.IO.GetFileText(fp, out string? data) == Utils.IO.IOActionResultState.Success)
             {
                 try
                 {
@@ -104,15 +104,15 @@ public static class XMLDocumentHelper
     }
 
     
-    public static Utils.IOActionResultState SaveLoadedDocToDisk(string sanitizedFilePath)
+    public static Utils.IO.IOActionResultState SaveLoadedDocToDisk(string sanitizedFilePath)
     {
         string sfp = sanitizedFilePath;
         
         if (!LoadedDocs.ContainsKey(sfp) || LoadedDocs[sfp] is null)
-            return Utils.IOActionResultState.EntryMissing;
+            return Utils.IO.IOActionResultState.EntryMissing;
         
-        var result = Utils.CreateFilePath(sfp, out sfp!);
-        if (result == Utils.IOActionResultState.Success)
+        var result = Utils.IO.CreateFilePath(sfp, out sfp!);
+        if (result == Utils.IO.IOActionResultState.Success)
         {
             try
             {
@@ -121,7 +121,7 @@ public static class XMLDocumentHelper
             catch (Exception e)
             {
                 LuaCsSetup.PrintCsError($"XMLDocumentHelper::SaveLoadedDocToDisk() | Unknown error. Exception: {e.Message} | SFP: {sfp}");
-                return Utils.IOActionResultState.UnknownError;
+                return Utils.IO.IOActionResultState.UnknownError;
             }
         }
         return result;
@@ -131,13 +131,13 @@ public static class XMLDocumentHelper
     /// Saves all loaded XDocuments to disk.
     /// </summary>
     /// <returns>A dictionary containing the IOResults for any docs that failed to save.</returns>
-    internal static Dictionary<string, Utils.IOActionResultState> SaveAllDocsToDisk()
+    internal static Dictionary<string, Utils.IO.IOActionResultState> SaveAllDocsToDisk()
     {
-        Dictionary<string, Utils.IOActionResultState> dict = new();
+        Dictionary<string, Utils.IO.IOActionResultState> dict = new();
         foreach (KeyValuePair<string,XDocument?> loadedDoc in LoadedDocs)
         {
             var result = SaveLoadedDocToDisk(loadedDoc.Key);
-            if (result != Utils.IOActionResultState.Success)
+            if (result != Utils.IO.IOActionResultState.Success)
                 dict.Add(loadedDoc.Key, result);
         }
         return dict;

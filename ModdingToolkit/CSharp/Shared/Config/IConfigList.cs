@@ -12,4 +12,5 @@ public interface IConfigList : IConfigBase
         Action? onValueChanged = null);
     bool Validate(string value);
     public int GetDefaultValueIndex();
+    public void SetValueFromIndex(int index);
 }

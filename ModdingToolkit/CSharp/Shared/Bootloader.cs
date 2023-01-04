@@ -151,7 +151,6 @@ internal sealed class Bootloader : ACsMod
         MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<long>>();
         MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<float>>();
         MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<double>>();
-        MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<decimal>>();
         MoonSharp.Interpreter.UserData.RegisterType<IConfigEntry<string>>();
         MoonSharp.Interpreter.UserData.RegisterType<IConfigList>();
         MoonSharp.Interpreter.UserData.RegisterType<IConfigRangeFloat>();
@@ -168,7 +167,6 @@ internal sealed class Bootloader : ACsMod
         MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<long>>();
         MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<float>>();
         MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<double>>();
-        MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<decimal>>();
         MoonSharp.Interpreter.UserData.RegisterType<ConfigEntry<string>>();
         MoonSharp.Interpreter.UserData.RegisterType<ConfigList>();
         MoonSharp.Interpreter.UserData.RegisterType<ConfigRangeFloat>();
@@ -201,7 +199,6 @@ internal sealed class Bootloader : ACsMod
         MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<long>>();
         MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<float>>();
         MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<double>>();
-        MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<decimal>>();
         MoonSharp.Interpreter.UserData.UnregisterType<ConfigEntry<string>>();
         
         
@@ -219,7 +216,6 @@ internal sealed class Bootloader : ACsMod
         MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<long>>();
         MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<float>>();
         MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<double>>();
-        MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<decimal>>();
         MoonSharp.Interpreter.UserData.UnregisterType<IConfigEntry<string>>();
         MoonSharp.Interpreter.UserData.UnregisterType<IConfigBase>();
     }

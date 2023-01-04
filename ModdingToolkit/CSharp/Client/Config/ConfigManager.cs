@@ -1,4 +1,7 @@
-﻿namespace ModdingToolkit.Config;
+﻿using Barotrauma.Networking;
+using ModdingToolkit.Networking;
+
+namespace ModdingToolkit.Config;
 
 public static partial class ConfigManager
 {

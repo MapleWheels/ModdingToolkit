@@ -1,8 +1,10 @@
 ﻿
 using System.Diagnostics;
 using System.Xml.Linq;
+using Barotrauma.Networking;
 using Microsoft.Xna.Framework.Input;
 using ModdingToolkit;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
@@ -32,7 +34,6 @@ public static partial class ConfigManager
     /// </summary>
     public static readonly string BaseConfigDir = Path.Combine(Directory.GetCurrentDirectory(), "Config");
 
-    
     /// <summary>
     /// [CanBeNull]
     /// Registers a new Config Member and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
@@ -456,6 +457,11 @@ public static partial class ConfigManager
         }
     }
 
+    internal static void InitializeNetworking()
+    {
+        
+    }
+    
     #endregion
     
     #region INTERNAL_OPERATIONS
@@ -498,7 +504,7 @@ public static partial class ConfigManager
         }
         configElement.Value = config.GetStringValue();
         var r = XMLDocumentHelper.SaveLoadedDocToDisk(LoadedXDocKeys[keyIndex]);
-        if (r != Utils.IOActionResultState.Success)
+        if (r != Utils.IO.IOActionResultState.Success)
         {
             LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Could not save to disk! IOActionResult: {r.ToString()}");
             return false;
@@ -601,7 +607,7 @@ public static partial class ConfigManager
 
                     if (XMLDocumentHelper.TrySetRefLoadedXmlDoc(key, doc, true))
                     {
-                        if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IOActionResultState.Success)
+                        if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IO.IOActionResultState.Success)
                         {
                             LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                         }
@@ -653,7 +659,7 @@ public static partial class ConfigManager
             LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
             return false;
         }
-        fp = Path.Combine(BaseConfigDir, Utils.SanitizePath(config.ModName), Utils.SanitizeFileName(config.ModName) + ".xml");
+        fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
         return true;
     }
 
@@ -783,7 +789,7 @@ public static partial class ConfigManager
             Indexer_AllLoadedEntries.Add(new ConfigIndex(config.ModName, config.Name));
         }
     }
-
+    
     #endregion
 
     #endregion
