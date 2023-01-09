@@ -9,7 +9,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
     protected T _value = default!;
     protected Func<T, bool>? _valueChangePredicate;
     protected System.Action? _onValueChanged;
-    protected System.Action<uint, T>? _onNetworkEvent;
+    protected System.Action<Guid, T>? _onNetworkEvent;
 
     #endregion
 
@@ -28,7 +28,17 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
             {
                 this._value = value;
                 this._onValueChanged?.Invoke();
-                this._onNetworkEvent?.Invoke(NetId,_value);
+#if CLIENT
+                if (this.NetSync == NetworkSync.TwoWaySync)
+                {
+                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
+                }
+#else
+                if (this.NetSync is NetworkSync.TwoWaySync or NetworkSync.ServerAuthority)
+                {
+                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
+                }
+#endif
             }
         }
     }
@@ -36,20 +46,20 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
     public T DefaultValue { get; private set; } = default!;
 
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
-    public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
+    public NetworkSync NetSync { get; private set; }
 
-    public void SetNetworkingId(uint id)
+    public void SetNetworkingId(Guid id)
     {
         NetId = id;
     }
 
-    public uint NetId { get; private set; }
+    public Guid NetId { get; private set; }
     
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsInitialized { get; private set; } = false;
 
     public virtual void Initialize(string name, string modName, T newValue, T defaultValue, 
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, 
+        NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
         Action? onValueChanged = null)
@@ -147,12 +157,12 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         return true;
     }
 
-    public void SubscribeToNetEvents(Action<uint, T> evtHandle)
+    public void SubscribeToNetEvents(Action<Guid, T> evtHandle)
     {
         this._onNetworkEvent += evtHandle;
     }
 
-    public void UnsubscribeFromNetEvents(Action<uint, T> evtHandle)
+    public void UnsubscribeFromNetEvents(Action<Guid, T> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
     }

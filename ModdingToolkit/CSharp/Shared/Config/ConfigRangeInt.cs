@@ -1,4 +1,6 @@
-﻿namespace ModdingToolkit.Config;
+﻿using ModdingToolkit.Networking;
+
+namespace ModdingToolkit.Config;
 
 public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
 {
@@ -8,7 +10,7 @@ public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
     public int Steps { get; private set; }
 
     public void Initialize(string name, string modName, int newValue, int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
+        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null, Action? onValueChanged = null)
     {
         if (minValue >= maxValue)

@@ -10,7 +10,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     protected ImmutableList<string> _valueList = ImmutableList<string>.Empty;
     protected Func<string, bool>? _valueChangePredicate = null;
     protected System.Action? _onValueChanged;
-    protected System.Action<uint, ushort>? _onNetworkEvent;
+    protected System.Action<Guid, ushort>? _onNetworkEvent;
 
     #endregion
 
@@ -18,12 +18,12 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
 
     public Type SubTypeDef => typeof(string);
     public Type NetSyncVarTypeDef => typeof(ushort);
-    public void SetNetworkingId(uint id)
+    public void SetNetworkingId(Guid id)
     {
         NetId = id;
     }
 
-    public uint NetId { get; private set; }
+    public Guid NetId { get; private set; }
     public string ModName { get; private set; } = String.Empty;
     
     public virtual string Value
@@ -35,7 +35,18 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
             {
                 this._value = value;
                 this._onValueChanged?.Invoke();
-                this._onNetworkEvent?.Invoke(NetId, (ushort)_valueList.IndexOf(_value));    //will never be empty, error on val >65,535, a list shouldn't ever be this big.
+                //will never be empty, error on val >65,535, a list shouldn't ever be this big.
+#if CLIENT
+                if (this.NetSync == NetworkSync.TwoWaySync)
+                {
+                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
+                } 
+#else
+                if (this.NetSync is NetworkSync.TwoWaySync or NetworkSync.ServerAuthority)
+                {
+                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
+                } 
+#endif
             }
         }
     }
@@ -45,7 +56,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     public ref readonly ImmutableList<string> GetReadOnlyList() => ref _valueList;
     
     public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
+        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null, Action? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
@@ -77,7 +88,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     }
 
     public IConfigEntry<string>.Category MenuCategory { get; private set; }
-    public IConfigEntry<string>.NetworkSync NetSync { get; private set; }
+    public NetworkSync NetSync { get; private set; }
 
     public bool IsInitialized { get; private set; } = false;
 
@@ -135,12 +146,12 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
         return true;
     }
 
-    public void SubscribeToNetEvents(Action<uint, ushort> evtHandle)
+    public void SubscribeToNetEvents(Action<Guid, ushort> evtHandle)
     {
         this._onNetworkEvent += evtHandle;
     }
 
-    public void UnsubscribeFromNetEvents(Action<uint, ushort> evtHandle)
+    public void UnsubscribeFromNetEvents(Action<Guid, ushort> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
     }

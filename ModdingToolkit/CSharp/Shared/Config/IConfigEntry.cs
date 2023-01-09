@@ -1,4 +1,6 @@
-﻿namespace ModdingToolkit.Config;
+﻿using ModdingToolkit.Networking;
+
+namespace ModdingToolkit.Config;
 
 public interface IConfigEntry<T> : IConfigBase where T : IConvertible
 {
@@ -6,7 +8,7 @@ public interface IConfigEntry<T> : IConfigBase where T : IConvertible
     public T DefaultValue { get; }
 
     void Initialize(string name, string modName, T newValue, T defaultValue, 
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, 
+        NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
         Action? onValueChanged = null);

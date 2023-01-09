@@ -2,11 +2,12 @@
 
 public interface INetConfigBase
 {
-    uint NetId { get; }
+    Guid NetId { get; }
     string ModName { get; }
     string Name { get; }
     public Type NetSyncVarTypeDef { get; }
-    void SetNetworkingId(uint id);
+    void SetNetworkingId(Guid id);
+    public NetworkSync NetSync { get; }
     bool IsNetworked { get; }
     bool NetAuthorityValidate();
     /// <summary>

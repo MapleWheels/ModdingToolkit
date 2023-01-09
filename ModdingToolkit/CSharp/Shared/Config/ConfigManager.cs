@@ -42,7 +42,7 @@ public static partial class ConfigManager
     /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
     /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
     /// <param name="validateNewInput">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
@@ -53,7 +53,7 @@ public static partial class ConfigManager
         string modName,
         T defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         Action? onValueChanged = null,
         Func<T, bool>? validateNewInput = null,
         string? filePathOverride = null) where T : IConvertible
@@ -70,7 +70,7 @@ public static partial class ConfigManager
     /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
     /// <param name="defaultValue">The default string value if one cannot be loaded from file. Must exist in the List or the first entry in the list will be used.</param>
     /// <param name="valueList">A list of string values.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -80,7 +80,7 @@ public static partial class ConfigManager
         string name, string modName, 
         string defaultValue,
         List<string> valueList,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -100,7 +100,7 @@ public static partial class ConfigManager
     /// <param name="minValue">The minimum value.</param>
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -109,7 +109,7 @@ public static partial class ConfigManager
     public static IConfigRangeInt AddConfigRangeInt(
         string name, string modName,
         int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -129,7 +129,7 @@ public static partial class ConfigManager
     /// <param name="minValue">The minimum value.</param>
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -138,7 +138,7 @@ public static partial class ConfigManager
     public static IConfigRangeFloat AddConfigRangeFloat(
         string name, string modName,
         float defaultValue, float minValue, float maxValue, int steps,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -266,7 +266,7 @@ public static partial class ConfigManager
     /// </summary>
     /// <param name="networkSync">The sync setting.</param>
     /// <returns>Enumerator for iteration.</returns>
-    public static IEnumerable<IConfigBase> GetConfigMembers(IConfigBase.NetworkSync networkSync)
+    public static IEnumerable<IConfigBase> GetConfigMembers(NetworkSync networkSync)
     {
         if (!Indexer_NetSync.ContainsKey(networkSync))
             return new List<IConfigBase>();
@@ -291,7 +291,7 @@ public static partial class ConfigManager
     
     public static IConfigEntry<double> AddConfigDouble(string name, string modName, double defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         Action? onValueChanged = null, 
         Func<double, bool>? validateNewInput = null, 
         string? filePath = null)
@@ -299,7 +299,7 @@ public static partial class ConfigManager
     
     public static IConfigEntry<string> AddConfigString(string name, string modName, string defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         Action? onValueChanged = null, 
         Func<string, bool>? validateNewInput = null, 
         string? filePath = null)
@@ -308,7 +308,7 @@ public static partial class ConfigManager
     
     public static IConfigEntry<bool> AddConfigBoolean(string name, string modName, bool defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         Action? onValueChanged = null, 
         Func<bool, bool>? validateNewInput = null, 
         string? filePath = null)
@@ -317,7 +317,7 @@ public static partial class ConfigManager
     
     public static IConfigEntry<int> AddConfigInteger(string name, string modName, int defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         Action? onValueChanged = null, 
         Func<int, bool>? validateNewInput = null, 
         string? filePath = null)
@@ -327,15 +327,13 @@ public static partial class ConfigManager
 
 
     #region Internal_Func
-
     
-
     private static IConfigEntry<T> CreateIConfigEntry<T>(
         string name,
         string modName,
         T defaultValue,
         IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
+        NetworkSync networkSync,
         Action? onValueChanged,
         Func<T, bool>? validateNewInput,
         string? filePathOverride = null
@@ -345,12 +343,14 @@ public static partial class ConfigManager
         ce.Initialize(name, modName, default!, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
+        if (GameMain.IsMultiplayer && ce is INetConfigEntry<T> ince)
+            RegisterForNetworking(ince);
         return ce;
     }
 
     private static IConfigList CreateIConfigList(string name, string modName, string defaultValue,
         List<string> valueList,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -360,13 +360,15 @@ public static partial class ConfigManager
         cl.Initialize(name, modName, default!, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
+        if (GameMain.IsMultiplayer && cl is INetConfigEntry<ushort> ince)
+            RegisterForNetworking(ince);
         return cl;
     }
     
     private static IConfigRangeInt CreateIConfigRangeInt(
         string name, string modName,
         int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -376,13 +378,15 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
+        if (GameMain.IsMultiplayer && cr is INetConfigEntry<int> ince)
+            RegisterForNetworking(ince);
         return cr;
     }
 
     private static IConfigRangeFloat CreateIConfigRangeFloat(
         string name, string modName,
         float defaultValue, float minValue, float maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
         Action? onValueChanged = null,
@@ -392,6 +396,8 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
+        if (GameMain.IsMultiplayer && cr is INetConfigEntry<float> ince)
+            RegisterForNetworking(ince);
         return cr;
     }
 
@@ -456,16 +462,12 @@ public static partial class ConfigManager
             OnDispose = null;
         }
     }
-
-    internal static void InitializeNetworking()
-    {
-        
-    }
     
     #endregion
     
     #region INTERNAL_OPERATIONS
 
+    #region IO
     private static bool SaveData(IConfigBase config)
     {
         if (config.Name.IsNullOrWhiteSpace())
@@ -662,6 +664,24 @@ public static partial class ConfigManager
         fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
         return true;
     }
+    
+    #endregion
+
+    private static void RegisterForNetworking(INetConfigBase cfg)
+    {
+        if (!NetworkingManager.RegisterNetConfigInstance(cfg))
+        {
+            LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+        }
+    }
+
+    private static void RegisterForNetworking<T>(INetConfigEntry<T> cfg) where T : IConvertible
+    {
+        if (!NetworkingManager.RegisterNetConfigInstance(cfg))
+        {
+            LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+        }
+    }
 
     private static void RemoveConfigFromLists(IConfigBase config)
     {
@@ -674,7 +694,7 @@ public static partial class ConfigManager
                 Indexer_MenuCategory[config.MenuCategory].Remove(ci);
         }
         
-        if (config.NetSync != IConfigBase.NetworkSync.NoSync)
+        if (config.NetSync != NetworkSync.NoSync)
         {
             ConfigIndex? ci = Indexer_NetSync[config.NetSync].First(entry => 
                 entry.Name.Equals(config.Name) && entry.ModName.Equals(config.ModName));
@@ -735,7 +755,7 @@ public static partial class ConfigManager
         }
         LoadedConfigEntries[config.ModName].Add(config.Name, config);
         
-        if (config.NetSync != IConfigBase.NetworkSync.NoSync)
+        if (config.NetSync != NetworkSync.NoSync)
         {
             if (!Indexer_NetSync.ContainsKey(config.NetSync))
                 Indexer_NetSync.Add(config.NetSync, new List<ConfigIndex>());
@@ -801,7 +821,7 @@ public static partial class ConfigManager
     /// </summary>
     private static readonly Dictionary<string, Dictionary<string, IConfigBase>> LoadedConfigEntries = new();
     private static readonly Dictionary<IConfigBase.Category, List<ConfigIndex>> Indexer_MenuCategory = new();
-    private static readonly Dictionary<IConfigBase.NetworkSync, List<ConfigIndex>> Indexer_NetSync = new();
+    private static readonly Dictionary<NetworkSync, List<ConfigIndex>> Indexer_NetSync = new();
     private static readonly List<ConfigIndex> Indexer_KeyMouseControls = new();
     private static readonly List<ConfigIndex> Indexer_AllLoadedEntries = new();
     private static readonly Dictionary<string, string> LoadedXDocKeys = new();

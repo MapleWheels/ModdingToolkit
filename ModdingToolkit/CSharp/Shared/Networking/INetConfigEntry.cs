@@ -12,7 +12,7 @@ public interface INetConfigEntry<T> : INetConfigBase where T : IConvertible
     /// Called when the Value is changed. Args: ModName, Name, Value.
     /// </summary>
     /// <param name="evtHandle"></param>
-    void SubscribeToNetEvents(System.Action<uint, T> evtHandle);
-    void UnsubscribeFromNetEvents(System.Action<uint, T> evtHandle);
+    void SubscribeToNetEvents(System.Action<Guid, T> evtHandle);
+    void UnsubscribeFromNetEvents(System.Action<Guid, T> evtHandle);
     T GetNetworkValue();
 }
