@@ -20,9 +20,9 @@ public static partial class NetworkingManager
     public static bool TryGetNetConfig(string modName, string name, out INetConfigBase? cfg)
     {
         cfg = null;
-        if (!Indexer_LocalNetConfigIds.ContainsKey(modName) || !Indexer_LocalNetConfigIds[modName].ContainsKey(name))
+        if (!Indexer_LocalNetConfigGuids.ContainsKey(modName) || !Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
             return false;
-        Guid cfgId = Indexer_LocalNetConfigIds[modName][name];
+        Guid cfgId = Indexer_LocalNetConfigGuids[modName][name];
         if (!NetConfigRegistry.ContainsKey(cfgId) || NetConfigRegistry[cfgId] is null)
             return false;
         cfg = NetConfigRegistry[cfgId];
@@ -53,17 +53,18 @@ public static partial class NetworkingManager
             return;
         
         GameMain.LuaCs.Networking.LuaCsNetReceives.Remove(NetMsgId);
+        ClearNetworkData();
+        UpdaterReadCallback.Clear();
+        UpdaterWriteCallback.Clear();
         NetConfigRegistry.Clear();
-        Indexer_NetConfigIds.Clear();
-        foreach (var indexer in Indexer_LocalNetConfigIds)
+        foreach (var indexer in Indexer_LocalNetConfigGuids)
             indexer.Value.Clear();
-        Indexer_LocalNetConfigIds.Clear();
-        Indexer_ReverseNetConfigId.Clear();
+        Indexer_LocalNetConfigGuids.Clear();
         UpdaterReadCallback.Clear();
         UpdaterWriteCallback.Clear();
 #if SERVER
         // Follow up resync won't occur as we've unsubscribed from the inbound net event.
-        SendMsg(WriteMessageHeaders(NetworkEventId.ResetState));            
+        SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.ResetState));            
 #endif
         IsInitialized = false;
     }
@@ -85,14 +86,7 @@ public static partial class NetworkingManager
             {
                 Utils.Networking.WriteNetValueFromType(wMessage, config.GetStringNetworkValue());
             });
-#if CLIENT
-        SendRequestIdSingle(config.ModName, config.Name);
-#else
-        if (WriteIdSingleMsg(config.ModName, config.Name, out var msg))
-        {
-            SendMsg(msg!);
-        }
-#endif
+        SynchronizeNewVar(config);
         return true;
     }
 
@@ -114,13 +108,31 @@ public static partial class NetworkingManager
                 Utils.Networking.WriteNetValueFromType(wMessage, config.GetNetworkValue());
             });
         config.SubscribeToNetEvents(SendNetEvent);
+        SynchronizeNewVar(config);
         return true;
+    }
+
+    /// <summary>
+    /// For use by custom INetConfigBase implementations.
+    /// Allows you to manually send a network event to update a sync var.
+    /// </summary>
+    /// <param name="netId"></param>
+    /// <param name="val"></param>
+    public static void SendStringNetVarUpdate(Guid netId, string val)
+    {
+        SendNetEvent(netId, val);
     }
 
     #endregion
 
     #region INTERNAL_OPS
 
+    private static void ClearNetworkData()
+    {
+        Indexer_NetConfigIds.Clear();
+        Indexer_ReverseNetConfigId.Clear();
+    }
+    
     private static void SendNetEvent<T>(Guid id, T val) where T : IConvertible
     {
         if (!Indexer_ReverseNetConfigId.ContainsKey(id) || Indexer_ReverseNetConfigId[id] == 0)
@@ -128,14 +140,14 @@ public static partial class NetworkingManager
             LuaCsSetup.PrintCsError($"NetworkManager::SendNetEvent<{typeof(T)}>() | No network id exists for the Guid {id.ToString()}");
             return;
         }
-        var msg = WriteMessageHeaders(NetworkEventId.SyncVarSingle);
+        var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
         uint netId = Indexer_ReverseNetConfigId[id];
         msg.WriteUInt32(netId);
         Utils.Networking.WriteNetValueFromType(msg, val);
         SendMsg(msg);
     }
 
-    private static IWriteMessage WriteMessageHeaders(NetworkEventId eventId)
+    private static IWriteMessage PrepareWriteMessageWithHeaders(NetworkEventId eventId)
     {
         var msg = GameMain.LuaCs.Networking.Start(NetworkingManager.NetMsgId);
         Utils.Networking.WriteNetValueFromType(msg, eventId);
@@ -146,22 +158,56 @@ public static partial class NetworkingManager
     {
         if (NetConfigRegistry.ContainsKey(localId) && NetConfigRegistry[localId] is not null)
             return false;
+        cfg.SetNetworkingId(localId);
         NetConfigRegistry[localId] = cfg;
-        if (!Indexer_LocalNetConfigIds.ContainsKey(cfg.ModName))
-            Indexer_LocalNetConfigIds.Add(cfg.ModName, new Dictionary<string, Guid>());
-        Indexer_LocalNetConfigIds[cfg.ModName][cfg.Name] = localId;
+        if (!Indexer_LocalNetConfigGuids.ContainsKey(cfg.ModName))
+            Indexer_LocalNetConfigGuids.Add(cfg.ModName, new Dictionary<string, Guid>());
+        Indexer_LocalNetConfigGuids[cfg.ModName][cfg.Name] = localId;
         return true;
+    }
+
+    private static void SynchronizeCleanLocalNetIndex(INetConfigBase cfg)
+    {
+        if (cfg.NetId == Guid.Empty)
+            return;
+        List<(uint, NetSyncVarIndex)> toAssign = new();
+        foreach (KeyValuePair<uint,NetSyncVarIndex> pair in Indexer_NetConfigIds)
+        {
+            // setup network index
+            if (pair.Value.ModName.Equals(cfg.ModName)
+                && pair.Value.Name.Equals(cfg.Name))
+            {
+                toAssign.Add((pair.Key, new NetSyncVarIndex(cfg.ModName, cfg.Name, cfg.NetId)));
+            }
+        }
+
+        if (!toAssign.Any())
+            return;
+        (uint, NetSyncVarIndex)? tupleA = null;
+        // cleanup to ensure there are never multiple entries
+        foreach ((uint, NetSyncVarIndex) tuple in toAssign)
+        {
+            Indexer_NetConfigIds.Remove(tuple.Item1);
+            if (tuple.Item1 > Counter.MinValue && tupleA is null)
+            {
+                tupleA = (tuple.Item1, tuple.Item2);
+            }
+        }
+        if (tupleA is null)
+            return;
+        Indexer_NetConfigIds[tupleA.Value.Item1] = tupleA.Value.Item2;
+        Indexer_ReverseNetConfigId[tupleA.Value.Item2.localId] = tupleA.Value.Item1;
     }
 
     private static bool RegisterOrUpdateNetConfigId(string modName, string name, uint id)
     {
         Guid guid = Guid.Empty; //empty
-        if (Indexer_LocalNetConfigIds.ContainsKey(modName) && Indexer_LocalNetConfigIds[modName].ContainsKey(name))
-            guid = Indexer_LocalNetConfigIds[modName][name];
+        if (Indexer_LocalNetConfigGuids.ContainsKey(modName) && Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
+            guid = Indexer_LocalNetConfigGuids[modName][name];
         Indexer_NetConfigIds[id] = new NetSyncVarIndex(modName, name, guid);
         if (guid != Guid.Empty)
             Indexer_ReverseNetConfigId[guid] = id;
-        return false;
+        return guid != Guid.Empty;
     }
 
     private static void RemoveCallbacks(Guid id)
@@ -186,7 +232,7 @@ public static partial class NetworkingManager
     private static readonly Dictionary<Guid, System.Action<IReadMessage>?> UpdaterReadCallback = new();
     private static readonly Dictionary<uint, NetSyncVarIndex> Indexer_NetConfigIds = new();
     private static readonly Dictionary<Guid, uint> Indexer_ReverseNetConfigId = new();
-    private static readonly Dictionary<string, Dictionary<string, Guid>> Indexer_LocalNetConfigIds = new();
+    private static readonly Dictionary<string, Dictionary<string, Guid>> Indexer_LocalNetConfigGuids = new();
     // ReSharper disable once StringLiteralTypo
     private static readonly string NetMsgId = "MTKNET";    //keep this short as it gets transmitted with every message.
 
@@ -196,10 +242,11 @@ public static partial class NetworkingManager
 
     private static class Counter
     {
+        public static uint MinValue { get; private set; } = 10;
         private static uint _counter;
         public static uint GetIncrement() => _counter++;
         public static uint Get() => _counter;
-        public static void Reset() => _counter = 10;    //values below 10 are reserved.
+        public static void Reset() => _counter = MinValue;    //values below 10 are reserved.
     }
 
     public enum NetworkEventId
@@ -210,6 +257,8 @@ public static partial class NetworkingManager
         SyncVarMulti,
         Client_RequestIdSingle,
         Client_RequestIdList,
+        Client_RequestSyncVarSingle,
+        Client_RequestSyncVarMulti,
         ClientResponse_ResetStateSuccess
     }
 

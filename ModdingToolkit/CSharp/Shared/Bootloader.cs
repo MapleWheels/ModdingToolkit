@@ -37,11 +37,13 @@ internal sealed class Bootloader : ACsMod
             _ =>
             {
                 ConfigManager.Dispose();
+                NetworkingManager.Dispose();
                 XMLDocumentHelper.UnloadCache();
                 UnloadPatches();
                 PatchManager.Dispose();
                 PluginHelper.UnloadAssemblies();
                 PluginHelper.LoadAssemblies();
+                NetworkingManager.Initialize(true);
                 LoadPatches();
             });
         
@@ -51,6 +53,7 @@ internal sealed class Bootloader : ACsMod
             _ =>
             {
                 ConfigManager.Dispose();
+                NetworkingManager.Dispose();
                 XMLDocumentHelper.UnloadCache();
                 UnloadPatches();
                 PatchManager.Dispose();

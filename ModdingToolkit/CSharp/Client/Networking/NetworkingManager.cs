@@ -33,6 +33,8 @@ public static partial class NetworkingManager
     private static void ReceiveResetNetworkState()
     {
         Initialize(true);
+        var outMsg = PrepareWriteMessageWithHeaders(NetworkEventId.ClientResponse_ResetStateSuccess);
+        SendMsg(outMsg);
     }
     
     private static bool ReceiveIdSingle(IReadMessage msg)
@@ -43,7 +45,8 @@ public static partial class NetworkingManager
             string modName = msg.ReadString();
             string name = msg.ReadString();
 
-            RegisterOrUpdateNetConfigId(modName, name, id);
+            if (RegisterOrUpdateNetConfigId(modName, name, id))
+                SendRequestSyncVarSingle(id);
             return true;
         }
         catch(Exception e)
@@ -66,6 +69,7 @@ public static partial class NetworkingManager
                     return;
                 }
             }
+            SendRequestSyncVarMulti();
         }
         catch
         {
@@ -122,15 +126,37 @@ public static partial class NetworkingManager
 
     #region NET_OUTBOUND
 
+    private static void SynchronizeNewVar(INetConfigBase cfg)
+    {
+        SynchronizeCleanLocalNetIndex(cfg);
+        SendRequestIdSingle(cfg.ModName, cfg.Name);
+    }
+
+    private static void SendRequestSyncVarSingle(uint id)
+    {
+        var outMessage = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
+        outMessage.WriteUInt32(id);
+        SendMsg(outMessage);
+    }
+
+    private static void SendRequestSyncVarMulti() =>
+        SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestSyncVarMulti));
+
     private static void SendRequestIdSingle(string modName, string name)
     {
-        var message = WriteMessageHeaders(NetworkEventId.Client_RequestIdSingle);
+        var message = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
         message.WriteString(modName);
         message.WriteString(name);
         SendMsg(message);
     }
 
-    private static void SendRequestIdList() => SendMsg(WriteMessageHeaders(NetworkEventId.Client_RequestIdList));
+    public static void SynchronizeAll()
+    {
+        ClearNetworkData();
+        SendRequestIdList();
+    }
+    
+    private static void SendRequestIdList() => SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdList));
 
     #endregion
 }

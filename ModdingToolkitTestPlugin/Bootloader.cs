@@ -15,12 +15,14 @@ public class Bootloader : IAssemblyPlugin
 
     public void Initialize()
     {
+        #region STANDARD-MENU_TESTS
+
         cc = ConfigManager.AddConfigKeyOrMouseBind(
             "TestEntry", 
             "ModdingTK",
             new KeyOrMouse(Keys.A),
             () => {}
-            );
+        );
 
         ce_float = ConfigManager.AddConfigEntry(
             "TestEntry00",
@@ -51,7 +53,7 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry04",
             "ModdingTK",
             10, 0, 20, 21
-            );
+        );
 
         icrf = ConfigManager.AddConfigRangeFloat(
             "TestEntry05",
@@ -63,7 +65,19 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry06",
             "ModdingTK",
             false);
+
+        #endregion
+
+        
     }
+
+    #region NETWORKING_TESTS
+    
+    
+
+    #endregion
+    
+    
 
     public void OnLoadCompleted()
     {

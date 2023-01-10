@@ -343,7 +343,7 @@ public static partial class ConfigManager
         ce.Initialize(name, modName, default!, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
-        if (GameMain.IsMultiplayer && ce is INetConfigEntry<T> ince)
+        if (ce is INetConfigEntry<T> ince)
             RegisterForNetworking(ince);
         return ce;
     }
@@ -360,7 +360,7 @@ public static partial class ConfigManager
         cl.Initialize(name, modName, default!, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
-        if (GameMain.IsMultiplayer && cl is INetConfigEntry<ushort> ince)
+        if (cl is INetConfigEntry<ushort> ince)
             RegisterForNetworking(ince);
         return cl;
     }
@@ -378,7 +378,7 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
-        if (GameMain.IsMultiplayer && cr is INetConfigEntry<int> ince)
+        if (cr is INetConfigEntry<int> ince)
             RegisterForNetworking(ince);
         return cr;
     }
@@ -396,7 +396,7 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
-        if (GameMain.IsMultiplayer && cr is INetConfigEntry<float> ince)
+        if (cr is INetConfigEntry<float> ince)
             RegisterForNetworking(ince);
         return cr;
     }
@@ -467,7 +467,7 @@ public static partial class ConfigManager
     
     #region INTERNAL_OPERATIONS
 
-    #region IO
+    #region LOCAL_IO
     private static bool SaveData(IConfigBase config)
     {
         if (config.Name.IsNullOrWhiteSpace())
@@ -667,8 +667,12 @@ public static partial class ConfigManager
     
     #endregion
 
+    #region NETWORKING
+
     private static void RegisterForNetworking(INetConfigBase cfg)
     {
+        if (!GameMain.IsMultiplayer || cfg.NetSync == NetworkSync.NoSync)
+            return;
         if (!NetworkingManager.RegisterNetConfigInstance(cfg))
         {
             LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
@@ -677,11 +681,15 @@ public static partial class ConfigManager
 
     private static void RegisterForNetworking<T>(INetConfigEntry<T> cfg) where T : IConvertible
     {
+        if (!GameMain.IsMultiplayer || cfg.NetSync == NetworkSync.NoSync)
+            return;
         if (!NetworkingManager.RegisterNetConfigInstance(cfg))
         {
             LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
         }
     }
+
+    #endregion
 
     private static void RemoveConfigFromLists(IConfigBase config)
     {
