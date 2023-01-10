@@ -31,6 +31,9 @@ public static partial class NetworkingManager
 
     public static void Initialize(bool force = false)
     {
+        if (!GameMain.IsMultiplayer)
+            return;
+        
         if (IsInitialized)
         {
             if (force)
@@ -38,7 +41,7 @@ public static partial class NetworkingManager
             else 
                 return;
         }
-            
+
         GameMain.LuaCs.Networking.Receive(
             NetMsgId, 
             args => ReceiveMessage((IReadMessage)args[0], (Barotrauma.Networking.Client)args[1])
@@ -188,11 +191,12 @@ public static partial class NetworkingManager
         foreach ((uint, NetSyncVarIndex) tuple in toAssign)
         {
             Indexer_NetConfigIds.Remove(tuple.Item1);
-            if (tuple.Item1 > Counter.MinValue && tupleA is null)
+            if (tuple.Item1 >= Counter.MinValue && tupleA is null)
             {
                 tupleA = (tuple.Item1, tuple.Item2);
             }
         }
+        
         if (tupleA is null)
             return;
         Indexer_NetConfigIds[tupleA.Value.Item1] = tupleA.Value.Item2;

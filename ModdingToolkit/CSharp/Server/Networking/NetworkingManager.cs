@@ -6,11 +6,6 @@ public static partial class NetworkingManager
 {
     public static void SendMsg(IWriteMessage msg, NetworkConnection? conn = null) => GameMain.LuaCs.Networking.Send(msg, conn, DeliveryMethod.Reliable);
 
-    public static void SynchronizeAll()
-    {
-        
-    }
-
     #region NET_OUTBOUND_FROM_INTERNAL
 
     private static void SynchronizeNewVar(INetConfigBase cfg)
@@ -27,7 +22,13 @@ public static partial class NetworkingManager
         {
             SendMsg(msg!);
         }
-    }    
+    }
+
+    public static void SynchronizeAll()
+    {
+        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.ResetState);
+        SendMsg(outmsg);
+    }
 
     #endregion
     
@@ -91,7 +92,7 @@ public static partial class NetworkingManager
     {
         if (client is null)
             return;
-        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestSyncVarMulti);
+        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarMulti);
         List<(uint, Action<IWriteMessage>)> idList = new();
         foreach (KeyValuePair<uint,NetSyncVarIndex> index in Indexer_NetConfigIds)
         {
@@ -102,6 +103,9 @@ public static partial class NetworkingManager
                 idList.Add((index.Key, UpdaterWriteCallback[index.Value.localId]!));
             }
         }
+
+        if (!idList.Any())
+            return;
         outmsg.WriteUInt32(Convert.ToUInt32(idList.Count));
         foreach ((uint, Action<IWriteMessage>) tuple in idList)
         {

@@ -5,6 +5,25 @@ namespace ModdingToolkit.Networking;
 public static partial class NetworkingManager
 {
     public static void SendMsg(IWriteMessage msg) => GameMain.LuaCs.Networking.Send(msg, DeliveryMethod.Reliable);
+
+    private static bool ReadIdSingle(IReadMessage msg, out uint id, out string modName, out string name)
+    {
+        try
+        {
+            id = msg.ReadUInt32();
+            modName = msg.ReadString();
+            name = msg.ReadString();
+            return true;
+        }
+        catch (Exception e)
+        {
+            LuaCsSetup.PrintCsError($"NetworkingManager::ReadIdSingle() | Unable to continue. Message read error. | Exception: {e.Message}");
+            id = 0;
+            modName = string.Empty;
+            name = string.Empty;
+            return false;
+        }
+    }
     
     #region NET_INBOUND
 
@@ -32,28 +51,23 @@ public static partial class NetworkingManager
 
     private static void ReceiveResetNetworkState()
     {
-        Initialize(true);
+        ClearNetworkData();
         var outMsg = PrepareWriteMessageWithHeaders(NetworkEventId.ClientResponse_ResetStateSuccess);
         SendMsg(outMsg);
     }
     
     private static bool ReceiveIdSingle(IReadMessage msg)
     {
-        try
+        if (ReadIdSingle(msg, out uint id, out string modName, out string name))
         {
-            uint id = msg.ReadUInt32();
-            string modName = msg.ReadString();
-            string name = msg.ReadString();
-
             if (RegisterOrUpdateNetConfigId(modName, name, id))
+            {
                 SendRequestSyncVarSingle(id);
-            return true;
+                return true;
+            }
         }
-        catch(Exception e)
-        {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveIdSingle() | Unable to process incoming Id. Bad format. Exception: {e.Message}");
-            return false;
-        }
+
+        return false;
     }
     
     private static void ReceiveIdList(IReadMessage msg)
@@ -63,42 +77,53 @@ public static partial class NetworkingManager
             uint counter = msg.ReadUInt32();
             for (int index = 0; index < counter; index++)
             {
-                if (!ReceiveIdSingle(msg))
+                if (ReadIdSingle(msg, out uint id, out string modName, out string name))
+                    RegisterOrUpdateNetConfigId(modName, name, id);
+                else
                 {
-                    LuaCsSetup.PrintCsError("NetworkingManager::ReceiveIdList() | Unable to continue. Message read error.");
-                    return;
+                    LuaCsSetup.PrintCsError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
+                    break;
                 }
             }
             SendRequestSyncVarMulti();
         }
-        catch
+        catch (Exception e)
         {
-            LuaCsSetup.PrintCsError("NetworkingManager::ReceiveIdList() | Unable to continue. Message read error.");
+            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveIdList() | Unable to continue. Message read error. | Exception: {e.Message}");
         }
     }
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg)
     {
-        uint id = msg.ReadUInt32();
-        if (!Indexer_NetConfigIds.ContainsKey(id))
+        try
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
+            uint id = msg.ReadUInt32();
+            if (!Indexer_NetConfigIds.ContainsKey(id))
+            {
+                LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
+                return false;
+            }
+            var cfgDat = Indexer_NetConfigIds[id];
+            if (cfgDat.localId != Guid.Empty 
+                && UpdaterReadCallback.ContainsKey(cfgDat.localId) 
+                && UpdaterReadCallback[cfgDat.localId] is not null
+                && NetConfigRegistry.ContainsKey(cfgDat.localId) 
+                && NetConfigRegistry[cfgDat.localId] is
+                {
+                    IsNetworked: true, 
+                    NetSync: NetworkSync.TwoWaySync or NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync
+                })
+            {
+                UpdaterReadCallback[cfgDat.localId]!.Invoke(msg);
+                return true;
+            }
             return false;
         }
-        var cfgDat = Indexer_NetConfigIds[id];
-        if (cfgDat.localId != Guid.Empty 
-            && UpdaterReadCallback.ContainsKey(cfgDat.localId) 
-            && NetConfigRegistry.ContainsKey(cfgDat.localId) 
-            && NetConfigRegistry[cfgDat.localId] is
-            {
-                IsNetworked: true, 
-                NetSync: NetworkSync.TwoWaySync or NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync
-            })
+        catch (Exception e)
         {
-            UpdaterReadCallback[cfgDat.localId]?.Invoke(msg);
-            return true;
+            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue.");
+            return false;
         }
-        return false;
     }
     
     private static void ReceiveSyncVarMulti(IReadMessage msg)

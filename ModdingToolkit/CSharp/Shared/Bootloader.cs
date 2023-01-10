@@ -21,17 +21,19 @@ internal sealed class Bootloader : ACsMod
     private void Init()
     {
         RegisterLua();
+        NetworkingManager.Initialize(true);
         PluginHelper.LoadAssemblies();
         LoadPatches();
         RegisterCommands();
         ConsoleCommands.ReloadAllCommands();
-        NetworkingManager.Initialize(true);
+        NetworkingManager.SynchronizeAll();
         IsLoaded = true;
     }
 
     private void RegisterCommands()
     {
-        ConsoleCommands.RegisterCommand(
+        // TODO: Fix console commands. This is disabled as unloading plugins requires unloading and reloading Config and Networking but there is no way to ensure compliance from ContentPackage mods. This will just leads to runtime errors for end-users.
+        /*ConsoleCommands.RegisterCommand(
             "cl_reloadassemblies", 
             "Reloads all assemblies and their plugins.",
             _ =>
@@ -44,6 +46,7 @@ internal sealed class Bootloader : ACsMod
                 PluginHelper.UnloadAssemblies();
                 PluginHelper.LoadAssemblies();
                 NetworkingManager.Initialize(true);
+                NetworkingManager.SynchronizeAll();
                 LoadPatches();
             });
         
@@ -58,7 +61,7 @@ internal sealed class Bootloader : ACsMod
                 UnloadPatches();
                 PatchManager.Dispose();
                 PluginHelper.UnloadAssemblies();
-            });
+            });*/
         
         ConsoleCommands.RegisterCommand(
             "cl_cfgsetvar",
