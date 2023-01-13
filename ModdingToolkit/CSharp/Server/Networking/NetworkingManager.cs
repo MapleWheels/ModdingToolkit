@@ -4,7 +4,7 @@ namespace ModdingToolkit.Networking;
 
 public static partial class NetworkingManager
 {
-    public static void SendMsg(IWriteMessage msg, NetworkConnection? conn = null) => GameMain.LuaCs.Networking.Send(msg, conn, DeliveryMethod.Reliable);
+    private static void SendMsg(IWriteMessage msg, NetworkConnection? conn = null) => GameMain.LuaCs.Networking.Send(msg, conn, DeliveryMethod.Reliable);
 
     #region NET_OUTBOUND_FROM_INTERNAL
 
@@ -206,8 +206,21 @@ public static partial class NetworkingManager
     private static IWriteMessage WriteIdListMsg()
     {
         var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdList);
-        outmsg.WriteUInt32(Convert.ToUInt32(Indexer_NetConfigIds.Count));
-        foreach (var index in Indexer_NetConfigIds)
+        ImmutableDictionary<uint, NetSyncVarIndex> toSync = Indexer_NetConfigIds.Where((kvp) =>
+        {
+            if (TryGetNetConfig(kvp.Value.ModName, kvp.Value.Name, out var cfg) 
+                && cfg is
+                {
+                    IsNetworked: true,
+                    NetSync: NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.TwoWaySync
+                })
+            {
+                return true;
+            }
+            return false;
+        }).ToImmutableDictionary();
+        outmsg.WriteUInt32(Convert.ToUInt32(toSync.Count));
+        foreach (var index in toSync)
         {
             outmsg.WriteUInt32(index.Key);
             outmsg.WriteString(index.Value.ModName);

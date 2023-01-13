@@ -4,7 +4,7 @@ namespace ModdingToolkit.Networking;
 
 public static partial class NetworkingManager
 {
-    public static void SendMsg(IWriteMessage msg) => GameMain.LuaCs.Networking.Send(msg, DeliveryMethod.Reliable);
+    private static void SendMsg(IWriteMessage msg) => GameMain.LuaCs.Networking.Send(msg, DeliveryMethod.Reliable);
 
     private static bool ReadIdSingle(IReadMessage msg, out uint id, out string modName, out string name)
     {
@@ -56,15 +56,28 @@ public static partial class NetworkingManager
         SendMsg(outMsg);
     }
     
-    private static bool ReceiveIdSingle(IReadMessage msg)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="msg"></param>
+    /// <param name="requestSyncVar"></param>
+    /// <returns>Returns whether the message buffer was read successfully.</returns>
+    private static bool ReceiveIdSingle(IReadMessage msg, bool requestSyncVar = true)
     {
         if (ReadIdSingle(msg, out uint id, out string modName, out string name))
         {
-            if (RegisterOrUpdateNetConfigId(modName, name, id))
+            if (RegisterOrUpdateNetConfigId(modName, name, id)
+                && requestSyncVar
+                && TryGetNetConfig(modName, name, out var cfg)
+                && cfg is
+                {
+                    IsNetworked: true,
+                    NetSync: NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.TwoWaySync
+                })
             {
                 SendRequestSyncVarSingle(id);
-                return true;
             }
+            return true;
         }
 
         return false;
@@ -77,9 +90,7 @@ public static partial class NetworkingManager
             uint counter = msg.ReadUInt32();
             for (int index = 0; index < counter; index++)
             {
-                if (ReadIdSingle(msg, out uint id, out string modName, out string name))
-                    RegisterOrUpdateNetConfigId(modName, name, id);
-                else
+                if (ReceiveIdSingle(msg, false))
                 {
                     LuaCsSetup.PrintCsError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
                     break;
@@ -121,7 +132,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue.");
+            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue. | Exception: {e.Message}");
             return false;
         }
     }

@@ -9,9 +9,11 @@ public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
     
     public int Steps { get; private set; }
 
+    private Action<IConfigRangeInt>? _onValChanged;
+
     public void Initialize(string name, string modName, int newValue, int defaultValue, int minValue, int maxValue, int steps,
         NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<int, bool>? valueChangePredicate = null, Action? onValueChanged = null)
+        Func<int, bool>? valueChangePredicate = null, Action<IConfigRangeInt>? onValueChanged = null)
     {
         if (minValue >= maxValue)
             throw new ArgumentException(
@@ -19,8 +21,10 @@ public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
         Steps = steps;
         MinValue = minValue;
         MaxValue = maxValue;
+        _onValChanged = onValueChanged;
         
-        base.Initialize(name, modName, newValue, defaultValue, sync, menuCategory, valueChangePredicate, onValueChanged);
+        base.Initialize(name, modName, newValue, defaultValue, sync, menuCategory, 
+            valueChangePredicate, _ => _onValChanged?.Invoke(this));
     }
 
     public override bool Validate(int value) => value >= MinValue && value <= MaxValue && base.Validate(value);

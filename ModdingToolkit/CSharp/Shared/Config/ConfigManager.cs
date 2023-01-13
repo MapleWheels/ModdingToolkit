@@ -1,10 +1,13 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Xml.Linq;
 using Barotrauma.Networking;
-using Microsoft.Xna.Framework.Input;
 using ModdingToolkit;
 using ModdingToolkit.Networking;
+#if CLIENT
+using Microsoft.Xna.Framework.Input;
+#else
+
+#endif
 
 namespace ModdingToolkit.Config;
 
@@ -54,7 +57,7 @@ public static partial class ConfigManager
         T defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action? onValueChanged = null,
+        Action<IConfigEntry<T>>? onValueChanged = null,
         Func<T, bool>? validateNewInput = null,
         string? filePathOverride = null) where T : IConvertible
     {
@@ -83,7 +86,7 @@ public static partial class ConfigManager
         NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigList>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigList(name, modName, defaultValue, valueList, networkSync, 
@@ -112,7 +115,7 @@ public static partial class ConfigManager
         NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeInt>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
@@ -141,7 +144,7 @@ public static partial class ConfigManager
         NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeFloat>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
@@ -292,7 +295,7 @@ public static partial class ConfigManager
     public static IConfigEntry<double> AddConfigDouble(string name, string modName, double defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        Action<IConfigEntry<double>>? onValueChanged = null, 
         Func<double, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -300,7 +303,7 @@ public static partial class ConfigManager
     public static IConfigEntry<string> AddConfigString(string name, string modName, string defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        Action<IConfigEntry<string>>? onValueChanged = null, 
         Func<string, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -309,7 +312,7 @@ public static partial class ConfigManager
     public static IConfigEntry<bool> AddConfigBoolean(string name, string modName, bool defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        Action<IConfigEntry<bool>>? onValueChanged = null, 
         Func<bool, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -318,7 +321,7 @@ public static partial class ConfigManager
     public static IConfigEntry<int> AddConfigInteger(string name, string modName, int defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        Action<IConfigEntry<int>>? onValueChanged = null, 
         Func<int, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -334,13 +337,13 @@ public static partial class ConfigManager
         T defaultValue,
         IConfigBase.Category menuCategory,
         NetworkSync networkSync,
-        Action? onValueChanged,
+        Action<IConfigEntry<T>>? onValueChanged,
         Func<T, bool>? validateNewInput,
         string? filePathOverride = null
         ) where T : IConvertible
     {
         ConfigEntry<T> ce = new();
-        ce.Initialize(name, modName, default!, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
+        ce.Initialize(name, modName, defaultValue, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
         if (ce is INetConfigEntry<T> ince)
@@ -353,11 +356,11 @@ public static partial class ConfigManager
         NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigList>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigList cl = new();
-        cl.Initialize(name, modName, default!, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
+        cl.Initialize(name, modName, defaultValue, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
         if (cl is INetConfigEntry<ushort> ince)
@@ -371,11 +374,11 @@ public static partial class ConfigManager
         NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeInt>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigRangeInt cr = new();
-        cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
         if (cr is INetConfigEntry<int> ince)
@@ -389,11 +392,11 @@ public static partial class ConfigManager
         NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeFloat>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigRangeFloat cr = new();
-        cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
         if (cr is INetConfigEntry<float> ince)

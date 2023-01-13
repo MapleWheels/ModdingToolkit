@@ -1,6 +1,10 @@
-﻿using Microsoft.Xna.Framework.Input;
+﻿using System.Globalization;
+using Microsoft.Xna.Framework.Input;
 using ModdingToolkit.Config;
+using ModdingToolkit.Networking;
 
+[assembly: IgnoresAccessChecksTo("Barotrauma")]
+[assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModdingToolkitTestPlugin;
 
 public class Bootloader : IAssemblyPlugin
@@ -12,6 +16,9 @@ public class Bootloader : IAssemblyPlugin
     private IConfigList? cl;
     private IConfigRangeInt? icri;
     private IConfigRangeFloat? icrf;
+    private IConfigEntry<float>? net_ce_float;
+    private IConfigEntry<string>? net_ce_string;
+    private IConfigList? net_cl;
 
     public void Initialize()
     {
@@ -68,12 +75,60 @@ public class Bootloader : IAssemblyPlugin
 
         #endregion
 
+        #region NETWORKING_TESTS_CVARS
+
+        net_ce_float = ConfigManager.AddConfigEntry<float>(
+            "net_ce_test01",
+            "ModdingTK2",
+            10f,
+            IConfigBase.Category.Ignore,
+            NetworkSync.ServerAuthority,
+            (ce) =>
+            {
+                PrintNetTestMsg(
+                    ce.ModName + ":" + ce.Name,
+                    ce.Value.ToString(CultureInfo.CurrentCulture));
+            }
+        );
         
+        net_ce_string = ConfigManager.AddConfigEntry<string>(
+            "net_ce_test02",
+            "ModdingTK2",
+            "Hello",
+            IConfigBase.Category.Ignore,
+            NetworkSync.ServerAuthority,
+            (ce) =>
+            {
+                PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);
+            }
+        );
+        
+        net_cl = ConfigManager.AddConfigList(
+            "net_ce_test03",
+            "ModdingTK2",
+            "03",
+            new List<string> { "01", "02", "03", "04", "05" },
+            NetworkSync.TwoWaySync,
+            IConfigBase.Category.Ignore,
+            null,
+            (ce) =>
+            {
+                PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);
+            }
+        );
+
+        #endregion
     }
 
     #region NETWORKING_TESTS
-    
-    
+
+    private static void PrintNetTestMsg(string name, string value)
+    {
+        string mode = GameMain.IsSingleplayer ? "sp" : "mp";
+        LuaCsSetup.PrintCsMessage(NetworkingManager.IsClient
+            ? $"net_ce_test: client, name: {name}, mode: {mode}, net_auth: srvauth, value {value}"
+            : $"net_ce_test: server, name: {name}, mode: {mode}, net_auth: srvauth, value {value}");
+    }
 
     #endregion
     

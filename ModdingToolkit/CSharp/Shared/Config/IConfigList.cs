@@ -11,7 +11,7 @@ public interface IConfigList : IConfigBase
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<string, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null);
+        Action<IConfigList>? onValueChanged = null);
     bool Validate(string value);
     public int GetDefaultValueIndex();
     public void SetValueFromIndex(int index);

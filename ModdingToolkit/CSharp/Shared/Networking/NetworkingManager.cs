@@ -144,8 +144,7 @@ public static partial class NetworkingManager
             return;
         }
         var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
-        uint netId = Indexer_ReverseNetConfigId[id];
-        msg.WriteUInt32(netId);
+        msg.WriteUInt32(Indexer_ReverseNetConfigId[id]);
         Utils.Networking.WriteNetValueFromType(msg, val);
         SendMsg(msg);
     }
@@ -251,19 +250,6 @@ public static partial class NetworkingManager
         public static uint GetIncrement() => _counter++;
         public static uint Get() => _counter;
         public static void Reset() => _counter = MinValue;    //values below 10 are reserved.
-    }
-
-    public enum NetworkEventId
-    {
-        Undef = 0,
-        ResetState,
-        SyncVarSingle,
-        SyncVarMulti,
-        Client_RequestIdSingle,
-        Client_RequestIdList,
-        Client_RequestSyncVarSingle,
-        Client_RequestSyncVarMulti,
-        ClientResponse_ResetStateSuccess
     }
 
     public record NetSyncVarIndex(string ModName, string Name, Guid localId);

@@ -1,4 +1,5 @@
-﻿using ModdingToolkit.Networking;
+﻿using System.ComponentModel;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
@@ -8,7 +9,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
     
     protected T _value = default!;
     protected Func<T, bool>? _valueChangePredicate;
-    protected System.Action? _onValueChanged;
+    protected System.Action<IConfigEntry<T>>? _onValueChanged;
     protected System.Action<Guid, T>? _onNetworkEvent;
 
     #endregion
@@ -27,7 +28,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
             if (Validate(value) && NetAuthorityValidate())
             {
                 this._value = value;
-                this._onValueChanged?.Invoke();
+                this._onValueChanged?.Invoke(this);
 #if CLIENT
                 if (this.NetSync == NetworkSync.TwoWaySync)
                 {
@@ -62,7 +63,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null)
+        Action<IConfigEntry<T>>? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty.");
@@ -71,8 +72,8 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
 
         this.Name = name;
         this.ModName = modName;
-        this.Value = newValue;
         this.DefaultValue = defaultValue;
+        this._value = this.Validate(newValue) ? newValue : this.DefaultValue;
         this.NetSync = sync;
         this.MenuCategory = menuCategory;
         if (valueChangePredicate is not null)
@@ -93,12 +94,21 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
     {
         try
         {
-            this.Value = (T)Convert.ChangeType(value, typeof(T));
+            if (typeof(T) == typeof(string))
+            {
+                this.Value = (T)(object)value;
+                return;
+            }
+            
+            var conv = TypeDescriptor.GetConverter(typeof(T));
+            T? val = (T?)conv.ConvertFromString(value);
+            if (val is not null)
+                this.Value = val;
         }
-        catch (Exception)
+        catch (Exception e)
         {
             LuaCsSetup.PrintCsError(
-                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
+                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}. EXCEPTION: {e.Message}. INNER_EXCEPTION: {e.InnerException}");
         }
     }
 
@@ -136,7 +146,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         try
         {
             this._value = (T)Convert.ChangeType(value, typeof(T));
-            this._onValueChanged?.Invoke();
+            this._onValueChanged?.Invoke(this);
             return true;
         }
         catch (Exception)
@@ -153,7 +163,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         if (!Validate(value))
             return false;
         this._value = value;
-        this._onValueChanged?.Invoke();
+        this._onValueChanged?.Invoke(this);
         return true;
     }
 

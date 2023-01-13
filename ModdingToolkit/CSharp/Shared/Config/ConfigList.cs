@@ -9,7 +9,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     protected string _value = String.Empty;
     protected ImmutableList<string> _valueList = ImmutableList<string>.Empty;
     protected Func<string, bool>? _valueChangePredicate = null;
-    protected System.Action? _onValueChanged;
+    protected System.Action<IConfigList>? _onValueChanged;
     protected System.Action<Guid, ushort>? _onNetworkEvent;
 
     #endregion
@@ -34,7 +34,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
             if (Validate(value) && NetAuthorityValidate())
             {
                 this._value = value;
-                this._onValueChanged?.Invoke();
+                this._onValueChanged?.Invoke(this);
                 //will never be empty, error on val >65,535, a list shouldn't ever be this big.
 #if CLIENT
                 if (this.NetSync == NetworkSync.TwoWaySync)
@@ -57,7 +57,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     
     public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
         NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<string, bool>? valueChangePredicate = null, Action? onValueChanged = null)
+        Func<string, bool>? valueChangePredicate = null, Action<IConfigList>? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<string>::Initialize() | Name is null or empty.");
@@ -131,7 +131,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
         if (!ValidateString(value))
             return false;
         this._value = value;
-        this._onValueChanged?.Invoke();
+        this._onValueChanged?.Invoke(this);
         return true;
     }
 
@@ -142,7 +142,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
         if (value >= _valueList.Count)
             return false;
         this._value = _valueList[value];
-        this._onValueChanged?.Invoke();
+        this._onValueChanged?.Invoke(this);
         return true;
     }
 

@@ -12,5 +12,5 @@ public interface IConfigRangeFloat : IConfigEntry<float>
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<float, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null);
+        Action<IConfigRangeFloat>? onValueChanged = null);
 }

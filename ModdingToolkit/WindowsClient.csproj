@@ -24,6 +24,7 @@
       <PlatformTarget>x64</PlatformTarget>
       <DefineConstants>TRACE,CLIENT</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DocumentationFile>bin\Release\WindowsClient.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
