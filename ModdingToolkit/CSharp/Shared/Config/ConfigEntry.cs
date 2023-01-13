@@ -107,7 +107,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError(
+            Utils.Logging.PrintError(
                 $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}. EXCEPTION: {e.Message}. INNER_EXCEPTION: {e.InnerException}");
         }
     }
@@ -151,7 +151,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         }
         catch (Exception)
         {
-            LuaCsSetup.PrintCsError($"ConfigEntry<{typeof(T)}>::SetStringValueFromNetwork() | Unable to convert string to Native type. StringValue={value}, CName={ModName}::{Name}");
+            Utils.Logging.PrintError($"ConfigEntry<{typeof(T)}>::SetStringValueFromNetwork() | Unable to convert string to Native type. StringValue={value}, CName={ModName}::{Name}");
             return false;
         }
     }

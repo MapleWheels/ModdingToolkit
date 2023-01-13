@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<contentpackage name="Modding Toolkit" modversion="0.0.1.0" corepackage="false">
+<contentpackage name="Modding Toolkit" modversion="0.0.1.3" corepackage="false">
     <Other file="%ModDir%/CSharp/Shared/Bootloader.cs" />
 </contentpackage>

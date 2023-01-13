@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>ModdingToolkitTestPlugin.plugin</AssemblyName>
+        <RootNamespace>ModdingToolkitTestPlugin</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACE;SERVER</DefineConstants>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DefineConstants>TRACE;SERVER</DefineConstants>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="0Harmony">
+        <HintPath>..\Refs\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="DedicatedServer">
+        <HintPath>..\Refs\DedicatedServer.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Cecil">
+        <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework.Windows.NetStandard">
+        <HintPath>..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Common">
+        <HintPath>..\Refs\MonoMod.Common.dll</HintPath>
+      </Reference>
+      <Reference Include="XNATypes">
+        <HintPath>..\Refs\XNATypes.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WindowsServer\WindowsServer.csproj" />
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced&quot; &quot;$(TargetFileName)&quot;) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0&#xA;&#xA;(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced&quot; &quot;$(TargetName).deps.json&quot;) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0" />
+    </Target>
+
+</Project>

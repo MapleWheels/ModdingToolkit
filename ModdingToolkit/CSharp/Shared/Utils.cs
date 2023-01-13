@@ -5,6 +5,19 @@ namespace ModdingToolkit;
 
 public static class Utils
 {
+    public static class Logging
+    {
+        public static void PrintMessage(string s)
+        {
+            LuaCsSetup.PrintCsMessage(s);
+        }
+        
+        public static void PrintError(string s)
+        {
+            LuaCsSetup.PrintCsError(s);
+        }
+    }
+    
     public static class IO
     {
         public static string PrepareFilePathString(string filePath) =>
@@ -40,37 +53,37 @@ public static class Utils
                 }
                 catch (ArgumentNullException ane)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: An argument is null. path: {fp ?? "null"} | Exception Details: {ane.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: An argument is null. path: {fp ?? "null"} | Exception Details: {ane.Message}");
                     return IOActionResultState.FilePathNull;
                 }
                 catch (ArgumentException ae)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: An argument is invalid. path: {fp ?? "null"} | Exception Details: {ae.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: An argument is invalid. path: {fp ?? "null"} | Exception Details: {ae.Message}");
                     return IOActionResultState.FilePathInvalid;
                 }
                 catch (DirectoryNotFoundException dnfe)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Cannot find directory. path: {fp ?? "null"} | Exception Details: {dnfe.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Cannot find directory. path: {fp ?? "null"} | Exception Details: {dnfe.Message}");
                     return IOActionResultState.DirectoryMissing;
                 }
                 catch (PathTooLongException ptle)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: path length is over 200 characters. path: {fp ?? "null"} | Exception Details: {ptle.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: path length is over 200 characters. path: {fp ?? "null"} | Exception Details: {ptle.Message}");
                     return IOActionResultState.PathTooLong;
                 }
                 catch (NotSupportedException nse)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Operation not supported on your platform/environment (permissions?). path: {fp ?? "null"}  | Exception Details: {nse.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Operation not supported on your platform/environment (permissions?). path: {fp ?? "null"}  | Exception Details: {nse.Message}");
                     return IOActionResultState.InvalidOperation;
                 }
                 catch (IOException ioe)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: IO tasks failed (Operation not supported). path: {fp ?? "null"}  | Exception Details: {ioe.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: IO tasks failed (Operation not supported). path: {fp ?? "null"}  | Exception Details: {ioe.Message}");
                     return IOActionResultState.IOFailure;
                 }
                 catch (Exception e)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Unknown/Other Exception. path: {fp ?? "null"} | ExceptionMessage: {e.Message}");
+                    Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Unknown/Other Exception. path: {fp ?? "null"} | ExceptionMessage: {e.Message}");
                     return IOActionResultState.UnknownError;
                 }
             }
@@ -94,37 +107,37 @@ public static class Utils
             }
             catch (ArgumentNullException ane)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: An argument is null. path: {formattedFilePath ?? "null"}  | Exception Details: {ane.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: An argument is null. path: {formattedFilePath ?? "null"}  | Exception Details: {ane.Message}");
                 return IOActionResultState.FilePathNull;
             }
             catch (ArgumentException ae)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: An argument is invalid. path: {formattedFilePath ?? "null"} | Exception Details: {ae.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: An argument is invalid. path: {formattedFilePath ?? "null"} | Exception Details: {ae.Message}");
                 return IOActionResultState.FilePathInvalid;
             }
             catch (DirectoryNotFoundException dnfe)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Cannot find directory. path: {path ?? "null"} | Exception Details: {dnfe.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Cannot find directory. path: {path ?? "null"} | Exception Details: {dnfe.Message}");
                 return IOActionResultState.DirectoryMissing;
             }
             catch (PathTooLongException ptle)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: path length is over 200 characters. path: {formattedFilePath ?? "null"} | Exception Details: {ptle.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: path length is over 200 characters. path: {formattedFilePath ?? "null"} | Exception Details: {ptle.Message}");
                 return IOActionResultState.PathTooLong;
             }
             catch (NotSupportedException nse)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Operation not supported on your platform/environment (permissions?). path: {formattedFilePath ?? "null"} | Exception Details: {nse.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Operation not supported on your platform/environment (permissions?). path: {formattedFilePath ?? "null"} | Exception Details: {nse.Message}");
                 return IOActionResultState.InvalidOperation;
             }
             catch (IOException ioe)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: IO tasks failed (Operation not supported). path: {formattedFilePath ?? "null"} | Exception Details: {ioe.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: IO tasks failed (Operation not supported). path: {formattedFilePath ?? "null"} | Exception Details: {ioe.Message}");
                 return IOActionResultState.IOFailure;
             }
             catch (Exception e)
             {
-                LuaCsSetup.PrintCsError($"Utils::CreateFilePath() | Exception: Unknown/Other Exception. path: {path ?? "null"} | Exception Details: {e.Message}");
+                Utils.Logging.PrintError($"Utils::CreateFilePath() | Exception: Unknown/Other Exception. path: {path ?? "null"} | Exception Details: {e.Message}");
                 return IOActionResultState.UnknownError;
             }
         }
@@ -141,37 +154,37 @@ public static class Utils
                 }
                 catch (ArgumentNullException ane)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: An argument is null. path: {fp ?? "null"} | Exception Details: {ane.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: An argument is null. path: {fp ?? "null"} | Exception Details: {ane.Message}");
                     return IOActionResultState.FilePathNull;
                 }
                 catch (ArgumentException ae)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: An argument is invalid. path: {fp ?? "null"} | Exception Details: {ae.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: An argument is invalid. path: {fp ?? "null"} | Exception Details: {ae.Message}");
                     return IOActionResultState.FilePathInvalid;
                 }
                 catch (DirectoryNotFoundException dnfe)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: Cannot find directory. path: {fp ?? "null"} | Exception Details: {dnfe.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: Cannot find directory. path: {fp ?? "null"} | Exception Details: {dnfe.Message}");
                     return IOActionResultState.DirectoryMissing;
                 }
                 catch (PathTooLongException ptle)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: path length is over 200 characters. path: {fp ?? "null"} | Exception Details: {ptle.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: path length is over 200 characters. path: {fp ?? "null"} | Exception Details: {ptle.Message}");
                     return IOActionResultState.PathTooLong;
                 }
                 catch (NotSupportedException nse)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: Operation not supported on your platform/environment (permissions?). path: {fp ?? "null"} | Exception Details: {nse.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: Operation not supported on your platform/environment (permissions?). path: {fp ?? "null"} | Exception Details: {nse.Message}");
                     return IOActionResultState.InvalidOperation;
                 }
                 catch (IOException ioe)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: IO tasks failed (Operation not supported). path: {fp ?? "null"} | Exception Details: {ioe.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: IO tasks failed (Operation not supported). path: {fp ?? "null"} | Exception Details: {ioe.Message}");
                     return IOActionResultState.IOFailure;
                 }
                 catch (Exception e)
                 {
-                    LuaCsSetup.PrintCsError($"Utils::WriteFileText() | Exception: Unknown/Other Exception. path: {fp ?? "null"} | ExceptionMessage: {e.Message}");
+                    Utils.Logging.PrintError($"Utils::WriteFileText() | Exception: Unknown/Other Exception. path: {fp ?? "null"} | ExceptionMessage: {e.Message}");
                     return IOActionResultState.UnknownError;
                 }
             }
@@ -220,12 +233,12 @@ public static class Utils
                 }
                 catch (Exception e)
                 {
-                    LuaCsSetup.PrintCsError(e);
+                    Utils.Logging.PrintError($"Utils.Net...::ReadNetValueFromType() | {e.Message}");
                     return 0;
                 }
             }
 
-            LuaCsSetup.PrintCsError(
+            Utils.Logging.PrintError(
             $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return 0;
         }
@@ -264,12 +277,12 @@ public static class Utils
                 }
                 catch (Exception e)
                 {
-                    LuaCsSetup.PrintCsError(e);
+                    Utils.Logging.PrintError($"Utils.Net...::ReadNetValueFromType<{typeof(T)}>() | {e.Message}");
                     return default!;
                 }
             }
 
-            LuaCsSetup.PrintCsError(
+            Utils.Logging.PrintError(
                 $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return default!;
         }
@@ -355,7 +368,7 @@ public static class Utils
             }
             else
             {
-                LuaCsSetup.PrintCsError(
+                Utils.Logging.PrintError(
                     $"Utils::WriteNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             }
         }
@@ -442,7 +455,7 @@ public static class Utils
             }
             else
             {
-                LuaCsSetup.PrintCsError(
+                Utils.Logging.PrintError(
                     $"Utils::WriteNetValueFromType<{type}>() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             }
         }

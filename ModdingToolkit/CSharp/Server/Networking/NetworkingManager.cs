@@ -84,7 +84,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveRequestForSyncVarSingle() | Exception: {e.Message}"); 
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveRequestForSyncVarSingle() | Exception: {e.Message}"); 
         }
     }
 
@@ -124,7 +124,7 @@ public static partial class NetworkingManager
             {
                 if (!ReceiveSyncVarSingle(msg, client))
                 {
-                    LuaCsSetup.PrintCsError(
+                    Utils.Logging.PrintError(
                         $"NetworkingManager::ReceiveSyncVarMulti() | Was unable to parse data."); 
                     //we can't continue to read since we can't remove the unknown-length value bits from the message.
                     break;
@@ -133,7 +133,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarMulti() | {e.Message}");
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | {e.Message}");
         }
     }
 
@@ -162,7 +162,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkManager::ReceiveRequestIdSingle() | Cannot read config name or mod name. | Exception: {e.Message}");
+            Utils.Logging.PrintError($"NetworkManager::ReceiveRequestIdSingle() | Cannot read config name or mod name. | Exception: {e.Message}");
         }
     }
 
@@ -171,7 +171,7 @@ public static partial class NetworkingManager
         uint id = msg.ReadUInt32();
         if (!Indexer_NetConfigIds.ContainsKey(id))
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
             return false;
         }
         var cfgDat = Indexer_NetConfigIds[id];

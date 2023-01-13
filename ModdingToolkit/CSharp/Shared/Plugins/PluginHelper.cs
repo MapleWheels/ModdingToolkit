@@ -64,7 +64,7 @@ public static class PluginHelper
             }
             catch(Exception e)
             {
-                LuaCsSetup.PrintCsError($"PluginHelper::GetAllAssemblyPathsInPackages() | Unable to parse the package: {package.Name} | Details: {e.Message}");
+                Utils.Logging.PrintError($"PluginHelper::GetAllAssemblyPathsInPackages() | Unable to parse the package: {package.Name} | Details: {e.Message}");
             }
         }
         return dllPaths;
@@ -162,6 +162,6 @@ public static class PluginHelper
 
     private static void AssemblyManagerOnException(string arg1, Exception arg2)
     {
-        LuaCsSetup.PrintCsError($"{arg1} | Exception Details: {arg2.Message}");
+        Utils.Logging.PrintError($"{arg1} | Exception Details: {arg2.Message}");
     }
 }

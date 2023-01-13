@@ -70,7 +70,7 @@ internal sealed class Bootloader : ACsMod
             {
                 if (argsv.Length < 1)
                 {
-                    LuaCsSetup.PrintCsError($"Arguments missing!");
+                    Utils.Logging.PrintError($"Arguments missing!");
                     return;
                 }
                 
@@ -110,7 +110,7 @@ internal sealed class Bootloader : ACsMod
             {
                 if (argsv.Length < 1)
                 {
-                    LuaCsSetup.PrintCsError($"Arguments missing!");
+                    Utils.Logging.PrintError($"Arguments missing!");
                     return;
                 }
                 

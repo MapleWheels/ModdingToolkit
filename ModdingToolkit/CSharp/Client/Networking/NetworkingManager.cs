@@ -17,7 +17,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReadIdSingle() | Unable to continue. Message read error. | Exception: {e.Message}");
+            Utils.Logging.PrintError($"NetworkingManager::ReadIdSingle() | Unable to continue. Message read error. | Exception: {e.Message}");
             id = 0;
             modName = string.Empty;
             name = string.Empty;
@@ -92,7 +92,7 @@ public static partial class NetworkingManager
             {
                 if (ReceiveIdSingle(msg, false))
                 {
-                    LuaCsSetup.PrintCsError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
+                    Utils.Logging.PrintError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
                     break;
                 }
             }
@@ -100,7 +100,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveIdList() | Unable to continue. Message read error. | Exception: {e.Message}");
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveIdList() | Unable to continue. Message read error. | Exception: {e.Message}");
         }
     }
 
@@ -111,7 +111,7 @@ public static partial class NetworkingManager
             uint id = msg.ReadUInt32();
             if (!Indexer_NetConfigIds.ContainsKey(id))
             {
-                LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
+                Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
                 return false;
             }
             var cfgDat = Indexer_NetConfigIds[id];
@@ -132,7 +132,7 @@ public static partial class NetworkingManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue. | Exception: {e.Message}");
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue. | Exception: {e.Message}");
             return false;
         }
     }
@@ -146,14 +146,14 @@ public static partial class NetworkingManager
             {
                 if (!ReceiveSyncVarSingle(msg))
                 {
-                    LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarMulti() | Read failure, cannot continue.");
+                    Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | Read failure, cannot continue.");
                     return;
                 }
             }
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"NetworkingManager::ReceiveSyncVarMulti() | Exception: {e.Message}.");
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | Exception: {e.Message}.");
             return;
         }
     }

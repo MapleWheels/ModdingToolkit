@@ -172,7 +172,7 @@ public static partial class ConfigManager
         if (LoadedConfigEntries.ContainsKey(modName)
             && LoadedConfigEntries[modName].ContainsKey(name)) 
             return SaveData(LoadedConfigEntries[modName][name]);
-        LuaCsSetup.PrintCsError($"ConfigManager: Tried to save a config: {modName}:{name} does not exist in the dictionary!");
+        Utils.Logging.PrintError($"ConfigManager: Tried to save a config: {modName}:{name} does not exist in the dictionary!");
         return false;
     }
 
@@ -475,26 +475,26 @@ public static partial class ConfigManager
     {
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | config var Name is null!");
             return false;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | config var ModName is null!");
             return false;
         }
 
         string keyIndex = GenerateXDocKey(config)!;
         if (!LoadedXDocKeys.ContainsKey(keyIndex))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot find XDoc key!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Cannot find XDoc key!");
             return false;
         }
 
         XDocument? doc;
         if (!XMLDocumentHelper.TryGetLoadedXmlDoc(LoadedXDocKeys[keyIndex], out doc))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot load XDocument!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Cannot load XDocument!");
             return false;
         }
 
@@ -504,14 +504,14 @@ public static partial class ConfigManager
             .Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
         if (configElement is null)
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | XDocument does not contain an entry for this config!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | XDocument does not contain an entry for this config!");
             return false;
         }
         configElement.Value = config.GetStringValue();
         var r = XMLDocumentHelper.SaveLoadedDocToDisk(LoadedXDocKeys[keyIndex]);
         if (r != Utils.IO.IOActionResultState.Success)
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Could not save to disk! IOActionResult: {r.ToString()}");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Could not save to disk! IOActionResult: {r.ToString()}");
             return false;
         }
 
@@ -545,12 +545,12 @@ public static partial class ConfigManager
                 ).ToString()
             ))
             {
-                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Failed to load existing data. | Config: {config.ModName}, {config.Name}");
+                Utils.Logging.PrintError($"ConfigManager::LoadData() | Failed to load existing data. | Config: {config.ModName}, {config.Name}");
             }
             string? lxkey = GenerateXDocKey(config);
             if (lxkey is null)
             {
-                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Unable to create lxkey.");
+                Utils.Logging.PrintError($"ConfigManager::LoadData() | Unable to create lxkey.");
                 return false;
             }
             if (LoadedXDocKeys.ContainsKey(lxkey))
@@ -561,7 +561,7 @@ public static partial class ConfigManager
                 }
                 else
                 {
-                    LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
+                    Utils.Logging.PrintError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
                     return false;
                 }
             }
@@ -614,11 +614,11 @@ public static partial class ConfigManager
                     {
                         if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IO.IOActionResultState.Success)
                         {
-                            LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
+                            Utils.Logging.PrintError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                         }
                     }
                     else
-                        LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
+                        Utils.Logging.PrintError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                 }
             }
             else
@@ -630,7 +630,7 @@ public static partial class ConfigManager
             }
             return true;
         }
-        LuaCsSetup.PrintCsError(
+        Utils.Logging.PrintError(
             $"ConfigManager::LoadData() | Unable to get a valid file path for config name {config.Name}, modname {config.ModName}");
         return false;
     }
@@ -639,12 +639,12 @@ public static partial class ConfigManager
     {
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GenerateXDocKey() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::GenerateXDocKey() | config var Name is null!");
             return null;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GenerateXDocKey() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::GenerateXDocKey() | config var ModName is null!");
             return null;
         }
 
@@ -656,12 +656,12 @@ public static partial class ConfigManager
         fp = null;
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
             return false;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
             return false;
         }
         fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
@@ -678,7 +678,7 @@ public static partial class ConfigManager
             return;
         if (!NetworkingManager.RegisterNetConfigInstance(cfg))
         {
-            LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+            Utils.Logging.PrintError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
         }
     }
 
@@ -688,7 +688,7 @@ public static partial class ConfigManager
             return;
         if (!NetworkingManager.RegisterNetConfigInstance(cfg))
         {
-            LuaCsSetup.PrintCsError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+            Utils.Logging.PrintError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
         }
     }
 
@@ -746,13 +746,13 @@ public static partial class ConfigManager
     {
         if (config.Name.Trim().IsNullOrEmpty())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Name is null!");
             return;
         }
         
         if (config.ModName.Trim().IsNullOrEmpty())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Name is null!");
             return;
         }
         
@@ -761,7 +761,7 @@ public static partial class ConfigManager
 
         if (LoadedConfigEntries[config.ModName].ContainsKey(config.Name))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name}. An entry already exists!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name}. An entry already exists!");
             return;
         }
         LoadedConfigEntries[config.ModName].Add(config.Name, config);
@@ -779,7 +779,7 @@ public static partial class ConfigManager
                 }
             });
             if (exists)
-                LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for NETSYNC. An entry already exists!");
+                Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for NETSYNC. An entry already exists!");
             else
                 Indexer_NetSync[config.NetSync].Add(new ConfigIndex(config.ModName, config.Name));
         }
@@ -797,7 +797,7 @@ public static partial class ConfigManager
                 }
             });
             if (exists)
-                LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for DISPLAY. An entry already exists!");
+                Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for DISPLAY. An entry already exists!");
             else
                 Indexer_MenuCategory[config.MenuCategory].Add(new ConfigIndex(config.ModName, config.Name));
         }

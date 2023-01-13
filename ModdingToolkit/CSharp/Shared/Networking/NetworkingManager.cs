@@ -77,7 +77,7 @@ public static partial class NetworkingManager
         Guid id = Guid.NewGuid();
         if (!RegisterLocalConfig(config, id))
         {
-            LuaCsSetup.PrintCsError($"Net..Manager::RegisterNetConfigInstance() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
+            Utils.Logging.PrintError($"Net..Manager::RegisterNetConfigInstance() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
             return false;
         }
         RegisterCallbacks(id,
@@ -98,7 +98,7 @@ public static partial class NetworkingManager
         Guid id = Guid.NewGuid();
         if (!RegisterLocalConfig(config, id))
         {
-            LuaCsSetup.PrintCsError($"Net..Manager::RegisterNetConfigInstance<T>() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
+            Utils.Logging.PrintError($"Net..Manager::RegisterNetConfigInstance<T>() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
             return false;
         }
         RegisterCallbacks(id,
@@ -140,7 +140,7 @@ public static partial class NetworkingManager
     {
         if (!Indexer_ReverseNetConfigId.ContainsKey(id) || Indexer_ReverseNetConfigId[id] == 0)
         {
-            LuaCsSetup.PrintCsError($"NetworkManager::SendNetEvent<{typeof(T)}>() | No network id exists for the Guid {id.ToString()}");
+            Utils.Logging.PrintError($"NetworkManager::SendNetEvent<{typeof(T)}>() | No network id exists for the Guid {id.ToString()}");
             return;
         }
         var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);

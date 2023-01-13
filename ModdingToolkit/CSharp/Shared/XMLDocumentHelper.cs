@@ -14,13 +14,13 @@ public static class XMLDocumentHelper
         
         if (fp is null)
         {
-            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Unable to parse file path.");
+            Utils.Logging.PrintError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Unable to parse file path.");
             return false;
         }
 
         if (!fp.EndsWith(".xml"))
         {
-            LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Filetype is not an XML document. | FP: {fp}");
+            Utils.Logging.PrintError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Filetype is not an XML document. | FP: {fp}");
             return false;
         }
         
@@ -34,7 +34,7 @@ public static class XMLDocumentHelper
                 }
                 catch
                 {
-                    LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Failed to load data, generating new.");
+                    Utils.Logging.PrintError($"XMLDocumentHelper::LoadOrCreateDocToCache() | Failed to load data, generating new.");
                     try
                     {
                         LoadedDocs[fp] = XDocument.Parse(generateNewDocString?.Invoke() ?? throw new Exception());
@@ -43,7 +43,7 @@ public static class XMLDocumentHelper
                     }
                     catch
                     {
-                        LuaCsSetup.PrintCsError($"XMLDocumentHelper::LoadOrCreateDocToCache() | XML data is not valid. | FP: {fp}");
+                        Utils.Logging.PrintError($"XMLDocumentHelper::LoadOrCreateDocToCache() | XML data is not valid. | FP: {fp}");
                         LoadedDocs.Remove(fp);
                         return false;
                     }
@@ -63,7 +63,7 @@ public static class XMLDocumentHelper
             {
                 foreach (var state in r)
                 {
-                    LuaCsSetup.PrintCsError(
+                    Utils.Logging.PrintError(
                         $"XMLDocumentHelper::UnloadCache() | Error while writing to disk pathKey: {state.Key} , State: {state.Value.ToString()}");
                 }
                 if (force)
@@ -120,7 +120,7 @@ public static class XMLDocumentHelper
             }
             catch (Exception e)
             {
-                LuaCsSetup.PrintCsError($"XMLDocumentHelper::SaveLoadedDocToDisk() | Unknown error. Exception: {e.Message} | SFP: {sfp}");
+                Utils.Logging.PrintError($"XMLDocumentHelper::SaveLoadedDocToDisk() | Unknown error. Exception: {e.Message} | SFP: {sfp}");
                 return Utils.IO.IOActionResultState.UnknownError;
             }
         }
