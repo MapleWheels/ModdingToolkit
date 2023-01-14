@@ -66,6 +66,9 @@ public static partial class NetworkingManager
     {
         if (ReadIdSingle(msg, out uint id, out string modName, out string name))
         {
+#if DEBUG
+            Utils.Logging.PrintMessage($"ReceiveIdSingle: id={id}, modName={modName}, name={name}");
+#endif
             if (RegisterOrUpdateNetConfigId(modName, name, id)
                 && requestSyncVar
                 && TryGetNetConfig(modName, name, out var cfg)
@@ -75,6 +78,9 @@ public static partial class NetworkingManager
                     NetSync: NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.TwoWaySync
                 })
             {
+#if DEBUG
+                Utils.Logging.PrintMessage($"Receive ID Single: Sending SyncVar Request.");
+#endif
                 SendRequestSyncVarSingle(id);
             }
             return true;
@@ -88,14 +94,21 @@ public static partial class NetworkingManager
         try
         {
             uint counter = msg.ReadUInt32();
+#if DEBUG
+            Utils.Logging.PrintMessage($"Client: Received ID List: Count {counter}");
+#endif
+            
             for (int index = 0; index < counter; index++)
             {
-                if (ReceiveIdSingle(msg, false))
+                if (!ReceiveIdSingle(msg, false))
                 {
                     Utils.Logging.PrintError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
                     break;
                 }
             }
+#if DEBUG
+            Utils.Logging.PrintMessage($"Client: Receive ID Multi: Sending SyncVar Request.");
+#endif
             SendRequestSyncVarMulti();
         }
         catch (Exception e)
@@ -106,6 +119,9 @@ public static partial class NetworkingManager
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg)
     {
+#if DEBUG      
+        Utils.Logging.PrintMessage($"Client: ReceiveSyncVarSingle()");
+#endif
         try
         {
             uint id = msg.ReadUInt32();

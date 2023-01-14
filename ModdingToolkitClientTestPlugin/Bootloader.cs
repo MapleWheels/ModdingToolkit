@@ -125,7 +125,7 @@ public class Bootloader : IAssemblyPlugin
     private static void PrintNetTestMsg(string name, string value)
     {
         string mode = GameMain.IsSingleplayer ? "sp" : "mp";
-        LuaCsSetup.PrintCsMessage(NetworkingManager.IsClient
+        Utils.Logging.PrintMessage(NetworkingManager.IsClient
             ? $"net_ce_test: client, name: {name}, mode: {mode}, net_auth: srvauth, value {value}"
             : $"net_ce_test: server, name: {name}, mode: {mode}, net_auth: srvauth, value {value}");
     }

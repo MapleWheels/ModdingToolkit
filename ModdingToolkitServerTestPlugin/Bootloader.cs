@@ -5,8 +5,6 @@ using ModdingToolkit;
 using ModdingToolkit.Config;
 using ModdingToolkit.Networking;
 
-[assembly: IgnoresAccessChecksTo("Barotrauma")]
-[assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModdingToolkitTestPlugin;
 
 public class Bootloader : IAssemblyPlugin
@@ -118,7 +116,8 @@ public class Bootloader : IAssemblyPlugin
 
     private static void PrintNetTestMsg(string name, string value)
     {
-        LuaCsSetup.PrintCsMessage($"net_ce_test: server, name: {name}, mode: mp, net_auth: srvauth, value {value}");
+        //Utils.Logging.PrintMessage($"net_ce_test: server, name: {name}, mode: mp, net_auth: srvauth, value {value}");
+        LuaCsLogger.LogMessage($"net_ce_test: server, name: {name}, mode: mp, net_auth: srvauth, value {value}");
     }
 
     #endregion

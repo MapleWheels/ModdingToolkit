@@ -15,4 +15,4 @@ global using ModdingToolkit;
 
 [assembly: IgnoresAccessChecksTo("Barotrauma")]
 [assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
-namespace ModConfigManager;
+namespace ModdingToolkitTestPlugin;

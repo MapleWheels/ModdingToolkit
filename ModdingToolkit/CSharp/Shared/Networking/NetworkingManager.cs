@@ -1,4 +1,5 @@
-﻿using Barotrauma.Networking;
+﻿using System.Diagnostics;
+using Barotrauma.Networking;
 using ModdingToolkit.Config;
 
 namespace ModdingToolkit.Networking;
@@ -31,8 +32,10 @@ public static partial class NetworkingManager
 
     public static void Initialize(bool force = false)
     {
+#if CLIENT
         if (!GameMain.IsMultiplayer)
-            return;
+            return;        
+#endif
         
         if (IsInitialized)
         {
@@ -204,13 +207,38 @@ public static partial class NetworkingManager
 
     private static bool RegisterOrUpdateNetConfigId(string modName, string name, uint id)
     {
-        Guid guid = Guid.Empty; //empty
-        if (Indexer_LocalNetConfigGuids.ContainsKey(modName) && Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
-            guid = Indexer_LocalNetConfigGuids[modName][name];
-        Indexer_NetConfigIds[id] = new NetSyncVarIndex(modName, name, guid);
-        if (guid != Guid.Empty)
-            Indexer_ReverseNetConfigId[guid] = id;
-        return guid != Guid.Empty;
+        if (!Indexer_LocalNetConfigGuids.ContainsKey(modName) ||
+            !Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
+            return false;
+        Guid guidIndex = Indexer_LocalNetConfigGuids[modName][name];
+        if (!NetConfigRegistry.ContainsKey(guidIndex) || NetConfigRegistry[guidIndex] is null)
+            return false;
+        var cfg = NetConfigRegistry[guidIndex];
+        Debug.Assert(cfg is not null);
+        if (cfg.NetId != guidIndex)
+        {
+            //sync callbacks and cfg net id
+            Guid oldId = cfg.NetId;
+            cfg.SetNetworkingId(guidIndex);
+            if (oldId != Guid.Empty)
+            {
+                if (UpdaterReadCallback.ContainsKey(oldId))
+                {
+                    var readCallback = UpdaterReadCallback[oldId];
+                    UpdaterReadCallback.Remove(oldId);
+                    UpdaterReadCallback[guidIndex] = readCallback;
+                }
+                if (UpdaterWriteCallback.ContainsKey(oldId))
+                {
+                    var writeCallback = UpdaterWriteCallback[oldId];
+                    UpdaterWriteCallback.Remove(oldId);
+                    UpdaterWriteCallback[guidIndex] = writeCallback;
+                }
+            }
+        }
+        Indexer_ReverseNetConfigId[guidIndex] = id;
+        Indexer_NetConfigIds[id] = new NetSyncVarIndex(modName, name, guidIndex);
+        return true;
     }
 
     private static void RemoveCallbacks(Guid id)

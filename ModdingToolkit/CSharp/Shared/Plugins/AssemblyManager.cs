@@ -710,6 +710,10 @@ public static class AssemblyManager
                             return ass;
                     }
                 }
+
+                ass = typeof(Barotrauma.GameMain).Assembly;
+                if (assemblyName.FullName == ass.FullName)
+                    return ass;
             }
             finally
             {

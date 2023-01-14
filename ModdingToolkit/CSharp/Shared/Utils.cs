@@ -1,4 +1,5 @@
-﻿using Barotrauma.Networking;
+﻿using System.Diagnostics;
+using Barotrauma.Networking;
 using ModdingToolkit.Networking;
 
 namespace ModdingToolkit;
@@ -9,12 +10,12 @@ public static class Utils
     {
         public static void PrintMessage(string s)
         {
-            LuaCsSetup.PrintCsMessage(s);
+            LuaCsLogger.LogMessage(s);
         }
         
         public static void PrintError(string s)
         {
-            LuaCsSetup.PrintCsError(s);
+            LuaCsLogger.LogError(s);
         }
     }
     
@@ -215,20 +216,19 @@ public static class Utils
             if (type == typeof(float)) return msg.ReadSingle();
             if (type == typeof(double)) return msg.ReadDouble();
             if (type == typeof(string)) return msg.ReadString();
-            if (type == typeof(NetworkEventId)) return (NetworkEventId)Convert.ChangeType(msg.ReadByte(), typeof(NetworkEventId));
+            if (type == typeof(NetworkEventId)) return (NetworkEventId)Enum.Parse(type, msg.ReadByte().ToString());
             if (type.IsEnum)
             {
                 try
                 {
-                    var etype = (EnumNetworkType)Convert.ChangeType(msg.ReadByte(), typeof(EnumNetworkType));
+                    var etype = (EnumNetworkType)Enum.Parse(typeof(EnumNetworkType), msg.ReadByte().ToString());
                     switch (etype)
                     {
-                        case EnumNetworkType.Byte: return Convert.ChangeType(msg.ReadByte(), type);
-                        case EnumNetworkType.Short: return Convert.ChangeType(msg.ReadInt16(), type);
-                        case EnumNetworkType.Int: return Convert.ChangeType(msg.ReadInt32(), type);
-                        case EnumNetworkType.Long: return Convert.ChangeType(msg.ReadInt64(), type);
+                        case EnumNetworkType.Byte: return Enum.Parse(type, msg.ReadByte().ToString());
+                        case EnumNetworkType.Short: return Enum.Parse(type, msg.ReadInt16().ToString());
+                        case EnumNetworkType.Int: return Enum.Parse(type, msg.ReadInt32().ToString());
+                        case EnumNetworkType.Long: return Enum.Parse(type, msg.ReadInt64().ToString());
                         case EnumNetworkType.String: return Enum.Parse(type, msg.ReadString());
-                        default: return 0;
                     }
                 }
                 catch (Exception e)
@@ -259,18 +259,18 @@ public static class Utils
             if (type == typeof(float)) return (T)(object)msg.ReadSingle();
             if (type == typeof(double)) return (T)(object)msg.ReadDouble();
             if (type == typeof(string)) return (T)(object)msg.ReadString();
-            if (type == typeof(NetworkEventId)) return (T)Convert.ChangeType(msg.ReadByte(), typeof(NetworkEventId));
+            if (type == typeof(NetworkEventId)) return (T)Enum.Parse(type, msg.ReadByte().ToString());
             if (type.IsEnum)
             {
                 try
                 {
-                    var etype = (EnumNetworkType)Convert.ChangeType(msg.ReadByte(), typeof(EnumNetworkType));
+                    var etype = (EnumNetworkType)Enum.Parse(typeof(EnumNetworkType), msg.ReadByte().ToString());
                     switch (etype)
                     {
-                        case EnumNetworkType.Byte: return (T)Convert.ChangeType(msg.ReadByte(), type);
-                        case EnumNetworkType.Short: return (T)Convert.ChangeType(msg.ReadInt16(), type);
-                        case EnumNetworkType.Int: return (T)Convert.ChangeType(msg.ReadInt32(), type);
-                        case EnumNetworkType.Long: return (T)Convert.ChangeType(msg.ReadInt64(), type);
+                        case EnumNetworkType.Byte: return (T)Enum.Parse(type, msg.ReadByte().ToString());
+                        case EnumNetworkType.Short: return (T)Enum.Parse(type, msg.ReadInt16().ToString());
+                        case EnumNetworkType.Int: return (T)Enum.Parse(type, msg.ReadInt32().ToString());
+                        case EnumNetworkType.Long: return (T)Enum.Parse(type, msg.ReadInt64().ToString());
                         case EnumNetworkType.String: return (T)Enum.Parse(type, msg.ReadString());
                         default: return default!;
                     }
@@ -287,8 +287,23 @@ public static class Utils
             return default!;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="type">Note: Type must implement IConvertible interface</param>
+        /// <param name="value"></param>
         public static void WriteNetValueFromType(IWriteMessage msg, Type type, object value)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (value is null)
+            {
+                Utils.Logging.PrintError(
+                    $"Utils::WriteNetValueFromType() | The value was null for the type of {type.Name}.");
+                return;
+            }
+            Debug.Assert(value is not null);
+
             if (type == typeof(bool)) msg.WriteBoolean((bool)value);
             else if (type == typeof(byte)) msg.WriteByte((byte)value);
             else if (type == typeof(sbyte)) msg.WriteInt16(Convert.ToInt16(value)); //converted up to preserve range
@@ -308,11 +323,11 @@ public static class Utils
                 // try to find the smallest signed data type we can pack the Enum into. Default to string on failure.
                 bool err = false;
                 long min = 0, max = 0;
-                foreach (object o in Enum.GetValues(type))
+                foreach (var o in Enum.GetValues(type))
                 {
                     try
                     {
-                        long v = (long)Convert.ChangeType(o, TypeCode.UInt64);
+                        long v = Convert.ToInt64(o);
                         if (max < v)
                             max = v;
                         else if (v < min)
@@ -330,33 +345,33 @@ public static class Utils
                     if (err)    //default to string transmission
                     {
                         msg.WriteByte(Convert.ToByte(EnumNetworkType.String));
-                        msg.WriteString((string)Convert.ChangeType(value, TypeCode.String));
+                        msg.WriteString(Convert.ToString(value)!);
                         return;
                     }
 
                     if (byte.MinValue <= min && max <= byte.MaxValue)
                     {
                         msg.WriteByte(Convert.ToByte(EnumNetworkType.Byte));
-                        msg.WriteByte((byte)Convert.ChangeType(value, TypeCode.Byte));
+                        msg.WriteByte(Convert.ToByte(value));
                         return;
                     }
                 
                     if (short.MinValue <= min && max <= short.MaxValue)
                     {
                         msg.WriteByte(Convert.ToByte(EnumNetworkType.Short));
-                        msg.WriteInt16((short)Convert.ChangeType(value, TypeCode.Int16));
+                        msg.WriteInt16(Convert.ToInt16(value));
                         return;
                     }
                 
                     if (int.MinValue <= min && max <= int.MaxValue)
                     {
                         msg.WriteByte(Convert.ToByte(EnumNetworkType.Int));
-                        msg.WriteInt32((int)Convert.ChangeType(value, TypeCode.Int32));
+                        msg.WriteInt32(Convert.ToInt32(value));
                         return;
                     }
                 
                     msg.WriteByte(Convert.ToByte(EnumNetworkType.Long));
-                    msg.WriteInt64((long)Convert.ChangeType(value, TypeCode.Int64));
+                    msg.WriteInt64(Convert.ToInt64(value));
                     return;
                 }
                 catch
@@ -375,89 +390,7 @@ public static class Utils
         
         public static void WriteNetValueFromType<T>(IWriteMessage msg, T value) where T : IConvertible
         {
-            Type type = typeof(T);
-            if (type == typeof(bool)) msg.WriteBoolean((bool)(object)value);
-            else if (type == typeof(byte)) msg.WriteByte((byte)(object)value);
-            else if (type == typeof(sbyte)) msg.WriteInt16(Convert.ToInt16(value)); //converted up to preserve range
-            else if (type == typeof(char)) msg.WriteUInt16(Convert.ToUInt16(value)); //utf-16b
-            else if (type == typeof(short)) msg.WriteInt16((short)(object)value);
-            else if (type == typeof(ushort)) msg.WriteUInt16((ushort)(object)value);
-            else if (type == typeof(int)) msg.WriteInt32((int)(object)value);
-            else if (type == typeof(uint)) msg.WriteUInt32((uint)(object)value);
-            else if (type == typeof(long)) msg.WriteInt64((long)(object)value);
-            else if (type == typeof(ulong)) msg.WriteUInt64((ulong)(object)value);
-            else if (type == typeof(float)) msg.WriteSingle((float)(object)value);
-            else if (type == typeof(double)) msg.WriteDouble((double)(object)value);
-            else if (type == typeof(string)) msg.WriteString((string)(object)value);
-            else if (type == typeof(NetworkEventId)) msg.WriteByte(Convert.ToByte(value));
-            else if (type.IsEnum)
-            {
-                // try to find the smallest signed data type we can pack the Enum into. Default to string on failure.
-                bool err = false;
-                long min = 0, max = 0;
-                foreach (object o in Enum.GetValues(type))
-                {
-                    try
-                    {
-                        long v = (long)Convert.ChangeType(o, TypeCode.UInt64);
-                        if (max < v)
-                            max = v;
-                        else if (v < min)
-                            min = v;
-                    }
-                    catch
-                    {
-                        err = true;
-                        break;
-                    }
-                }
-
-                try
-                {
-                    if (err)    //default to string transmission
-                    {
-                        msg.WriteByte(Convert.ToByte(EnumNetworkType.String));
-                        msg.WriteString((string)Convert.ChangeType(value, TypeCode.String));
-                        return;
-                    }
-
-                    if (byte.MinValue <= min && max <= byte.MaxValue)
-                    {
-                        msg.WriteByte(Convert.ToByte(EnumNetworkType.Byte));
-                        msg.WriteByte((byte)Convert.ChangeType(value, TypeCode.Byte));
-                        return;
-                    }
-                
-                    if (short.MinValue <= min && max <= short.MaxValue)
-                    {
-                        msg.WriteByte(Convert.ToByte(EnumNetworkType.Short));
-                        msg.WriteInt16((short)Convert.ChangeType(value, TypeCode.Int16));
-                        return;
-                    }
-                
-                    if (int.MinValue <= min && max <= int.MaxValue)
-                    {
-                        msg.WriteByte(Convert.ToByte(EnumNetworkType.Int));
-                        msg.WriteInt32((int)Convert.ChangeType(value, TypeCode.Int32));
-                        return;
-                    }
-                
-                    msg.WriteByte(Convert.ToByte(EnumNetworkType.Long));
-                    msg.WriteInt64((long)Convert.ChangeType(value, TypeCode.Int64));
-                    return;
-                }
-                catch
-                {
-                    msg.WriteByte(Convert.ToByte(EnumNetworkType.String));
-                    msg.WriteString(value.ToString());
-                    return;
-                }
-            }
-            else
-            {
-                Utils.Logging.PrintError(
-                    $"Utils::WriteNetValueFromType<{type}>() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
-            }
+            WriteNetValueFromType(msg, typeof(T), value);
         }
 
         public enum EnumNetworkType : byte

@@ -125,7 +125,7 @@ public static class PluginHelper
             }
             else
             {
-                LuaCsSetup.PrintGenericError("ModConfigManager: ERROR: Unable to load plugins.");
+                Utils.Logging.PrintError("ModConfigManager: ERROR: Unable to load plugins.");
             }
         }
     }

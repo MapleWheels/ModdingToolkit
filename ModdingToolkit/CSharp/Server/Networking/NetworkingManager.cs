@@ -15,7 +15,13 @@ public static partial class NetworkingManager
         if (!Indexer_ReverseNetConfigId.ContainsKey(cfg.NetId))
         {
             uint newId = Counter.GetIncrement();
-            RegisterOrUpdateNetConfigId(cfg.ModName, cfg.Name, newId);
+#if DEBUG
+            Utils.Logging.PrintMessage($"Server: SynchronizeNewVar() | Registering Lookup for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+#endif
+            if (!RegisterOrUpdateNetConfigId(cfg.ModName, cfg.Name, newId))
+            {
+                Utils.Logging.PrintError($"Server: SynchronizeNewVar() | Reverse Lookup not registered for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+            }
         }
 
         if (WriteIdSingleMsg(cfg.ModName, cfg.Name, out var msg))
@@ -26,6 +32,13 @@ public static partial class NetworkingManager
 
     public static void SynchronizeAll()
     {
+#if DEBUG
+#if SERVER
+        Utils.Logging.PrintMessage($"Server: SynchronizeAll().");
+#else
+        Utils.Logging.PrintMessage($"Client: SynchronizeAll().");
+#endif
+#endif
         var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.ResetState);
         SendMsg(outmsg);
     }
