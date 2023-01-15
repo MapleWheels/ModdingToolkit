@@ -36,7 +36,7 @@ public static partial class NetworkingManager
         if (!GameMain.IsMultiplayer)
             return;        
 #endif
-        
+        Counter.Reset();
         if (IsInitialized)
         {
             if (force)
@@ -141,7 +141,7 @@ public static partial class NetworkingManager
     
     private static void SendNetEvent<T>(Guid id, T val) where T : IConvertible
     {
-        if (!Indexer_ReverseNetConfigId.ContainsKey(id) || Indexer_ReverseNetConfigId[id] == 0)
+        if (!Indexer_ReverseNetConfigId.ContainsKey(id) || Indexer_ReverseNetConfigId[id] < Counter.MinValue)
         {
             Utils.Logging.PrintError($"NetworkManager::SendNetEvent<{typeof(T)}>() | No network id exists for the Guid {id.ToString()}");
             return;
@@ -274,7 +274,7 @@ public static partial class NetworkingManager
     private static class Counter
     {
         public static uint MinValue { get; private set; } = 10;
-        private static uint _counter;
+        private static uint _counter = 10;
         public static uint GetIncrement() => _counter++;
         public static uint Get() => _counter;
         public static void Reset() => _counter = MinValue;    //values below 10 are reserved.
