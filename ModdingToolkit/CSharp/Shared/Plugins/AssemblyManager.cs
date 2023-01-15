@@ -710,6 +710,10 @@ public static class AssemblyManager
                             return ass;
                     }
                 }
+
+                ass = AssemblyLoadContext.Default.LoadFromAssemblyName(assemblyName);
+                if (ass is not null)
+                    return ass;
             }
             finally
             {
