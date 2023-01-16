@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Input;
 using ModdingToolkit.Config;
 using ModdingToolkit.Networking;
 
-[assembly: IgnoresAccessChecksTo("Barotrauma")]
-[assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
 namespace ModdingToolkitTestPlugin;
 
 public class Bootloader : IAssemblyPlugin
