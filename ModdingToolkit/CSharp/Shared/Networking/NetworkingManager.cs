@@ -21,6 +21,26 @@ public static partial class NetworkingManager
     public static bool TryGetNetConfig(string modName, string name, out INetConfigBase? cfg)
     {
         cfg = null;
+        if (modName.IsNullOrWhiteSpace())
+        {
+#if SERVER
+            Utils.Logging.PrintError($"[Server] NetworkingManager::TryGetNetConfig() | Modname is null or whitespace.");
+#else
+            Utils.Logging.PrintError($"[Client] NetworkingManager::TryGetNetConfig() | Modname is null or whitespace.");
+#endif
+            return false;
+        }
+        if (name.IsNullOrWhiteSpace())
+        {
+#if SERVER
+            Utils.Logging.PrintError($"[Server] NetworkingManager::TryGetNetConfig() | Name is null or whitespace.");
+#else
+            Utils.Logging.PrintError($"[Client] NetworkingManager::TryGetNetConfig() | Name is null or whitespace.");
+#endif
+            return false;
+        }
+        
+        cfg = null;
         if (!Indexer_LocalNetConfigGuids.ContainsKey(modName) || !Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
             return false;
         Guid cfgId = Indexer_LocalNetConfigGuids[modName][name];

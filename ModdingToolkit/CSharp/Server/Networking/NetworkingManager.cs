@@ -16,11 +16,11 @@ public static partial class NetworkingManager
         {
             uint newId = Counter.GetIncrement();
 #if DEBUG
-            Utils.Logging.PrintMessage($"Server: SynchronizeNewVar() | Registering Lookup for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+            Utils.Logging.PrintMessage($"[Server] SynchronizeNewVar() | Registering Lookup for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
 #endif
             if (!RegisterOrUpdateNetConfigId(cfg.ModName, cfg.Name, newId))
             {
-                Utils.Logging.PrintError($"Server: SynchronizeNewVar() | Reverse Lookup not registered for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+                Utils.Logging.PrintError($"[Server] SynchronizeNewVar() | Reverse Lookup not registered for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
             }
         }
 
@@ -156,6 +156,8 @@ public static partial class NetworkingManager
             return;
         if (client is null)
             return;
+        if (!Indexer_NetConfigIds.Any())
+            return;
         var outmsg = WriteIdListMsg();
         SendMsg(outmsg, client.Connection);
     }
@@ -233,11 +235,17 @@ public static partial class NetworkingManager
             return false;
         }).ToImmutableDictionary();
         outmsg.WriteUInt32(Convert.ToUInt32(toSync.Count));
+#if DEBUG
+        Utils.Logging.PrintMessage($"[Server] NM::WriteIdListMsg() | SyncVar Count: {toSync.Count}");
+#endif
         foreach (var index in toSync)
         {
             outmsg.WriteUInt32(index.Key);
             outmsg.WriteString(index.Value.ModName);
             outmsg.WriteString(index.Value.Name);
+#if DEBUG
+            Utils.Logging.PrintMessage($"[Server] NM::WriteIdListMsg() | Writing SyncVar: id={index.Key}, modName={index.Value.ModName}, name={index.Value.Name}");
+#endif
         }
         return outmsg;
     }
@@ -248,7 +256,7 @@ public static partial class NetworkingManager
         if (TryGetNetConfig(modName, name, out var cfg))
         {
             var guid = cfg!.NetId;
-            if (Indexer_ReverseNetConfigId.ContainsKey(guid))
+            if (Indexer_ReverseNetConfigId.ContainsKey(guid) && Indexer_ReverseNetConfigId[guid] >= Counter.MinValue)
             {
                 message = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
                 message.WriteUInt32(Indexer_ReverseNetConfigId[guid]);
