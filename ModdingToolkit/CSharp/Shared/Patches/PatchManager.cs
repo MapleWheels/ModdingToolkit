@@ -49,7 +49,7 @@ public static class PatchManager
         }
         catch (Exception e)
         {
-            LuaCsSetup.PrintCsError($"PatchManager::BuildPatchList() | Could not load patches: {e.Message}");
+            Utils.Logging.PrintError($"PatchManager::BuildPatchList() | Could not load patches: {e.Message}");
         }
     }
 

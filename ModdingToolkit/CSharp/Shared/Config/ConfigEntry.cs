@@ -1,18 +1,24 @@
-﻿namespace ModdingToolkit.Config;
+﻿using System.ComponentModel;
+using Barotrauma.Networking;
+using ModdingToolkit.Networking;
 
-public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
+namespace ModdingToolkit.Config;
+
+public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : IConvertible
 {
     #region INTERNALS
     
     protected T _value = default!;
     protected Func<T, bool>? _valueChangePredicate;
-    protected System.Action? _onValueChanged;
+    protected System.Action<IConfigEntry<T>>? _onValueChanged;
+    protected System.Action<INetConfigBase>? _onNetworkEvent;
 
     #endregion
 
     public string Name { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(T);
+    public Type NetSyncVarTypeDef => typeof(T);
     public string ModName { get; private set; } = String.Empty;
 
     public virtual T Value
@@ -20,10 +26,11 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
         get => this._value;
         set
         {
-            if (Validate(value))
+            if (Validate(value) && NetAuthorityValidate())
             {
                 this._value = value;
-                this._onValueChanged?.Invoke();
+                this._onValueChanged?.Invoke(this);
+                this.TriggerNetEvent();
             }
         }
     }
@@ -31,16 +38,23 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     public T DefaultValue { get; private set; } = default!;
 
     public IConfigEntry<T>.Category MenuCategory { get; private set; }
-    public IConfigEntry<T>.NetworkSync NetSync { get; private set; }
+    public NetworkSync NetSync { get; private set; }
 
+    public void SetNetworkingId(Guid id)
+    {
+        NetId = id;
+    }
+
+    public Guid NetId { get; private set; }
+    
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsInitialized { get; private set; } = false;
 
     public virtual void Initialize(string name, string modName, T newValue, T defaultValue, 
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, 
+        NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null)
+        Action<IConfigEntry<T>>? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty.");
@@ -49,8 +63,8 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
 
         this.Name = name;
         this.ModName = modName;
-        this.Value = newValue;
         this.DefaultValue = defaultValue;
+        this._value = this.Validate(newValue) ? newValue : this.DefaultValue;
         this.NetSync = sync;
         this.MenuCategory = menuCategory;
         if (valueChangePredicate is not null)
@@ -71,12 +85,25 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     {
         try
         {
-            this.Value = (T)Convert.ChangeType(value, typeof(T));
+            if (typeof(T) == typeof(string))
+            {
+                this.Value = (T)(object)value;
+                return;
+            }
+            
+            var conv = TypeDescriptor.GetConverter(typeof(T));
+            T? val = (T?)conv.ConvertFromString(value);
+            if (val is not null)
+                this.Value = val;
+            else
+                Utils.Logging.PrintError($"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. " +
+                                         $"Cannot convert from string value {value} to {typeof(T)}.");
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            LuaCsSetup.PrintCsError(
-                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}");
+            Utils.Logging.PrintError(
+                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. " +
+                $"Cannot convert from string value {value} to {typeof(T)}. EXCEPTION: {e.Message}. INNER_EXCEPTION: {e.InnerException}");
         }
     }
 
@@ -98,12 +125,40 @@ public class ConfigEntry<T> : IConfigEntry<T> where T : IConvertible
     {
         try
         {
-            _ = (T)Convert.ChangeType(value, typeof(T));    //try to convert & cast.
-            return true;
+            var a = (T)Convert.ChangeType(value, typeof(T));    //try to convert & cast.
+            return Validate(a);
         }
         catch (Exception)
         {
             return false;
         }
+    }
+
+    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
+    {
+        Utils.Networking.WriteNetValueFromType(msg, this.Value);
+        return true;
+    }
+
+    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    {
+        T value = Utils.Networking.ReadNetValueFromType<T>(msg);
+        if (Validate(value))
+        {
+            this._value = value;
+            this._onValueChanged?.Invoke(this);
+        }
+
+        return true;
+    }
+
+    void INetConfigBase.SubscribeToNetEvents(Action<INetConfigBase> evtHandle)
+    {
+        this._onNetworkEvent += evtHandle;
+    }
+
+    void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
+    {
+        this._onNetworkEvent -= evtHandle;
     }
 }

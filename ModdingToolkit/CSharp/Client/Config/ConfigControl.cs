@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Input;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
@@ -11,7 +12,7 @@ public sealed class ConfigControl : IConfigControl
     public Type SubTypeDef => typeof(KeyOrMouse);
     public string ModName { get; set; } = String.Empty;
     public IConfigBase.Category MenuCategory => IConfigBase.Category.Ignore;
-    public IConfigBase.NetworkSync NetSync => IConfigBase.NetworkSync.NoSync;
+    public NetworkSync NetSync => NetworkSync.NoSync;
 
     public string GetStringValue()
     {

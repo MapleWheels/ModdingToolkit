@@ -16,11 +16,14 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <DefineConstants>TRACE,SERVER</DefineConstants>
       <PlatformTarget>x64</PlatformTarget>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <PlatformTarget>x64</PlatformTarget>
       <DefineConstants>TRACE,SERVER</DefineConstants>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DocumentationFile>bin\Release\WindowsServer.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -48,6 +51,15 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Config\ConfigEntry.cs">
+        <Link>Server\Config\ConfigEntry.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Config\ConfigList.cs">
+        <Link>Server\Config\ConfigList.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetworkingManager.cs">
+        <Link>Server\Networking\NetworkingManager.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\ApplicationMode.cs">
         <Link>Shared\ApplicationMode.cs</Link>
       </Compile>
@@ -90,6 +102,18 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\global.cs">
         <Link>Shared\global.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\ENetworkEventId.cs">
+        <Link>Shared\Networking\ENetworkEventId.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\ENetworkSync.cs">
+        <Link>Shared\Networking\ENetworkSync.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetConfigBase.cs">
+        <Link>Shared\Networking\INetConfigBase.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetworkingManager.cs">
+        <Link>Shared\Networking\NetworkingManager.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Patches\IPatchable.cs">
         <Link>Shared\Patches\IPatchable.cs</Link>
       </Compile>
@@ -122,17 +146,8 @@
       </Compile>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="..\ModdingToolkit\CSharp\Server">
-        <Link>Server</Link>
-      </Folder>
-      <Folder Include="..\ModdingToolkit\CSharp\Shared\Networking">
-        <Link>Shared\Networking</Link>
-      </Folder>
-    </ItemGroup>
-
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="xcopy &quot;$(ProjectDir)$(OutDir)$(TargetFileName)&quot; &quot;$(SolutionDir)\Refs\Server\$(TargetFileName)*&quot; /y /s" />
+      <Exec Command="(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;$(SolutionDir)Refs\Server&quot; &quot;NetScriptAssembly.dll&quot;  /R:0 /W:0) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0" />
     </Target>
 
 </Project>

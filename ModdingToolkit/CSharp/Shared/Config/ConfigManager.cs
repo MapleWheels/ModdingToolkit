@@ -1,8 +1,13 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Xml.Linq;
-using Microsoft.Xna.Framework.Input;
+using Barotrauma.Networking;
 using ModdingToolkit;
+using ModdingToolkit.Networking;
+#if CLIENT
+using Microsoft.Xna.Framework.Input;
+#else
+
+#endif
 
 namespace ModdingToolkit.Config;
 
@@ -32,7 +37,6 @@ public static partial class ConfigManager
     /// </summary>
     public static readonly string BaseConfigDir = Path.Combine(Directory.GetCurrentDirectory(), "Config");
 
-    
     /// <summary>
     /// [CanBeNull]
     /// Registers a new Config Member and returns the instance to it. Returns null if a Config Member with the same ModName and Name exist.
@@ -41,7 +45,7 @@ public static partial class ConfigManager
     /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
     /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
     /// <param name="validateNewInput">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
@@ -52,8 +56,8 @@ public static partial class ConfigManager
         string modName,
         T defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
-        Action? onValueChanged = null,
+        NetworkSync networkSync = NetworkSync.NoSync,
+        Action<IConfigEntry<T>>? onValueChanged = null,
         Func<T, bool>? validateNewInput = null,
         string? filePathOverride = null) where T : IConvertible
     {
@@ -69,7 +73,7 @@ public static partial class ConfigManager
     /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
     /// <param name="defaultValue">The default string value if one cannot be loaded from file. Must exist in the List or the first entry in the list will be used.</param>
     /// <param name="valueList">A list of string values.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -79,10 +83,10 @@ public static partial class ConfigManager
         string name, string modName, 
         string defaultValue,
         List<string> valueList,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigList>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigList(name, modName, defaultValue, valueList, networkSync, 
@@ -99,7 +103,7 @@ public static partial class ConfigManager
     /// <param name="minValue">The minimum value.</param>
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -108,10 +112,10 @@ public static partial class ConfigManager
     public static IConfigRangeInt AddConfigRangeInt(
         string name, string modName,
         int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeInt>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
@@ -128,7 +132,7 @@ public static partial class ConfigManager
     /// <param name="minValue">The minimum value.</param>
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
-    /// <param name="networkSync">[NOT IMPL] Whether this should be synced or not with the server and clients.</param>
+    /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
     /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
@@ -137,10 +141,10 @@ public static partial class ConfigManager
     public static IConfigRangeFloat AddConfigRangeFloat(
         string name, string modName,
         float defaultValue, float minValue, float maxValue, int steps,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync networkSync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeFloat>? onValueChanged = null,
         string? filePathOverride = null)
     {
         return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
@@ -168,7 +172,7 @@ public static partial class ConfigManager
         if (LoadedConfigEntries.ContainsKey(modName)
             && LoadedConfigEntries[modName].ContainsKey(name)) 
             return SaveData(LoadedConfigEntries[modName][name]);
-        LuaCsSetup.PrintCsError($"ConfigManager: Tried to save a config: {modName}:{name} does not exist in the dictionary!");
+        Utils.Logging.PrintError($"ConfigManager: Tried to save a config: {modName}:{name} does not exist in the dictionary!");
         return false;
     }
 
@@ -265,7 +269,7 @@ public static partial class ConfigManager
     /// </summary>
     /// <param name="networkSync">The sync setting.</param>
     /// <returns>Enumerator for iteration.</returns>
-    public static IEnumerable<IConfigBase> GetConfigMembers(IConfigBase.NetworkSync networkSync)
+    public static IEnumerable<IConfigBase> GetConfigMembers(NetworkSync networkSync)
     {
         if (!Indexer_NetSync.ContainsKey(networkSync))
             return new List<IConfigBase>();
@@ -290,16 +294,16 @@ public static partial class ConfigManager
     
     public static IConfigEntry<double> AddConfigDouble(string name, string modName, double defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        NetworkSync networkSync = NetworkSync.NoSync,
+        Action<IConfigEntry<double>>? onValueChanged = null, 
         Func<double, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
     
     public static IConfigEntry<string> AddConfigString(string name, string modName, string defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        NetworkSync networkSync = NetworkSync.NoSync,
+        Action<IConfigEntry<string>>? onValueChanged = null, 
         Func<string, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -307,8 +311,8 @@ public static partial class ConfigManager
     
     public static IConfigEntry<bool> AddConfigBoolean(string name, string modName, bool defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        NetworkSync networkSync = NetworkSync.NoSync,
+        Action<IConfigEntry<bool>>? onValueChanged = null, 
         Func<bool, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -316,8 +320,8 @@ public static partial class ConfigManager
     
     public static IConfigEntry<int> AddConfigInteger(string name, string modName, int defaultValue,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        IConfigBase.NetworkSync networkSync = IConfigBase.NetworkSync.NoSync,
-        Action? onValueChanged = null, 
+        NetworkSync networkSync = NetworkSync.NoSync,
+        Action<IConfigEntry<int>>? onValueChanged = null, 
         Func<int, bool>? validateNewInput = null, 
         string? filePath = null)
         => AddConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged, validateNewInput, filePath);
@@ -326,71 +330,77 @@ public static partial class ConfigManager
 
 
     #region Internal_Func
-
     
-
     private static IConfigEntry<T> CreateIConfigEntry<T>(
         string name,
         string modName,
         T defaultValue,
         IConfigBase.Category menuCategory,
-        IConfigBase.NetworkSync networkSync,
-        Action? onValueChanged,
+        NetworkSync networkSync,
+        Action<IConfigEntry<T>>? onValueChanged,
         Func<T, bool>? validateNewInput,
         string? filePathOverride = null
         ) where T : IConvertible
     {
         ConfigEntry<T> ce = new();
-        ce.Initialize(name, modName, default!, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
+        ce.Initialize(name, modName, defaultValue, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
+        if (ce is INetConfigBase ince)
+            RegisterForNetworking(ince);
         return ce;
     }
 
     private static IConfigList CreateIConfigList(string name, string modName, string defaultValue,
         List<string> valueList,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigList>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigList cl = new();
-        cl.Initialize(name, modName, default!, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
+        cl.Initialize(name, modName, defaultValue, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
+        if (cl is INetConfigBase ince)
+            RegisterForNetworking(ince);
         return cl;
     }
     
     private static IConfigRangeInt CreateIConfigRangeInt(
         string name, string modName,
         int defaultValue, int minValue, int maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeInt>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigRangeInt cr = new();
-        cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
+        if (cr is INetConfigBase ince)
+            RegisterForNetworking(ince);
         return cr;
     }
 
     private static IConfigRangeFloat CreateIConfigRangeFloat(
         string name, string modName,
         float defaultValue, float minValue, float maxValue, int steps,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync,
+        NetworkSync sync = NetworkSync.NoSync,
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
-        Action? onValueChanged = null,
+        Action<IConfigRangeFloat>? onValueChanged = null,
         string? filePathOverride = null)
     {
         ConfigRangeFloat cr = new();
-        cr.Initialize(name, modName, default!, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
+        if (cr is INetConfigBase ince)
+            RegisterForNetworking(ince);
         return cr;
     }
 
@@ -455,35 +465,36 @@ public static partial class ConfigManager
             OnDispose = null;
         }
     }
-
+    
     #endregion
     
     #region INTERNAL_OPERATIONS
 
+    #region LOCAL_IO
     private static bool SaveData(IConfigBase config)
     {
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | config var Name is null!");
             return false;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | config var ModName is null!");
             return false;
         }
 
         string keyIndex = GenerateXDocKey(config)!;
         if (!LoadedXDocKeys.ContainsKey(keyIndex))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot find XDoc key!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Cannot find XDoc key!");
             return false;
         }
 
         XDocument? doc;
         if (!XMLDocumentHelper.TryGetLoadedXmlDoc(LoadedXDocKeys[keyIndex], out doc))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Cannot load XDocument!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Cannot load XDocument!");
             return false;
         }
 
@@ -493,14 +504,14 @@ public static partial class ConfigManager
             .Descendants(config.Name).FirstOrDefault(defaultValue: null) ?? null;
         if (configElement is null)
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | XDocument does not contain an entry for this config!");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | XDocument does not contain an entry for this config!");
             return false;
         }
         configElement.Value = config.GetStringValue();
         var r = XMLDocumentHelper.SaveLoadedDocToDisk(LoadedXDocKeys[keyIndex]);
-        if (r != Utils.IOActionResultState.Success)
+        if (r != Utils.IO.IOActionResultState.Success)
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::SaveData() | Could not save to disk! IOActionResult: {r.ToString()}");
+            Utils.Logging.PrintError($"ConfigManager::SaveData() | Could not save to disk! IOActionResult: {r.ToString()}");
             return false;
         }
 
@@ -534,12 +545,12 @@ public static partial class ConfigManager
                 ).ToString()
             ))
             {
-                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Failed to load existing data. | Config: {config.ModName}, {config.Name}");
+                Utils.Logging.PrintError($"ConfigManager::LoadData() | Failed to load existing data. | Config: {config.ModName}, {config.Name}");
             }
             string? lxkey = GenerateXDocKey(config);
             if (lxkey is null)
             {
-                LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Unable to create lxkey.");
+                Utils.Logging.PrintError($"ConfigManager::LoadData() | Unable to create lxkey.");
                 return false;
             }
             if (LoadedXDocKeys.ContainsKey(lxkey))
@@ -550,7 +561,7 @@ public static partial class ConfigManager
                 }
                 else
                 {
-                    LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
+                    Utils.Logging.PrintError($"ConfigManager::LoadData() | lxkey {lxkey} already exists!");
                     return false;
                 }
             }
@@ -601,13 +612,13 @@ public static partial class ConfigManager
 
                     if (XMLDocumentHelper.TrySetRefLoadedXmlDoc(key, doc, true))
                     {
-                        if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IOActionResultState.Success)
+                        if (XMLDocumentHelper.SaveLoadedDocToDisk(key) != Utils.IO.IOActionResultState.Success)
                         {
-                            LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
+                            Utils.Logging.PrintError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                         }
                     }
                     else
-                        LuaCsSetup.PrintCsError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
+                        Utils.Logging.PrintError($"ConfigManager::LoadData() | Could not save new XDoc for {config.ModName}, {config.Name}");
                 }
             }
             else
@@ -619,7 +630,7 @@ public static partial class ConfigManager
             }
             return true;
         }
-        LuaCsSetup.PrintCsError(
+        Utils.Logging.PrintError(
             $"ConfigManager::LoadData() | Unable to get a valid file path for config name {config.Name}, modname {config.ModName}");
         return false;
     }
@@ -628,12 +639,12 @@ public static partial class ConfigManager
     {
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GenerateXDocKey() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::GenerateXDocKey() | config var Name is null!");
             return null;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GenerateXDocKey() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::GenerateXDocKey() | config var ModName is null!");
             return null;
         }
 
@@ -645,17 +656,43 @@ public static partial class ConfigManager
         fp = null;
         if (config.Name.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
             return false;
         }
         if (config.ModName.IsNullOrWhiteSpace())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
             return false;
         }
-        fp = Path.Combine(BaseConfigDir, Utils.SanitizePath(config.ModName), Utils.SanitizeFileName(config.ModName) + ".xml");
+        fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
         return true;
     }
+    
+    #endregion
+
+    #region NETWORKING
+
+    private static void RegisterForNetworking(INetConfigBase cfg)
+    {
+        if (!GameMain.IsMultiplayer || cfg.NetSync is NetworkSync.NoSync)
+            return;
+        if (!NetworkingManager.RegisterNetConfigInstance(cfg))
+        {
+            Utils.Logging.PrintError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+        }
+    }
+
+    private static void RegisterForNetworking<T>(INetConfigBase cfg) where T : IConvertible
+    {
+        if (!GameMain.IsMultiplayer || cfg.NetSync == NetworkSync.NoSync)
+            return;
+        if (!NetworkingManager.RegisterNetConfigInstance(cfg))
+        {
+            Utils.Logging.PrintError($"Network Registration for {cfg.ModName} {cfg.Name} failed.");
+        }
+    }
+
+    #endregion
 
     private static void RemoveConfigFromLists(IConfigBase config)
     {
@@ -668,7 +705,7 @@ public static partial class ConfigManager
                 Indexer_MenuCategory[config.MenuCategory].Remove(ci);
         }
         
-        if (config.NetSync != IConfigBase.NetworkSync.NoSync)
+        if (config.NetSync != NetworkSync.NoSync)
         {
             ConfigIndex? ci = Indexer_NetSync[config.NetSync].First(entry => 
                 entry.Name.Equals(config.Name) && entry.ModName.Equals(config.ModName));
@@ -709,13 +746,13 @@ public static partial class ConfigManager
     {
         if (config.Name.Trim().IsNullOrEmpty())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Name is null!");
             return;
         }
         
         if (config.ModName.Trim().IsNullOrEmpty())
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Name is null!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Name is null!");
             return;
         }
         
@@ -724,12 +761,12 @@ public static partial class ConfigManager
 
         if (LoadedConfigEntries[config.ModName].ContainsKey(config.Name))
         {
-            LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name}. An entry already exists!");
+            Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name}. An entry already exists!");
             return;
         }
         LoadedConfigEntries[config.ModName].Add(config.Name, config);
         
-        if (config.NetSync != IConfigBase.NetworkSync.NoSync)
+        if (config.NetSync != NetworkSync.NoSync)
         {
             if (!Indexer_NetSync.ContainsKey(config.NetSync))
                 Indexer_NetSync.Add(config.NetSync, new List<ConfigIndex>());
@@ -742,7 +779,7 @@ public static partial class ConfigManager
                 }
             });
             if (exists)
-                LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for NETSYNC. An entry already exists!");
+                Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for NETSYNC. An entry already exists!");
             else
                 Indexer_NetSync[config.NetSync].Add(new ConfigIndex(config.ModName, config.Name));
         }
@@ -760,7 +797,7 @@ public static partial class ConfigManager
                 }
             });
             if (exists)
-                LuaCsSetup.PrintCsError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for DISPLAY. An entry already exists!");
+                Utils.Logging.PrintError($"ConfigManager::AddConfigToList() | Could not register the config entry from ModName {config.ModName} with the name {config.Name} for DISPLAY. An entry already exists!");
             else
                 Indexer_MenuCategory[config.MenuCategory].Add(new ConfigIndex(config.ModName, config.Name));
         }
@@ -783,7 +820,7 @@ public static partial class ConfigManager
             Indexer_AllLoadedEntries.Add(new ConfigIndex(config.ModName, config.Name));
         }
     }
-
+    
     #endregion
 
     #endregion
@@ -795,7 +832,7 @@ public static partial class ConfigManager
     /// </summary>
     private static readonly Dictionary<string, Dictionary<string, IConfigBase>> LoadedConfigEntries = new();
     private static readonly Dictionary<IConfigBase.Category, List<ConfigIndex>> Indexer_MenuCategory = new();
-    private static readonly Dictionary<IConfigBase.NetworkSync, List<ConfigIndex>> Indexer_NetSync = new();
+    private static readonly Dictionary<NetworkSync, List<ConfigIndex>> Indexer_NetSync = new();
     private static readonly List<ConfigIndex> Indexer_KeyMouseControls = new();
     private static readonly List<ConfigIndex> Indexer_AllLoadedEntries = new();
     private static readonly Dictionary<string, string> LoadedXDocKeys = new();

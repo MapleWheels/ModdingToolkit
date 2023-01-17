@@ -1,4 +1,6 @@
-﻿namespace ModdingToolkit.Config;
+﻿using ModdingToolkit.Networking;
+
+namespace ModdingToolkit.Config;
 
 public interface IConfigBase
 {
@@ -20,11 +22,6 @@ public interface IConfigBase
         Ignore,    
         Audio_NOTIMPL,
         Graphics_NOTIMPL
-    }
-
-    public enum NetworkSync
-    {
-        NoSync, ServerAuthority, ClientPermissive
     }
 
     public enum DisplayType

@@ -1,30 +1,42 @@
-﻿namespace ModdingToolkit.Config;
+﻿using Barotrauma.Networking;
+using ModdingToolkit.Networking;
 
-public class ConfigList : IConfigList
+namespace ModdingToolkit.Config;
+
+public partial class ConfigList : IConfigList, INetConfigBase
 {
     #region INTERNALS
 
     protected string _value = String.Empty;
     protected ImmutableList<string> _valueList = ImmutableList<string>.Empty;
     protected Func<string, bool>? _valueChangePredicate = null;
-    protected System.Action? _onValueChanged;
+    protected System.Action<IConfigList>? _onValueChanged;
+    protected System.Action<INetConfigBase>? _onNetworkEvent;
 
     #endregion
 
     public string Name { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(string);
-    public string ModName { get; private set; } = String.Empty;
+    public Type NetSyncVarTypeDef => typeof(ushort);
+    public void SetNetworkingId(Guid id)
+    {
+        NetId = id;
+    }
 
+    public Guid NetId { get; private set; }
+    public string ModName { get; private set; } = String.Empty;
+    
     public virtual string Value
     {
         get => this._value;
         set
         {
-            if (Validate(value))
+            if (Validate(value) && NetAuthorityValidate())
             {
                 this._value = value;
-                this._onValueChanged?.Invoke();
+                this._onValueChanged?.Invoke(this);
+                this.TriggerNetEvent();
             }
         }
     }
@@ -32,10 +44,10 @@ public class ConfigList : IConfigList
     public string DefaultValue { get; private set; } = String.Empty;
     
     public ref readonly ImmutableList<string> GetReadOnlyList() => ref _valueList;
-
+    
     public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
-        IConfigBase.NetworkSync sync = IConfigBase.NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<string, bool>? valueChangePredicate = null, Action? onValueChanged = null)
+        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
+        Func<string, bool>? valueChangePredicate = null, Action<IConfigList>? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<string>::Initialize() | Name is null or empty.");
@@ -49,6 +61,9 @@ public class ConfigList : IConfigList
         this.MenuCategory = menuCategory;
         this._valueList = valueList.ToImmutableList();
 
+        if (this._valueList.Count < 1)
+            this._valueList = new List<string> { "" }.ToImmutableList();    //Empty lists not allowed to reduce overhead elsewhere.
+        
         if (_valueList.Contains(newValue))
             this.Value = newValue;
         if (_valueList.Contains(defaultValue))
@@ -63,7 +78,7 @@ public class ConfigList : IConfigList
     }
 
     public IConfigEntry<string>.Category MenuCategory { get; private set; }
-    public IConfigEntry<string>.NetworkSync NetSync { get; private set; }
+    public NetworkSync NetSync { get; private set; }
 
     public bool IsInitialized { get; private set; } = false;
 
@@ -80,14 +95,18 @@ public class ConfigList : IConfigList
         return 0;
     }
 
-    public virtual string GetStringValue() => this._value.ToString() ?? "";
+    public void SetValueFromIndex(int index)
+    {
+        if (index >= _valueList.Count || index < 0)
+            return;
+        this.Value = _valueList[index];
+    }
+
+    public virtual string GetStringValue() => this.Value.ToString() ?? "";
 
     public virtual string GetStringDefaultValue() => this.DefaultValue.ToString() ?? "";
 
-    public virtual void SetValueFromString(string value)
-    {
-        this.Value = value;
-    }
+    public virtual void SetValueFromString(string value) => this.Value = value;
 
     public void SetValueAsDefault()
     {
@@ -95,8 +114,34 @@ public class ConfigList : IConfigList
     }
 
     public virtual IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.DropdownList;
-    public bool ValidateString(string value)
+    public bool ValidateString(string value) => Validate(value);
+
+    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
-        return Validate(value);
+        Utils.Networking.WriteNetValueFromType(msg, (ushort)_valueList.IndexOf(_value));
+        return true;
+    }
+
+    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    {
+        ushort val = Utils.Networking.ReadNetValueFromType<ushort>(msg);
+        if (val >= _valueList.Count)
+        {
+            Utils.Logging.PrintError($"ConfigList::ReadNetworkValue() | The index value of {val} is out of bounds.");
+            return false;
+        }
+        this._value = _valueList[val];
+        this._onValueChanged?.Invoke(this);
+        return true;
+    }
+
+    void INetConfigBase.SubscribeToNetEvents(Action<INetConfigBase> evtHandle)
+    {
+        this._onNetworkEvent += evtHandle;
+    }
+
+    void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
+    {
+        this._onNetworkEvent -= evtHandle;
     }
 }
