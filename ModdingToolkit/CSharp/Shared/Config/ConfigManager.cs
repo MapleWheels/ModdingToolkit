@@ -346,7 +346,7 @@ public static partial class ConfigManager
         ce.Initialize(name, modName, defaultValue, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
-        if (ce is INetConfigEntry<T> ince)
+        if (ce is INetConfigBase ince)
             RegisterForNetworking(ince);
         return ce;
     }
@@ -363,7 +363,7 @@ public static partial class ConfigManager
         cl.Initialize(name, modName, defaultValue, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
-        if (cl is INetConfigEntry<ushort> ince)
+        if (cl is INetConfigBase ince)
             RegisterForNetworking(ince);
         return cl;
     }
@@ -381,7 +381,7 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
-        if (cr is INetConfigEntry<int> ince)
+        if (cr is INetConfigBase ince)
             RegisterForNetworking(ince);
         return cr;
     }
@@ -399,7 +399,7 @@ public static partial class ConfigManager
         cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
-        if (cr is INetConfigEntry<float> ince)
+        if (cr is INetConfigBase ince)
             RegisterForNetworking(ince);
         return cr;
     }
@@ -674,7 +674,7 @@ public static partial class ConfigManager
 
     private static void RegisterForNetworking(INetConfigBase cfg)
     {
-        if (!GameMain.IsMultiplayer || cfg.NetSync == NetworkSync.NoSync)
+        if (!GameMain.IsMultiplayer || cfg.NetSync is NetworkSync.NoSync)
             return;
         if (!NetworkingManager.RegisterNetConfigInstance(cfg))
         {
@@ -682,7 +682,7 @@ public static partial class ConfigManager
         }
     }
 
-    private static void RegisterForNetworking<T>(INetConfigEntry<T> cfg) where T : IConvertible
+    private static void RegisterForNetworking<T>(INetConfigBase cfg) where T : IConvertible
     {
         if (!GameMain.IsMultiplayer || cfg.NetSync == NetworkSync.NoSync)
             return;

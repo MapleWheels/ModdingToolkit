@@ -1,4 +1,6 @@
-﻿namespace ModdingToolkit.Networking;
+﻿using Barotrauma.Networking;
+
+namespace ModdingToolkit.Networking;
 
 public interface INetConfigBase
 {
@@ -11,11 +13,12 @@ public interface INetConfigBase
     bool IsNetworked { get; }
     bool NetAuthorityValidate();
     /// <summary>
-    /// Set value without creating network events.
+    /// Called when the Value is changed. Args: ModName, Name, Value.
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns>Success</returns>
-    bool SetStringValueFromNetwork(string value);
-
-    string GetStringNetworkValue();
+    /// <param name="evtHandle"></param>
+    internal bool WriteNetworkValue(IWriteMessage msg);
+    internal bool ReadNetworkValue(IReadMessage msg);
+    internal void SubscribeToNetEvents(System.Action<INetConfigBase> evtHandle);
+    internal void UnsubscribeFromNetEvents(System.Action<INetConfigBase> evtHandle);
+    void TriggerNetEvent();
 }

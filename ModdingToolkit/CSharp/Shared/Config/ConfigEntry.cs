@@ -1,16 +1,17 @@
 ﻿using System.ComponentModel;
+using Barotrauma.Networking;
 using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
-public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where T : IConvertible
+public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : IConvertible
 {
     #region INTERNALS
     
     protected T _value = default!;
     protected Func<T, bool>? _valueChangePredicate;
     protected System.Action<IConfigEntry<T>>? _onValueChanged;
-    protected System.Action<Guid, T>? _onNetworkEvent;
+    protected System.Action<INetConfigBase>? _onNetworkEvent;
 
     #endregion
 
@@ -29,17 +30,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
             {
                 this._value = value;
                 this._onValueChanged?.Invoke(this);
-#if CLIENT
-                if (this.NetSync == NetworkSync.TwoWaySync)
-                {
-                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
-                }
-#else
-                if (this.NetSync is NetworkSync.TwoWaySync or NetworkSync.ServerAuthority)
-                {
-                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
-                }
-#endif
+                this.TriggerNetEvent();
             }
         }
     }
@@ -104,11 +95,15 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
             T? val = (T?)conv.ConvertFromString(value);
             if (val is not null)
                 this.Value = val;
+            else
+                Utils.Logging.PrintError($"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. " +
+                                         $"Cannot convert from string value {value} to {typeof(T)}.");
         }
         catch (Exception e)
         {
             Utils.Logging.PrintError(
-                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. Cannot convert from string value {value} to {typeof(T)}. EXCEPTION: {e.Message}. INNER_EXCEPTION: {e.InnerException}");
+                $"ConfigEntry::SetValueFromString() | Name: {Name}. ModName: {ModName}. " +
+                $"Cannot convert from string value {value} to {typeof(T)}. EXCEPTION: {e.Message}. INNER_EXCEPTION: {e.InnerException}");
         }
     }
 
@@ -139,43 +134,31 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
         }
     }
 
-    public bool SetStringValueFromNetwork(string value)
+    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
-        if (!ValidateString(value))
-            return false;
-        try
-        {
-            this._value = (T)Convert.ChangeType(value, typeof(T));
-            this._onValueChanged?.Invoke(this);
-            return true;
-        }
-        catch (Exception)
-        {
-            Utils.Logging.PrintError($"ConfigEntry<{typeof(T)}>::SetStringValueFromNetwork() | Unable to convert string to Native type. StringValue={value}, CName={ModName}::{Name}");
-            return false;
-        }
-    }
-
-    public string GetStringNetworkValue() => GetStringValue();
-
-    public bool SetNativeValueFromNetwork(T value)
-    {
-        if (!Validate(value))
-            return false;
-        this._value = value;
-        this._onValueChanged?.Invoke(this);
+        Utils.Networking.WriteNetValueFromType(msg, this.Value);
         return true;
     }
 
-    public void SubscribeToNetEvents(Action<Guid, T> evtHandle)
+    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    {
+        T value = Utils.Networking.ReadNetValueFromType<T>(msg);
+        if (Validate(value))
+        {
+            this._value = value;
+            this._onValueChanged?.Invoke(this);
+        }
+
+        return true;
+    }
+
+    void INetConfigBase.SubscribeToNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent += evtHandle;
     }
 
-    public void UnsubscribeFromNetEvents(Action<Guid, T> evtHandle)
+    void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
     }
-
-    public T GetNetworkValue() => this._value;
 }

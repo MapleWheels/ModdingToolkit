@@ -94,7 +94,7 @@ public class Bootloader : IAssemblyPlugin
             "ModdingTK2",
             "Hello",
             IConfigBase.Category.Ignore,
-            NetworkSync.ServerAuthority,
+            NetworkSync.TwoWaySync,
             (ce) =>
             {
                 PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);

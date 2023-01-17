@@ -10,12 +10,20 @@ public static class Utils
     {
         public static void PrintMessage(string s)
         {
-            LuaCsLogger.LogMessage(s);
+#if SERVER
+            LuaCsLogger.LogMessage($"[Server] {s}");
+#else
+            LuaCsLogger.LogMessage($"[Client] {s}");
+#endif
         }
         
         public static void PrintError(string s)
         {
-            LuaCsLogger.LogError(s);
+#if SERVER
+            LuaCsLogger.LogError($"[Server] {s}");
+#else
+            LuaCsLogger.LogError($"[Client] {s}");
+#endif
         }
     }
     

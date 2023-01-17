@@ -38,22 +38,30 @@ public static partial class NetworkingManager
             case NetworkEventId.Undef: return;
             case NetworkEventId.SyncVarSingle: ReceiveSyncVarSingle(msg);
                 break;
-            case NetworkEventId.SyncVarMulti: ReceiveSyncVarMulti(msg);
-                break;
-            case NetworkEventId.Client_RequestIdList: ReceiveIdList(msg);
-                break;
             case NetworkEventId.Client_RequestIdSingle: ReceiveIdSingle(msg);
                 break;
-            case NetworkEventId.ResetState: ReceiveResetNetworkState();
+            case NetworkEventId.Client_ResetState: ReceiveResetNetworkState();
                 break;
+        }
+    }
+    
+    private static void SendNetSyncVarEvent(INetConfigBase cfg)
+    {
+        if (!IsInitialized)
+            return;
+        if (TryGetNetId(cfg.NetId, out uint id))
+        {
+            var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
+            msg.WriteUInt32(id);
+            cfg.WriteNetworkValue(msg);
+            SendMsg(msg);
         }
     }
 
     private static void ReceiveResetNetworkState()
     {
         ClearNetworkData();
-        var outMsg = PrepareWriteMessageWithHeaders(NetworkEventId.ClientResponse_ResetStateSuccess);
-        SendMsg(outMsg);
+        SendRequestIdList();
     }
     
     /// <summary>
@@ -71,7 +79,7 @@ public static partial class NetworkingManager
 #endif
             if (RegisterOrUpdateNetConfigId(modName, name, id)
                 && requestSyncVar
-                && TryGetNetConfig(modName, name, out var cfg)
+                && TryGetNetConfigInstance(modName, name, out var cfg)
                 && cfg is
                 {
                     IsNetworked: true,
@@ -88,34 +96,6 @@ public static partial class NetworkingManager
 
         return false;
     }
-    
-    private static void ReceiveIdList(IReadMessage msg)
-    {
-        try
-        {
-            uint counter = msg.ReadUInt32();
-#if DEBUG
-            Utils.Logging.PrintMessage($"Client: Received ID List: Count {counter}");
-#endif
-            
-            for (int index = 0; index < counter; index++)
-            {
-                if (!ReceiveIdSingle(msg, false))
-                {
-                    Utils.Logging.PrintError("NetworkingManager::ReceiveIdList() | Unable to continue. Read error.");
-                    break;
-                }
-            }
-#if DEBUG
-            Utils.Logging.PrintMessage($"Client: Receive ID Multi: Sending SyncVar Request.");
-#endif
-            SendRequestSyncVarMulti();
-        }
-        catch (Exception e)
-        {
-            Utils.Logging.PrintError($"NetworkingManager::ReceiveIdList() | Unable to continue. Message read error. | Exception: {e.Message}");
-        }
-    }
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg)
     {
@@ -125,52 +105,14 @@ public static partial class NetworkingManager
         try
         {
             uint id = msg.ReadUInt32();
-            if (!Indexer_NetConfigIds.ContainsKey(id))
-            {
-                Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
-                return false;
-            }
-            var cfgDat = Indexer_NetConfigIds[id];
-            if (cfgDat.localId != Guid.Empty 
-                && UpdaterReadCallback.ContainsKey(cfgDat.localId) 
-                && UpdaterReadCallback[cfgDat.localId] is not null
-                && NetConfigRegistry.ContainsKey(cfgDat.localId) 
-                && NetConfigRegistry[cfgDat.localId] is
-                {
-                    IsNetworked: true, 
-                    NetSync: NetworkSync.TwoWaySync or NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync
-                })
-            {
-                UpdaterReadCallback[cfgDat.localId]!.Invoke(msg);
-                return true;
-            }
+            if (TryGetNetConfigInstance(id, out var cfg))
+                return cfg!.ReadNetworkValue(msg);
             return false;
         }
         catch (Exception e)
         {
             Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue. | Exception: {e.Message}");
             return false;
-        }
-    }
-    
-    private static void ReceiveSyncVarMulti(IReadMessage msg)
-    {
-        try
-        {
-            uint counter = msg.ReadUInt32();
-            for (int index = 0; index < counter; index++)
-            {
-                if (!ReceiveSyncVarSingle(msg))
-                {
-                    Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | Read failure, cannot continue.");
-                    return;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | Exception: {e.Message}.");
-            return;
         }
     }
 
@@ -180,7 +122,6 @@ public static partial class NetworkingManager
 
     private static void SynchronizeNewVar(INetConfigBase cfg)
     {
-        SynchronizeCleanLocalNetIndex(cfg);
         SendRequestIdSingle(cfg.ModName, cfg.Name);
     }
 
@@ -190,9 +131,6 @@ public static partial class NetworkingManager
         outMessage.WriteUInt32(id);
         SendMsg(outMessage);
     }
-
-    private static void SendRequestSyncVarMulti() =>
-        SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestSyncVarMulti));
 
     private static void SendRequestIdSingle(string modName, string name)
     {
@@ -208,7 +146,7 @@ public static partial class NetworkingManager
         SendRequestIdList();
     }
     
-    private static void SendRequestIdList() => SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdList));
+    private static void SendRequestIdList() => SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestAllIds));
 
     #endregion
 }

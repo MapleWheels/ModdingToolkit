@@ -1,8 +1,9 @@
-﻿using ModdingToolkit.Networking;
+﻿using Barotrauma.Networking;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
-public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
+public partial class ConfigList : IConfigList, INetConfigBase
 {
     #region INTERNALS
 
@@ -10,7 +11,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     protected ImmutableList<string> _valueList = ImmutableList<string>.Empty;
     protected Func<string, bool>? _valueChangePredicate = null;
     protected System.Action<IConfigList>? _onValueChanged;
-    protected System.Action<Guid, ushort>? _onNetworkEvent;
+    protected System.Action<INetConfigBase>? _onNetworkEvent;
 
     #endregion
 
@@ -35,18 +36,7 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
             {
                 this._value = value;
                 this._onValueChanged?.Invoke(this);
-                //will never be empty, error on val >65,535, a list shouldn't ever be this big.
-#if CLIENT
-                if (this.NetSync == NetworkSync.TwoWaySync)
-                {
-                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
-                } 
-#else
-                if (this.NetSync is NetworkSync.TwoWaySync or NetworkSync.ServerAuthority)
-                {
-                    this._onNetworkEvent?.Invoke(NetId, GetNetworkValue());
-                } 
-#endif
+                this.TriggerNetEvent();
             }
         }
     }
@@ -126,35 +116,32 @@ public partial class ConfigList : IConfigList, INetConfigEntry<ushort>
     public virtual IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.DropdownList;
     public bool ValidateString(string value) => Validate(value);
 
-    public bool SetStringValueFromNetwork(string value)
+    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
-        if (!ValidateString(value))
+        Utils.Networking.WriteNetValueFromType(msg, (ushort)_valueList.IndexOf(_value));
+        return true;
+    }
+
+    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    {
+        ushort val = Utils.Networking.ReadNetValueFromType<ushort>(msg);
+        if (val >= _valueList.Count)
+        {
+            Utils.Logging.PrintError($"ConfigList::ReadNetworkValue() | The index value of {val} is out of bounds.");
             return false;
-        this._value = value;
+        }
+        this._value = _valueList[val];
         this._onValueChanged?.Invoke(this);
         return true;
     }
 
-    public string GetStringNetworkValue() => GetStringValue();
-
-    public bool SetNativeValueFromNetwork(ushort value)
-    {
-        if (value >= _valueList.Count)
-            return false;
-        this._value = _valueList[value];
-        this._onValueChanged?.Invoke(this);
-        return true;
-    }
-
-    public void SubscribeToNetEvents(Action<Guid, ushort> evtHandle)
+    void INetConfigBase.SubscribeToNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent += evtHandle;
     }
 
-    public void UnsubscribeFromNetEvents(Action<Guid, ushort> evtHandle)
+    void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
     }
-
-    public ushort GetNetworkValue() => (ushort)_valueList.IndexOf(_value);
 }

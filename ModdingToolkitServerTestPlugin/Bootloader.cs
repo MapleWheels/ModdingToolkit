@@ -88,7 +88,7 @@ public class Bootloader : IAssemblyPlugin
             "ModdingTK2",
             "Hello",
             IConfigBase.Category.Ignore,
-            NetworkSync.ServerAuthority,
+            NetworkSync.TwoWaySync,
             (ce) =>
             {
                 PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);
@@ -116,8 +116,7 @@ public class Bootloader : IAssemblyPlugin
 
     private static void PrintNetTestMsg(string name, string value)
     {
-        //Utils.Logging.PrintMessage($"net_ce_test: server, name: {name}, mode: mp, net_auth: srvauth, value {value}");
-        LuaCsLogger.LogMessage($"net_ce_test: server, name: {name}, mode: mp, net_auth: srvauth, value {value}");
+        Utils.Logging.PrintMessage($"net_ce_test, name: {name}, mode: mp, value {value}");
     }
 
     #endregion

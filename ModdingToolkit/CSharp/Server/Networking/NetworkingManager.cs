@@ -10,17 +10,16 @@ public static partial class NetworkingManager
 
     private static void SynchronizeNewVar(INetConfigBase cfg)
     {
-        SynchronizeCleanLocalNetIndex(cfg);
         // was not in local index
-        if (!Indexer_ReverseNetConfigId.ContainsKey(cfg.NetId))
+        if (!Indexer_LocalToNetIdLookup.ContainsKey(cfg.NetId) || Indexer_LocalToNetIdLookup[cfg.NetId] < Counter.MinValue)
         {
             uint newId = Counter.GetIncrement();
 #if DEBUG
-            Utils.Logging.PrintMessage($"[Server] SynchronizeNewVar() | Registering Lookup for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+            Utils.Logging.PrintMessage($"SynchronizeNewVar() | Registering Lookup for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
 #endif
             if (!RegisterOrUpdateNetConfigId(cfg.ModName, cfg.Name, newId))
             {
-                Utils.Logging.PrintError($"[Server] SynchronizeNewVar() | Reverse Lookup not registered for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
+                Utils.Logging.PrintError($"SynchronizeNewVar() | Reverse Lookup not registered for modName={cfg.ModName}, name={cfg.Name}, netId={newId}, guid={cfg.NetId}");
             }
         }
 
@@ -34,12 +33,12 @@ public static partial class NetworkingManager
     {
 #if DEBUG
 #if SERVER
-        Utils.Logging.PrintMessage($"Server: SynchronizeAll().");
+        Utils.Logging.PrintMessage($"SynchronizeAll().");
 #else
         Utils.Logging.PrintMessage($"Client: SynchronizeAll().");
 #endif
 #endif
-        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.ResetState);
+        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_ResetState);
         SendMsg(outmsg);
     }
 
@@ -58,17 +57,13 @@ public static partial class NetworkingManager
             case NetworkEventId.Undef: return;
             case NetworkEventId.SyncVarSingle: ReceiveSyncVarSingle(msg, client);
                 break;
-            case NetworkEventId.SyncVarMulti: ReceiveSyncVarMulti(msg, client);
-                break;
-            case NetworkEventId.Client_RequestIdList: ReceiveRequestIdList(client);
+            case NetworkEventId.Client_RequestAllIds: ReceiveRequestIdList(client);
                 break;
             case NetworkEventId.Client_RequestIdSingle: ReceiveRequestIdSingle(msg, client);
                 break;
-            case NetworkEventId.ClientResponse_ResetStateSuccess: ReceiveClientResponseResetState(client);
+            case NetworkEventId.Client_ResetState: ReceiveClientResponseResetState(client);
                 break;
             case NetworkEventId.Client_RequestSyncVarSingle: ReceiveRequestForSyncVarSingle(msg, client);
-                break;
-            case NetworkEventId.Client_RequestSyncVarMulti: ReceiveRequestForSyncVarMulti(client);
                 break;
             default:
                 return;
@@ -88,65 +83,17 @@ public static partial class NetworkingManager
         try
         {
             uint id = msg.ReadUInt32();
-            if (Indexer_NetConfigIds.ContainsKey(id))
+            if (TryGetNetConfigInstance(id, out var cfg))
             {
-                var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestSyncVarSingle);
-                if (WriteSyncVarIdValue(id, outmsg))
-                    SendMsg(outmsg, client.Connection);
+                var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
+                outmsg.WriteUInt32(id);
+                cfg!.WriteNetworkValue(outmsg);
+                SendMsg(outmsg, client.Connection);
             }
         }
         catch (Exception e)
         {
             Utils.Logging.PrintError($"NetworkingManager::ReceiveRequestForSyncVarSingle() | Exception: {e.Message}"); 
-        }
-    }
-
-    private static void ReceiveRequestForSyncVarMulti(Barotrauma.Networking.Client? client)
-    {
-        if (client is null)
-            return;
-        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarMulti);
-        List<(uint, Action<IWriteMessage>)> idList = new();
-        foreach (KeyValuePair<uint,NetSyncVarIndex> index in Indexer_NetConfigIds)
-        {
-            if (index.Value.localId != Guid.Empty
-                && UpdaterWriteCallback.ContainsKey(index.Value.localId)
-                && UpdaterWriteCallback[index.Value.localId] is not null)
-            {
-                idList.Add((index.Key, UpdaterWriteCallback[index.Value.localId]!));
-            }
-        }
-
-        if (!idList.Any())
-            return;
-        outmsg.WriteUInt32(Convert.ToUInt32(idList.Count));
-        foreach ((uint, Action<IWriteMessage>) tuple in idList)
-        {
-            outmsg.WriteUInt32(tuple.Item1);
-            tuple.Item2.Invoke(outmsg);
-        }
-        SendMsg(outmsg, client.Connection);
-    }
-    
-    private static void ReceiveSyncVarMulti(IReadMessage msg, Barotrauma.Networking.Client? client)
-    {
-        try
-        {
-            uint count = msg.ReadUInt32();
-            for (int i = 0; i < count; i++)
-            {
-                if (!ReceiveSyncVarSingle(msg, client))
-                {
-                    Utils.Logging.PrintError(
-                        $"NetworkingManager::ReceiveSyncVarMulti() | Was unable to parse data."); 
-                    //we can't continue to read since we can't remove the unknown-length value bits from the message.
-                    break;
-                }            
-            }
-        }
-        catch (Exception e)
-        {
-            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarMulti() | {e.Message}");
         }
     }
 
@@ -156,10 +103,25 @@ public static partial class NetworkingManager
             return;
         if (client is null)
             return;
-        if (!Indexer_NetConfigIds.Any())
+        if (!Indexer_NetToLocalIdLookup.Any())
             return;
-        var outmsg = WriteIdListMsg();
-        SendMsg(outmsg, client.Connection);
+        ImmutableDictionary<uint, NetSyncVarIndex> toSync = Indexer_NetToLocalIdLookup
+            .Where(kvp =>
+                TryGetNetConfigInstance(kvp.Value.ModName, kvp.Value.Name, out var cfg) 
+                && cfg is { IsNetworked: true })
+            .ToImmutableDictionary();
+#if DEBUG
+        Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | SyncVar Count: {toSync.Count}");
+#endif
+        foreach (var index in toSync)
+        {
+            var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
+            outmsg.WriteIdNameInfo(index.Key, index.Value.ModName, index.Value.Name);
+            SendMsg(outmsg, client.Connection);
+#if DEBUG
+            Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | Writing SyncVar: id={index.Key}, modName={index.Value.ModName}, name={index.Value.Name}");
+#endif
+        }
     }
 
     private static void ReceiveRequestIdSingle(IReadMessage msg, Barotrauma.Networking.Client? client)
@@ -180,107 +142,83 @@ public static partial class NetworkingManager
             Utils.Logging.PrintError($"NetworkManager::ReceiveRequestIdSingle() | Cannot read config name or mod name. | Exception: {e.Message}");
         }
     }
+    
+    private static void SendNetSyncVarEvent(INetConfigBase cfg, Barotrauma.Networking.Client? client = null)
+    {
+        if (!IsInitialized)
+            return;
+        if (TryGetNetId(cfg.NetId, out uint id))
+        {
+            var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
+            msg.WriteUInt32(id);
+            cfg.WriteNetworkValue(msg);
+            if (client is null)
+                SendMsg(msg, null);
+            else
+                SendMsg(msg, client.Connection);
+        }
+    }
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg, Barotrauma.Networking.Client? client)
     {
-        uint id = msg.ReadUInt32();
-        if (!Indexer_NetConfigIds.ContainsKey(id))
+#if DEBUG      
+        Utils.Logging.PrintMessage($"ReceiveSyncVarSingle()");
+#endif
+        try
         {
-            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | The id of {id} is not in the dictionary! Read failure.");
-            return false;
-        }
-        var cfgDat = Indexer_NetConfigIds[id];
-        if (cfgDat.localId != Guid.Empty 
-            && UpdaterReadCallback.ContainsKey(cfgDat.localId) 
-            && NetConfigRegistry.ContainsKey(cfgDat.localId) 
-            && NetConfigRegistry[cfgDat.localId] is { IsNetworked: true, NetSync: NetworkSync.TwoWaySync })
-        {
-            UpdaterReadCallback[cfgDat.localId]?.Invoke(msg);
-            //send updates to other clients
-            if (client is not null 
-                && UpdaterWriteCallback.ContainsKey(cfgDat.localId)
-                && UpdaterWriteCallback[cfgDat.localId] is {} callback)
+            uint id = msg.ReadUInt32();
+            if (TryGetNetConfigInstance(id, out var cfg))
             {
-                var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
-                callback.Invoke(outmsg);
-                foreach (NetworkConnection connection in Barotrauma.Networking.Client.ClientList.Where(c => c != client).Select(c => c.Connection))
+                // If bad read, retransmit the known good value to all clients.
+                if (!cfg!.ReadNetworkValue(msg))
                 {
-                    SendMsg(outmsg, connection);
+                    SendNetSyncVarEvent(cfg);
+                    return false;
+                }
+                
+                if (client is null)
+                {
+                    SendNetSyncVarEvent(cfg);
+                    return true;
+                }
+                
+                foreach (Barotrauma.Networking.Client cl in GameMain.Server.ConnectedClients.Where(c => c != client))
+                {
+                    SendNetSyncVarEvent(cfg, cl);
                 }
             }
-            
-            return true;
+            return false;
         }
-        return false;
+        catch (Exception e)
+        {
+            Utils.Logging.PrintError($"NetworkingManager::ReceiveSyncVarSingle() | Read failure, cannot continue. | Exception: {e.Message}");
+            return false;
+        }
     }
 
     #endregion
     
     #region UTIL
 
-    private static IWriteMessage WriteIdListMsg()
-    {
-        var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdList);
-        ImmutableDictionary<uint, NetSyncVarIndex> toSync = Indexer_NetConfigIds.Where((kvp) =>
-        {
-            if (TryGetNetConfig(kvp.Value.ModName, kvp.Value.Name, out var cfg) 
-                && cfg is
-                {
-                    IsNetworked: true,
-                    NetSync: NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.TwoWaySync
-                })
-            {
-                return true;
-            }
-            return false;
-        }).ToImmutableDictionary();
-        outmsg.WriteUInt32(Convert.ToUInt32(toSync.Count));
-#if DEBUG
-        Utils.Logging.PrintMessage($"[Server] NM::WriteIdListMsg() | SyncVar Count: {toSync.Count}");
-#endif
-        foreach (var index in toSync)
-        {
-            outmsg.WriteUInt32(index.Key);
-            outmsg.WriteString(index.Value.ModName);
-            outmsg.WriteString(index.Value.Name);
-#if DEBUG
-            Utils.Logging.PrintMessage($"[Server] NM::WriteIdListMsg() | Writing SyncVar: id={index.Key}, modName={index.Value.ModName}, name={index.Value.Name}");
-#endif
-        }
-        return outmsg;
-    }
-
     private static bool WriteIdSingleMsg(string modName, string name, out IWriteMessage? message)
     {
         message = null;
-        if (TryGetNetConfig(modName, name, out var cfg))
+        if (TryGetNetConfigInstance(modName, name, out var cfg)
+            && TryGetNetId(cfg!.NetId, out uint netId))
         {
-            var guid = cfg!.NetId;
-            if (Indexer_ReverseNetConfigId.ContainsKey(guid) && Indexer_ReverseNetConfigId[guid] >= Counter.MinValue)
-            {
-                message = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
-                message.WriteUInt32(Indexer_ReverseNetConfigId[guid]);
-                message.WriteString(modName);
-                message.WriteString(name);
-                return true;
-            }
+            message = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
+            message.WriteIdNameInfo(netId, cfg.ModName, cfg.Name);
+            return true;
         }
 
         return false;
     }
 
-    private static bool WriteSyncVarIdValue(uint id, IWriteMessage msg)
+    private static void WriteIdNameInfo(this IWriteMessage msg, uint netId, string modName, string name)
     {
-        if (Indexer_NetConfigIds.ContainsKey(id)
-            && Indexer_NetConfigIds[id].localId != Guid.Empty
-            && UpdaterWriteCallback.ContainsKey(Indexer_NetConfigIds[id].localId)
-            && UpdaterWriteCallback[Indexer_NetConfigIds[id].localId] is not null)
-        {
-            msg.WriteUInt32(id);
-            UpdaterWriteCallback[Indexer_NetConfigIds[id].localId]!.Invoke(msg);
-            return true;
-        }
-        return false;
+        msg.WriteUInt32(netId);
+        msg.WriteString(modName);
+        msg.WriteString(name);
     }
 
     #endregion

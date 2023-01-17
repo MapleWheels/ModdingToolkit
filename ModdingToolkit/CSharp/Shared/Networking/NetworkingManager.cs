@@ -18,37 +18,58 @@ public static partial class NetworkingManager
     public static readonly bool IsClient = true;
 #endif
 
-    public static bool TryGetNetConfig(string modName, string name, out INetConfigBase? cfg)
+    public static bool TryGetNetConfigInstance(uint netId, out INetConfigBase? cfg)
+    {
+        cfg = null;
+        if (netId < Counter.MinValue || !Indexer_NetToLocalIdLookup.ContainsKey(netId))
+            return false;
+        var index = Indexer_NetToLocalIdLookup[netId];
+        return TryGetNetConfigInstance(index.ModName, index.Name, out cfg);
+    }
+    
+    public static bool TryGetNetConfigInstance(string modName, string name, out INetConfigBase? cfg)
     {
         cfg = null;
         if (modName.IsNullOrWhiteSpace())
         {
-#if SERVER
-            Utils.Logging.PrintError($"[Server] NetworkingManager::TryGetNetConfig() | Modname is null or whitespace.");
-#else
-            Utils.Logging.PrintError($"[Client] NetworkingManager::TryGetNetConfig() | Modname is null or whitespace.");
+#if DEBUG
+            Utils.Logging.PrintError($"NetworkingManager::TryGetNetConfigInstance() | Modname is null or whitespace.");
 #endif
             return false;
         }
         if (name.IsNullOrWhiteSpace())
         {
-#if SERVER
-            Utils.Logging.PrintError($"[Server] NetworkingManager::TryGetNetConfig() | Name is null or whitespace.");
-#else
-            Utils.Logging.PrintError($"[Client] NetworkingManager::TryGetNetConfig() | Name is null or whitespace.");
+#if DEBUG
+            Utils.Logging.PrintError($"NetworkingManager::TryGetNetConfigInstance() | Name is null or whitespace.");
 #endif
             return false;
         }
         
         cfg = null;
-        if (!Indexer_LocalNetConfigGuids.ContainsKey(modName) || !Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
+        if (!Indexer_LocalGuidsLookup.ContainsKey(modName) || !Indexer_LocalGuidsLookup[modName].ContainsKey(name))
             return false;
-        Guid cfgId = Indexer_LocalNetConfigGuids[modName][name];
+        Guid cfgId = Indexer_LocalGuidsLookup[modName][name];
         if (!NetConfigRegistry.ContainsKey(cfgId) || NetConfigRegistry[cfgId] is null)
             return false;
         cfg = NetConfigRegistry[cfgId];
         return true;
     }
+
+    public static bool TryGetNetId(Guid localid, out uint netId)
+    {
+        netId = 0;
+        if (!Indexer_LocalToNetIdLookup.ContainsKey(localid))
+            return false;
+        if (Indexer_LocalToNetIdLookup[localid] < Counter.MinValue)
+        {
+            Indexer_LocalToNetIdLookup.Remove(localid);
+            return false;
+        }
+
+        netId = Indexer_LocalToNetIdLookup[localid];
+        return true;
+    }
+
 
     public static void Initialize(bool force = false)
     {
@@ -80,17 +101,13 @@ public static partial class NetworkingManager
         
         GameMain.LuaCs.Networking.LuaCsNetReceives.Remove(NetMsgId);
         ClearNetworkData();
-        UpdaterReadCallback.Clear();
-        UpdaterWriteCallback.Clear();
         NetConfigRegistry.Clear();
-        foreach (var indexer in Indexer_LocalNetConfigGuids)
+        foreach (var indexer in Indexer_LocalGuidsLookup)
             indexer.Value.Clear();
-        Indexer_LocalNetConfigGuids.Clear();
-        UpdaterReadCallback.Clear();
-        UpdaterWriteCallback.Clear();
+        Indexer_LocalGuidsLookup.Clear();
 #if SERVER
         // Follow up resync won't occur as we've unsubscribed from the inbound net event.
-        SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.ResetState));            
+        SendMsg(PrepareWriteMessageWithHeaders(NetworkEventId.Client_ResetState));            
 #endif
         IsInitialized = false;
     }
@@ -100,53 +117,18 @@ public static partial class NetworkingManager
         Guid id = Guid.NewGuid();
         if (!RegisterLocalConfig(config, id))
         {
-            Utils.Logging.PrintError($"Net..Manager::RegisterNetConfigInstance() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
+            Utils.Logging.PrintError($"NetworkingManager::RegisterNetConfigInstance() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
             return false;
         }
-        RegisterCallbacks(id,
-            rMessage =>
-            {
-                config.SetStringValueFromNetwork(Utils.Networking.ReadNetValueFromType<string>(rMessage));
-            },
-            wMessage =>
-            {
-                Utils.Networking.WriteNetValueFromType(wMessage, config.GetStringNetworkValue());
-            });
+        config.SubscribeToNetEvents(SendNetSyncVarEventRedirect);
         SynchronizeNewVar(config);
         return true;
     }
 
-    public static bool RegisterNetConfigInstance<T>(INetConfigEntry<T> config) where T : IConvertible
+    private static void SendNetSyncVarEventRedirect(INetConfigBase cfg)
     {
-        Guid id = Guid.NewGuid();
-        if (!RegisterLocalConfig(config, id))
-        {
-            Utils.Logging.PrintError($"Net..Manager::RegisterNetConfigInstance<T>() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
-            return false;
-        }
-        RegisterCallbacks(id,
-            rMessage =>
-            {
-                config.SetNativeValueFromNetwork(Utils.Networking.ReadNetValueFromType<T>(rMessage));
-            },
-            wMessage =>
-            {
-                Utils.Networking.WriteNetValueFromType(wMessage, config.GetNetworkValue());
-            });
-        config.SubscribeToNetEvents(SendNetEvent);
-        SynchronizeNewVar(config);
-        return true;
-    }
-
-    /// <summary>
-    /// For use by custom INetConfigBase implementations.
-    /// Allows you to manually send a network event to update a sync var.
-    /// </summary>
-    /// <param name="netId"></param>
-    /// <param name="val"></param>
-    public static void SendStringNetVarUpdate(Guid netId, string val)
-    {
-        SendNetEvent(netId, val);
+        // wrapper for specific implementation
+        SendNetSyncVarEvent(cfg);
     }
 
     #endregion
@@ -155,23 +137,10 @@ public static partial class NetworkingManager
 
     private static void ClearNetworkData()
     {
-        Indexer_NetConfigIds.Clear();
-        Indexer_ReverseNetConfigId.Clear();
+        Indexer_NetToLocalIdLookup.Clear();
+        Indexer_LocalToNetIdLookup.Clear();
     }
     
-    private static void SendNetEvent<T>(Guid id, T val) where T : IConvertible
-    {
-        if (!Indexer_ReverseNetConfigId.ContainsKey(id) || Indexer_ReverseNetConfigId[id] < Counter.MinValue)
-        {
-            Utils.Logging.PrintError($"NetworkManager::SendNetEvent<{typeof(T)}>() | No network id exists for the Guid {id.ToString()}");
-            return;
-        }
-        var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
-        msg.WriteUInt32(Indexer_ReverseNetConfigId[id]);
-        Utils.Networking.WriteNetValueFromType(msg, val);
-        SendMsg(msg);
-    }
-
     private static IWriteMessage PrepareWriteMessageWithHeaders(NetworkEventId eventId)
     {
         var msg = GameMain.LuaCs.Networking.Start(NetworkingManager.NetMsgId);
@@ -185,92 +154,22 @@ public static partial class NetworkingManager
             return false;
         cfg.SetNetworkingId(localId);
         NetConfigRegistry[localId] = cfg;
-        if (!Indexer_LocalNetConfigGuids.ContainsKey(cfg.ModName))
-            Indexer_LocalNetConfigGuids.Add(cfg.ModName, new Dictionary<string, Guid>());
-        Indexer_LocalNetConfigGuids[cfg.ModName][cfg.Name] = localId;
+        if (!Indexer_LocalGuidsLookup.ContainsKey(cfg.ModName))
+            Indexer_LocalGuidsLookup.Add(cfg.ModName, new Dictionary<string, Guid>());
+        Indexer_LocalGuidsLookup[cfg.ModName][cfg.Name] = localId;
         return true;
-    }
-
-    private static void SynchronizeCleanLocalNetIndex(INetConfigBase cfg)
-    {
-        if (cfg.NetId == Guid.Empty)
-            return;
-        List<(uint, NetSyncVarIndex)> toAssign = new();
-        foreach (KeyValuePair<uint,NetSyncVarIndex> pair in Indexer_NetConfigIds)
-        {
-            // setup network index
-            if (pair.Value.ModName.Equals(cfg.ModName)
-                && pair.Value.Name.Equals(cfg.Name))
-            {
-                toAssign.Add((pair.Key, new NetSyncVarIndex(cfg.ModName, cfg.Name, cfg.NetId)));
-            }
-        }
-
-        if (!toAssign.Any())
-            return;
-        (uint, NetSyncVarIndex)? tupleA = null;
-        // cleanup to ensure there are never multiple entries
-        foreach ((uint, NetSyncVarIndex) tuple in toAssign)
-        {
-            Indexer_NetConfigIds.Remove(tuple.Item1);
-            if (tuple.Item1 >= Counter.MinValue && tupleA is null)
-            {
-                tupleA = (tuple.Item1, tuple.Item2);
-            }
-        }
-        
-        if (tupleA is null)
-            return;
-        Indexer_NetConfigIds[tupleA.Value.Item1] = tupleA.Value.Item2;
-        Indexer_ReverseNetConfigId[tupleA.Value.Item2.localId] = tupleA.Value.Item1;
     }
 
     private static bool RegisterOrUpdateNetConfigId(string modName, string name, uint id)
     {
-        if (!Indexer_LocalNetConfigGuids.ContainsKey(modName) ||
-            !Indexer_LocalNetConfigGuids[modName].ContainsKey(name))
-            return false;
-        Guid guidIndex = Indexer_LocalNetConfigGuids[modName][name];
-        if (!NetConfigRegistry.ContainsKey(guidIndex) || NetConfigRegistry[guidIndex] is null)
-            return false;
-        var cfg = NetConfigRegistry[guidIndex];
-        Debug.Assert(cfg is not null);
-        if (cfg.NetId != guidIndex)
+        if (TryGetNetConfigInstance(modName, name, out var cfg))
         {
-            //sync callbacks and cfg net id
-            Guid oldId = cfg.NetId;
-            cfg.SetNetworkingId(guidIndex);
-            if (oldId != Guid.Empty)
-            {
-                if (UpdaterReadCallback.ContainsKey(oldId))
-                {
-                    var readCallback = UpdaterReadCallback[oldId];
-                    UpdaterReadCallback.Remove(oldId);
-                    UpdaterReadCallback[guidIndex] = readCallback;
-                }
-                if (UpdaterWriteCallback.ContainsKey(oldId))
-                {
-                    var writeCallback = UpdaterWriteCallback[oldId];
-                    UpdaterWriteCallback.Remove(oldId);
-                    UpdaterWriteCallback[guidIndex] = writeCallback;
-                }
-            }
+            Indexer_LocalToNetIdLookup[cfg!.NetId] = id;
+            Indexer_NetToLocalIdLookup[id] = new NetSyncVarIndex(cfg.ModName, cfg.Name);
+            return true;
         }
-        Indexer_ReverseNetConfigId[guidIndex] = id;
-        Indexer_NetConfigIds[id] = new NetSyncVarIndex(modName, name, guidIndex);
-        return true;
-    }
 
-    private static void RemoveCallbacks(Guid id)
-    {
-        UpdaterReadCallback.Remove(id);
-        UpdaterWriteCallback.Remove(id);
-    }
-
-    private static void RegisterCallbacks(Guid id, Action<IReadMessage> readHandle, Action<IWriteMessage> writeHandle)
-    {
-        UpdaterReadCallback[id] = readHandle;
-        UpdaterWriteCallback[id] = writeHandle;
+        return false;
     }
 
 
@@ -278,12 +177,12 @@ public static partial class NetworkingManager
 
     #region IVARDEF
 
-    private static readonly Dictionary<Guid, INetConfigBase?> NetConfigRegistry = new();
-    private static readonly Dictionary<Guid, System.Action<IWriteMessage>?> UpdaterWriteCallback = new();
-    private static readonly Dictionary<Guid, System.Action<IReadMessage>?> UpdaterReadCallback = new();
-    private static readonly Dictionary<uint, NetSyncVarIndex> Indexer_NetConfigIds = new();
-    private static readonly Dictionary<Guid, uint> Indexer_ReverseNetConfigId = new();
-    private static readonly Dictionary<string, Dictionary<string, Guid>> Indexer_LocalNetConfigGuids = new();
+    // local
+    private static readonly Dictionary<string, Dictionary<string, Guid>> Indexer_LocalGuidsLookup = new();
+    private static readonly Dictionary<Guid, INetConfigBase> NetConfigRegistry = new(); // net
+    private static readonly Dictionary<Guid, uint> Indexer_LocalToNetIdLookup = new();
+    private static readonly Dictionary<uint, NetSyncVarIndex> Indexer_NetToLocalIdLookup = new();
+    
     // ReSharper disable once StringLiteralTypo
     private static readonly string NetMsgId = "MTKNET";    //keep this short as it gets transmitted with every message.
 
@@ -300,7 +199,7 @@ public static partial class NetworkingManager
         public static void Reset() => _counter = MinValue;    //values below 10 are reserved.
     }
 
-    public record NetSyncVarIndex(string ModName, string Name, Guid localId);
+    public record NetSyncVarIndex(string ModName, string Name);
 
     #endregion
 }

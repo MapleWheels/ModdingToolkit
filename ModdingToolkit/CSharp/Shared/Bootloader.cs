@@ -149,18 +149,6 @@ internal sealed class Bootloader : ACsMod
     {
         // Interfaces
         UserData.RegisterType<INetConfigBase>();
-        UserData.RegisterType<INetConfigEntry<bool>>();
-        UserData.RegisterType<INetConfigEntry<byte>>();
-        UserData.RegisterType<INetConfigEntry<short>>();
-        UserData.RegisterType<INetConfigEntry<int>>();
-        UserData.RegisterType<INetConfigEntry<sbyte>>();
-        UserData.RegisterType<INetConfigEntry<ushort>>();
-        UserData.RegisterType<INetConfigEntry<uint>>();
-        UserData.RegisterType<INetConfigEntry<ulong>>();
-        UserData.RegisterType<INetConfigEntry<long>>();
-        UserData.RegisterType<INetConfigEntry<float>>();
-        UserData.RegisterType<INetConfigEntry<double>>();
-        UserData.RegisterType<INetConfigEntry<string>>();
         
         UserData.RegisterType<IConfigBase>();
         UserData.RegisterType<IConfigEntry<bool>>();
@@ -260,19 +248,7 @@ internal sealed class Bootloader : ACsMod
         UserData.UnregisterType<IConfigEntry<double>>();
         UserData.UnregisterType<IConfigEntry<string>>();
         UserData.UnregisterType<IConfigBase>();
-
-        UserData.UnregisterType<INetConfigEntry<bool>>();
-        UserData.UnregisterType<INetConfigEntry<byte>>();
-        UserData.UnregisterType<INetConfigEntry<short>>();
-        UserData.UnregisterType<INetConfigEntry<int>>();
-        UserData.UnregisterType<INetConfigEntry<sbyte>>();
-        UserData.UnregisterType<INetConfigEntry<ushort>>();
-        UserData.UnregisterType<INetConfigEntry<uint>>();
-        UserData.UnregisterType<INetConfigEntry<ulong>>();
-        UserData.UnregisterType<INetConfigEntry<long>>();
-        UserData.UnregisterType<INetConfigEntry<float>>();
-        UserData.UnregisterType<INetConfigEntry<double>>();
-        UserData.UnregisterType<INetConfigEntry<string>>();
+        
         UserData.UnregisterType<INetConfigBase>();
     }
 

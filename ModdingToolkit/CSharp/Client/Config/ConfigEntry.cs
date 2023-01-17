@@ -2,7 +2,7 @@
 
 namespace ModdingToolkit.Config;
 
-public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where T : IConvertible
+public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : IConvertible
 {
     public bool IsNetworked => this.NetSync != NetworkSync.NoSync && GameMain.IsMultiplayer;
     public bool NetAuthorityValidate()
@@ -16,5 +16,13 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigEntry<T> where 
             NetworkSync.TwoWaySync => true,
             _ => false
         };
+    }
+    
+    public void TriggerNetEvent()
+    {
+        if (this.NetSync is NetworkSync.TwoWaySync)
+        {
+            this._onNetworkEvent?.Invoke(this);
+        } 
     }
 }
