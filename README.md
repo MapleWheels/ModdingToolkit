@@ -18,9 +18,10 @@ Readme is WIP.
 
 ☑ Automatic Dependency Resolution 
 
+☑ Network Sync
+
 ⬛ Custom GUI Helpers
 
-☐ Network Sync
 
 
 ## For Lua Developers: How to Use - Config Variables (C# Developers look further down)
@@ -113,9 +114,6 @@ public class MyPlugin : IAssemblyPlugin
 - `<ContentPackageRoot>/bin/Server/Forced` will load your mod on the SERVER always, even if the ContentPackage is disabled.
 8. And finally, if using the Steam Workshop, add this mod as a Workshop Dependency.
 
-#### NOTE: You can use the following Console Commands to unload/reload plugins:
-- `cl_unloadassemblies`
-- `cl_reloadassemblies`
 
 ## For C# Developers: How to Use - Config Variables
 

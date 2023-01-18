@@ -102,15 +102,7 @@ internal sealed class Bootloader : ACsMod
             {
                 PrintAllConfigVars();   
             });
-        
-        ConsoleCommands.RegisterCommand(
-            "cl_cfgsaveall",
-            "Saves the current values of all CVars to disk.",
-            _ =>
-            {
-                ConfigManager.SaveAll();
-            });
-        
+
         ConsoleCommands.RegisterCommand(
             "cl_cfggetvar",
             "Gets a config member. Format is <command> \"<modname>\" \"<name>\"",
