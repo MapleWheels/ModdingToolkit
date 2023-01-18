@@ -87,6 +87,34 @@ public sealed class ConfigControl : IConfigControl
         return this._validateInput?.Invoke(newValue) ?? true;
     }
 
+    public bool IsHit()
+    {
+        if (this.Value is null)
+            return false;
+        switch (this.Value.MouseButton)
+        {   
+            case MouseButton.None:
+                return Barotrauma.PlayerInput.KeyHit(this.Value.Key);
+            case MouseButton.PrimaryMouse:
+            case MouseButton.LeftMouse:
+                return Barotrauma.PlayerInput.PrimaryMouseButtonClicked();
+            case MouseButton.SecondaryMouse:
+            case MouseButton.RightMouse:
+                return Barotrauma.PlayerInput.SecondaryMouseButtonClicked();
+            case MouseButton.MiddleMouse:
+                return Barotrauma.PlayerInput.MidButtonClicked();
+            case MouseButton.MouseButton4:
+                return Barotrauma.PlayerInput.Mouse4ButtonClicked();
+            case MouseButton.MouseButton5:
+                return Barotrauma.PlayerInput.Mouse5ButtonClicked();
+            case MouseButton.MouseWheelUp:
+                return Barotrauma.PlayerInput.MouseWheelUpClicked();
+            case MouseButton.MouseWheelDown:
+                return Barotrauma.PlayerInput.MouseWheelDownClicked();
+        }
+        return false;
+    }
+
     public bool ValidateString(string value)
     {
         if (Enum.IsDefined(typeof(Keys), value))

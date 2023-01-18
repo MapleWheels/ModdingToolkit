@@ -110,17 +110,17 @@ public static partial class NetworkingManager
                 TryGetNetConfigInstance(kvp.Value.ModName, kvp.Value.Name, out var cfg) 
                 && cfg is { IsNetworked: true })
             .ToImmutableDictionary();
-#if DEBUG
+    #if DEBUG
         Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | SyncVar Count: {toSync.Count}");
-#endif
+    #endif
         foreach (var index in toSync)
         {
             var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
             outmsg.WriteIdNameInfo(index.Key, index.Value.ModName, index.Value.Name);
             SendMsg(outmsg, client.Connection);
-#if DEBUG
+    #if DEBUG
             Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | Writing SyncVar: id={index.Key}, modName={index.Value.ModName}, name={index.Value.Name}");
-#endif
+    #endif
         }
     }
 

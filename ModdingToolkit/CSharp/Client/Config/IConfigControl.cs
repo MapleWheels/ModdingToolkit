@@ -8,4 +8,5 @@ public interface IConfigControl : IConfigBase
     KeyOrMouse DefaultValue { get; }
     void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged);
     bool Validate(KeyOrMouse newValue);
+    bool IsHit();
 }
