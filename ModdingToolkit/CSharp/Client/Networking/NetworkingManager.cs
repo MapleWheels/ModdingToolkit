@@ -142,6 +142,11 @@ public static partial class NetworkingManager
 
     public static void SynchronizeAll()
     {
+#if CLIENT
+        if (!GameMain.IsMultiplayer)
+            return;
+#endif
+        
         ClearNetworkData();
         SendRequestIdList();
     }

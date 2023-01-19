@@ -1,4 +1,5 @@
-﻿using ModdingToolkit.Patches;
+﻿using Microsoft.Xna.Framework.Input;
+using ModdingToolkit.Patches;
 
 [assembly: IgnoresAccessChecksTo("Barotrauma")]
 [assembly: IgnoresAccessChecksTo("NetScriptAssembly")]
