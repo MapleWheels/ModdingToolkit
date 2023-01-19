@@ -16,10 +16,13 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
     #endregion
 
     public string Name { get; private set; } = String.Empty;
-
+    public string DisplayName { get; private set; } = String.Empty;
+    public string ModName { get; private set; } = String.Empty;
+    public string DisplayModName { get; private set; } = String.Empty;
+    public string DisplayCategory { get; private set; } = String.Empty;
+    
     public Type SubTypeDef => typeof(T);
     public Type NetSyncVarTypeDef => typeof(T);
-    public string ModName { get; private set; } = String.Empty;
 
     public virtual T Value
     {
@@ -54,7 +57,10 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
-        Action<IConfigEntry<T>>? onValueChanged = null)
+        Action<IConfigEntry<T>>? onValueChanged = null,
+        string? displayName = null,
+        string? displayModName = null,
+        string? displayCategory = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<{typeof(T).Name}>::Initialize() | Name is null or empty.");
@@ -67,6 +73,15 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         this._value = this.Validate(newValue) ? newValue : this.DefaultValue;
         this.NetSync = sync;
         this.MenuCategory = menuCategory;
+        
+        // Client menu data
+        if (displayName is not null)
+            this.DisplayName = displayName;
+        if (displayModName is not null)
+            this.DisplayModName = displayModName;
+        if (displayCategory is not null)
+            this.DisplayCategory = displayCategory;
+        
         if (valueChangePredicate is not null)
             this._valueChangePredicate = valueChangePredicate;
         if (onValueChanged is not null)

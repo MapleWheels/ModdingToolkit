@@ -11,7 +11,10 @@ public interface IConfigEntry<T> : IConfigBase where T : IConvertible
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<T, bool>? valueChangePredicate = null,
-        Action<IConfigEntry<T>>? onValueChanged = null);
+        Action<IConfigEntry<T>>? onValueChanged = null,
+        string? displayName = null,
+        string? displayModName = null,
+        string? displayCategory = null);
     bool Validate(T value);
 }
 

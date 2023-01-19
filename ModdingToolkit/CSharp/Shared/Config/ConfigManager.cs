@@ -59,7 +59,10 @@ public static partial class ConfigManager
         NetworkSync networkSync = NetworkSync.NoSync,
         Action<IConfigEntry<T>>? onValueChanged = null,
         Func<T, bool>? validateNewInput = null,
-        string? filePathOverride = null) where T : IConvertible
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null) where T : IConvertible
     {
         return CreateIConfigEntry(name, modName, defaultValue, menuCategory, networkSync, onValueChanged,
             validateNewInput, filePathOverride);
@@ -87,10 +90,14 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
         Action<IConfigList>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         return CreateIConfigList(name, modName, defaultValue, valueList, networkSync, 
-            menuCategory, valueChangePredicate, onValueChanged, filePathOverride);
+            menuCategory, valueChangePredicate, onValueChanged, filePathOverride,
+            displayName, displayModname, displayCategory);
     }
 
     /// <summary>
@@ -116,10 +123,13 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
         Action<IConfigRangeInt>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
-            valueChangePredicate, onValueChanged, filePathOverride);
+            valueChangePredicate, onValueChanged, filePathOverride, displayName, displayModname, displayCategory);
     }
     
     /// <summary>
@@ -145,10 +155,13 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
         Action<IConfigRangeFloat>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync, menuCategory,
-            valueChangePredicate, onValueChanged, filePathOverride);
+            valueChangePredicate, onValueChanged, filePathOverride, displayName, displayModname, displayCategory);
     }
 
     /// <summary>
@@ -339,11 +352,15 @@ public static partial class ConfigManager
         NetworkSync networkSync,
         Action<IConfigEntry<T>>? onValueChanged,
         Func<T, bool>? validateNewInput,
-        string? filePathOverride = null
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null
         ) where T : IConvertible
     {
         ConfigEntry<T> ce = new();
-        ce.Initialize(name, modName, defaultValue, defaultValue, networkSync, menuCategory, validateNewInput, onValueChanged);
+        ce.Initialize(name, modName, defaultValue, defaultValue, networkSync, menuCategory, validateNewInput, 
+            onValueChanged, displayName, displayModname, displayCategory);
         AddConfigToLists(ce);
         LoadData(ce, filePathOverride);
         if (ce is INetConfigBase ince)
@@ -357,10 +374,14 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null,
         Action<IConfigList>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         ConfigList cl = new();
-        cl.Initialize(name, modName, defaultValue, defaultValue, valueList, sync, menuCategory, valueChangePredicate, onValueChanged);
+        cl.Initialize(name, modName, defaultValue, defaultValue, valueList, sync, menuCategory, valueChangePredicate, 
+            onValueChanged, displayName, displayModname, displayCategory);
         AddConfigToLists(cl);
         LoadData(cl, filePathOverride);
         if (cl is INetConfigBase ince)
@@ -375,10 +396,14 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<int, bool>? valueChangePredicate = null,
         Action<IConfigRangeInt>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         ConfigRangeInt cr = new();
-        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, 
+            valueChangePredicate, onValueChanged, displayName, displayModname, displayCategory);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
         if (cr is INetConfigBase ince)
@@ -393,10 +418,14 @@ public static partial class ConfigManager
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<float, bool>? valueChangePredicate = null,
         Action<IConfigRangeFloat>? onValueChanged = null,
-        string? filePathOverride = null)
+        string? filePathOverride = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null)
     {
         ConfigRangeFloat cr = new();
-        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, valueChangePredicate);
+        cr.Initialize(name, modName, defaultValue, defaultValue, minValue, maxValue, steps, sync, menuCategory, 
+            valueChangePredicate, onValueChanged, displayName, displayModname, displayCategory);
         AddConfigToLists(cr);
         LoadData(cr, filePathOverride);
         if (cr is INetConfigBase ince)

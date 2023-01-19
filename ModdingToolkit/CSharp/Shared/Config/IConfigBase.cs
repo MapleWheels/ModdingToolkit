@@ -5,8 +5,11 @@ namespace ModdingToolkit.Config;
 public interface IConfigBase
 {
     string Name { get; }
-    Type SubTypeDef { get; }
+    string DisplayName { get; }
     string ModName { get; }
+    string DisplayModName { get; }
+    string DisplayCategory { get; }
+    Type SubTypeDef { get; }
     public Category MenuCategory { get; }
     public NetworkSync NetSync { get; }
     string GetStringValue();

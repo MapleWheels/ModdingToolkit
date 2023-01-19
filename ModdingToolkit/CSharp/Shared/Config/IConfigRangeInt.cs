@@ -12,5 +12,8 @@ public interface IConfigRangeInt : IConfigEntry<int>
         NetworkSync sync = NetworkSync.NoSync, 
         IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<int, bool>? valueChangePredicate = null,
-        Action<IConfigRangeInt>? onValueChanged = null);
+        Action<IConfigRangeInt>? onValueChanged = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null);
 }

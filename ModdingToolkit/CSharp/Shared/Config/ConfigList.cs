@@ -16,6 +16,10 @@ public partial class ConfigList : IConfigList, INetConfigBase
     #endregion
 
     public string Name { get; private set; } = String.Empty;
+    public string DisplayName { get; private set; } = String.Empty;
+    public string ModName { get; private set; } = String.Empty;
+    public string DisplayModName { get; private set; } = String.Empty;
+    public string DisplayCategory { get; private set; } = String.Empty;
 
     public Type SubTypeDef => typeof(string);
     public Type NetSyncVarTypeDef => typeof(ushort);
@@ -25,7 +29,6 @@ public partial class ConfigList : IConfigList, INetConfigBase
     }
 
     public Guid NetId { get; private set; }
-    public string ModName { get; private set; } = String.Empty;
     
     public virtual string Value
     {
@@ -47,7 +50,8 @@ public partial class ConfigList : IConfigList, INetConfigBase
     
     public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
         NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<string, bool>? valueChangePredicate = null, Action<IConfigList>? onValueChanged = null)
+        Func<string, bool>? valueChangePredicate = null, Action<IConfigList>? onValueChanged = null,
+        string? displayName = null, string? displayModName = null, string? displayCategory = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigEntry<string>::Initialize() | Name is null or empty.");
@@ -61,6 +65,14 @@ public partial class ConfigList : IConfigList, INetConfigBase
         this.MenuCategory = menuCategory;
         this._valueList = valueList.ToImmutableList();
 
+        // Client menu data
+        if (displayName is not null)
+            this.DisplayName = displayName;
+        if (displayModName is not null)
+            this.DisplayModName = displayModName;
+        if (displayCategory is not null)
+            this.DisplayCategory = displayCategory;
+        
         if (this._valueList.Count < 1)
             this._valueList = new List<string> { "" }.ToImmutableList();    //Empty lists not allowed to reduce overhead elsewhere.
         

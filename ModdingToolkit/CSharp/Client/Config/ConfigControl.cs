@@ -8,9 +8,12 @@ public sealed class ConfigControl : IConfigControl
 {
     private event System.Func<KeyOrMouse, bool>? _validateInput;
     private event System.Action? _onValueChanged;
-    public string Name { get; set; } = String.Empty;
+    public string Name { get; private set; } = String.Empty;
+    public string DisplayName { get; private set; } = String.Empty;
+    public string ModName { get; private set; } = String.Empty;
+    public string DisplayModName { get; private set; } = String.Empty;
+    public string DisplayCategory { get; private set; } = String.Empty;
     public Type SubTypeDef => typeof(KeyOrMouse);
-    public string ModName { get; set; } = String.Empty;
     public IConfigBase.Category MenuCategory => IConfigBase.Category.Ignore;
     public NetworkSync NetSync => NetworkSync.NoSync;
 
@@ -66,7 +69,8 @@ public sealed class ConfigControl : IConfigControl
 
     public KeyOrMouse DefaultValue { get; private set; } = new KeyOrMouse(Keys.NumLock);
 
-    public void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged)
+    public void Initialize(string name, string modName, KeyOrMouse? currentValue, KeyOrMouse? defaultValue, System.Action? onValueChanged,
+        string? displayName = null, string? displayModName = null, string? displayCategory = null)
     {
         if (name.Trim().IsNullOrEmpty())
             throw new ArgumentNullException($"ConfigControl::Initialize() | Name is null or empty.");
@@ -76,6 +80,15 @@ public sealed class ConfigControl : IConfigControl
         this.Name = name;
         this.ModName = modName;
         this.Value = currentValue;
+        
+        // Client menu data
+        if (displayName is not null)
+            this.DisplayName = displayName;
+        if (displayModName is not null)
+            this.DisplayModName = displayModName;
+        if (displayCategory is not null)
+            this.DisplayCategory = displayCategory;
+        
         if (defaultValue is not null)
             this.DefaultValue = defaultValue;
     }
