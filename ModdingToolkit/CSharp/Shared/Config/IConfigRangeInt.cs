@@ -9,8 +9,6 @@ public interface IConfigRangeInt : IConfigEntry<int>
     public int Steps { get; }
     
     void Initialize(string name, string modName, int newValue, int defaultValue, int minValue, int maxValue, int steps,
-        NetworkSync sync = NetworkSync.NoSync, 
-        IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
         Func<int, bool>? valueChangePredicate = null,
         Action<IConfigRangeInt>? onValueChanged = null);
 }

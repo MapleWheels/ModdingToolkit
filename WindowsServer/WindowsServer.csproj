@@ -81,6 +81,12 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigRangeInt.cs">
         <Link>Shared\Config\ConfigRangeInt.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ECategory.cs">
+        <Link>Shared\Config\ECategory.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\EDisplayType.cs">
+        <Link>Shared\Config\EDisplayType.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigBase.cs">
         <Link>Shared\Config\IConfigBase.cs</Link>
       </Compile>
@@ -95,6 +101,9 @@
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigRangeInt.cs">
         <Link>Shared\Config\IConfigRangeInt.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\RDisplayData.cs">
+        <Link>Shared\Config\RDisplayData.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\ConsoleCommands.cs">
         <Link>Shared\ConsoleCommands.cs</Link>

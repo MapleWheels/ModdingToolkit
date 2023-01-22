@@ -26,43 +26,15 @@ internal sealed class Bootloader : ACsMod
         LoadPatches();
         RegisterCommands();
         ConsoleCommands.ReloadAllCommands();
-        NetworkingManager.SynchronizeAll();
+#if CLIENT
+        if (GameMain.IsMultiplayer)
+            NetworkingManager.SynchronizeAll();        
+#endif
         IsLoaded = true;
     }
 
     private void RegisterCommands()
     {
-        // TODO: Fix console commands. This is disabled as unloading plugins requires unloading and reloading Config and Networking but there is no way to ensure compliance from ContentPackage mods. This will just leads to runtime errors for end-users.
-        /*ConsoleCommands.RegisterCommand(
-            "cl_reloadassemblies", 
-            "Reloads all assemblies and their plugins.",
-            _ =>
-            {
-                ConfigManager.Dispose();
-                NetworkingManager.Dispose();
-                XMLDocumentHelper.UnloadCache();
-                UnloadPatches();
-                PatchManager.Dispose();
-                PluginHelper.UnloadAssemblies();
-                PluginHelper.LoadAssemblies();
-                NetworkingManager.Initialize(true);
-                NetworkingManager.SynchronizeAll();
-                LoadPatches();
-            });
-        
-        ConsoleCommands.RegisterCommand(
-            "cl_unloadassemblies", 
-            "Unloads all assemblies and their plugins.",
-            _ =>
-            {
-                ConfigManager.Dispose();
-                NetworkingManager.Dispose();
-                XMLDocumentHelper.UnloadCache();
-                UnloadPatches();
-                PatchManager.Dispose();
-                PluginHelper.UnloadAssemblies();
-            });*/
-        
         ConsoleCommands.RegisterCommand(
             "cl_cfgsetvar",
             "Sets a config member to the supplied string. Format is <command> <modname> <name> \"<value>\"",
@@ -168,8 +140,9 @@ internal sealed class Bootloader : ACsMod
         UserData.RegisterType<IConfigRangeInt>();
         
         // Types
+        UserData.RegisterType<DisplayData>();
         UserData.RegisterType<NetworkSync>();
-        UserData.RegisterType<IConfigBase.DisplayType>();
+        UserData.RegisterType<DisplayType>();
         
         UserData.RegisterType<ConfigEntry<bool>>();
         UserData.RegisterType<ConfigEntry<byte>>();
@@ -229,7 +202,8 @@ internal sealed class Bootloader : ACsMod
         UserData.UnregisterType<ConfigEntry<string>>();
         
         UserData.UnregisterType<NetworkSync>();
-        UserData.UnregisterType<IConfigBase.DisplayType>();
+        UserData.UnregisterType<DisplayType>();
+        UserData.UnregisterType<DisplayData>();
         
         // Interfaces
         UserData.UnregisterType<IConfigList>();

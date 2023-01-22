@@ -46,7 +46,6 @@ public partial class ConfigList : IConfigList, INetConfigBase
     public ref readonly ImmutableList<string> GetReadOnlyList() => ref _valueList;
     
     public void Initialize(string name, string modName, string newValue, string defaultValue, List<string> valueList,
-        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
         Func<string, bool>? valueChangePredicate = null, Action<IConfigList>? onValueChanged = null)
     {
         if (name.Trim().IsNullOrEmpty())
@@ -57,8 +56,6 @@ public partial class ConfigList : IConfigList, INetConfigBase
         this.Name = name;
         this.ModName = modName;
 
-        this.NetSync = sync;
-        this.MenuCategory = menuCategory;
         this._valueList = valueList.ToImmutableList();
 
         if (this._valueList.Count < 1)
@@ -77,7 +74,6 @@ public partial class ConfigList : IConfigList, INetConfigBase
         this.IsInitialized = true;
     }
 
-    public IConfigEntry<string>.Category MenuCategory { get; private set; }
     public NetworkSync NetSync { get; private set; }
 
     public bool IsInitialized { get; private set; } = false;
@@ -113,7 +109,6 @@ public partial class ConfigList : IConfigList, INetConfigBase
         this.Value = this.DefaultValue;
     }
 
-    public virtual IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.DropdownList;
     public bool ValidateString(string value) => Validate(value);
 
     bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
@@ -143,5 +138,11 @@ public partial class ConfigList : IConfigList, INetConfigBase
     void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
+    }
+
+    public void InitializeNetworking(Guid netId, NetworkSync networkSync)
+    {
+        this.NetId = netId;
+        this.NetSync = networkSync;
     }
 }

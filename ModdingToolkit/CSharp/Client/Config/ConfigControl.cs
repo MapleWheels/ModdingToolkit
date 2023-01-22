@@ -4,14 +4,19 @@ using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
-public sealed class ConfigControl : IConfigControl
+public sealed class ConfigControl : IConfigControl, IDisplayable
 {
     private event System.Func<KeyOrMouse, bool>? _validateInput;
     private event System.Action? _onValueChanged;
-    public string Name { get; set; } = String.Empty;
+    public string Name { get; private set; } = String.Empty;
     public Type SubTypeDef => typeof(KeyOrMouse);
-    public string ModName { get; set; } = String.Empty;
-    public IConfigBase.Category MenuCategory => IConfigBase.Category.Ignore;
+    public string ModName { get; private set; } = String.Empty;
+    public string DisplayName { get; private set; }
+    public string DisplayModName { get; private set; }
+    public string DisplayCategory { get; private set; }
+    public string Tooltip { get; private set; }
+    public string ImageIcon { get; private set; }
+    public Category MenuCategory => Category.Controls;
     public NetworkSync NetSync => NetworkSync.NoSync;
 
     public string GetStringValue()
@@ -48,7 +53,22 @@ public sealed class ConfigControl : IConfigControl
             this.Value = new KeyOrMouse(DefaultValue.MouseButton);
     }
 
-    public IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.KeyOrMouse;
+    public DisplayType GetDisplayType() => DisplayType.KeyOrMouse;
+
+    public void InitializeDisplay(string name = "", string modName = "", string displayName = "", string displayModName = "",
+        string displayCategory = "", string tooltip = "", string imageIcon = "", Category menuCategory = Category.Gameplay)
+    {
+        if (!displayName.IsNullOrWhiteSpace())
+            this.DisplayName = displayName;
+        if (!displayModName.IsNullOrWhiteSpace())
+            this.DisplayModName = displayModName;
+        if (!displayCategory.IsNullOrWhiteSpace())
+            this.DisplayCategory = displayCategory;
+        if (!tooltip.IsNullOrWhiteSpace())
+            this.Tooltip = tooltip;
+        if (!imageIcon.IsNullOrWhiteSpace())
+            this.ImageIcon = imageIcon;
+    }
 
     private KeyOrMouse? _value;
     public KeyOrMouse? Value

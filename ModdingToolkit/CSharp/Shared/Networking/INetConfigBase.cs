@@ -21,4 +21,5 @@ public interface INetConfigBase
     internal void SubscribeToNetEvents(System.Action<INetConfigBase> evtHandle);
     internal void UnsubscribeFromNetEvents(System.Action<INetConfigBase> evtHandle);
     void TriggerNetEvent();
+    void InitializeNetworking(Guid netId, NetworkSync networkSync);
 }

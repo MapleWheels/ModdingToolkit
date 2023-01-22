@@ -36,8 +36,6 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
     }
 
     public T DefaultValue { get; private set; } = default!;
-
-    public IConfigEntry<T>.Category MenuCategory { get; private set; }
     public NetworkSync NetSync { get; private set; }
 
     public void SetNetworkingId(Guid id)
@@ -50,9 +48,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsInitialized { get; private set; } = false;
 
-    public virtual void Initialize(string name, string modName, T newValue, T defaultValue, 
-        NetworkSync sync = NetworkSync.NoSync, 
-        IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay, 
+    public virtual void Initialize(string name, string modName, T newValue, T defaultValue,
         Func<T, bool>? valueChangePredicate = null,
         Action<IConfigEntry<T>>? onValueChanged = null)
     {
@@ -65,8 +61,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         this.ModName = modName;
         this.DefaultValue = defaultValue;
         this._value = this.Validate(newValue) ? newValue : this.DefaultValue;
-        this.NetSync = sync;
-        this.MenuCategory = menuCategory;
+
         if (valueChangePredicate is not null)
             this._valueChangePredicate = valueChangePredicate;
         if (onValueChanged is not null)
@@ -112,15 +107,6 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         this.Value = this.DefaultValue;
     }
 
-    public virtual IConfigBase.DisplayType GetDisplayType() =>
-        typeof(T) switch
-        {
-            { IsEnum: true } => IConfigBase.DisplayType.DropdownEnum,
-            { Name: nameof(Boolean) } => IConfigBase.DisplayType.Tickbox,
-            { IsPrimitive: true } => IConfigBase.DisplayType.Number,
-            _ => IConfigBase.DisplayType.Standard
-        };
-
     public bool ValidateString(string value)
     {
         try
@@ -160,5 +146,11 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
     void INetConfigBase.UnsubscribeFromNetEvents(Action<INetConfigBase> evtHandle)
     {
         this._onNetworkEvent -= evtHandle;
+    }
+
+    public void InitializeNetworking(Guid netId, NetworkSync networkSync)
+    {
+        this.NetId = netId;
+        this.NetSync = networkSync;
     }
 }

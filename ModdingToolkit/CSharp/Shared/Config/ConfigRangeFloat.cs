@@ -12,8 +12,8 @@ public class ConfigRangeFloat : ConfigEntry<float>, IConfigRangeFloat
 
 
     public void Initialize(string name, string modName, float newValue, float defaultValue, float minValue, float maxValue, int steps,
-        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<float, bool>? valueChangePredicate = null, Action<IConfigRangeFloat>? onValueChanged = null)
+        Func<float, bool>? valueChangePredicate = null, 
+        Action<IConfigRangeFloat>? onValueChanged = null)
     {
         if (minValue >= maxValue)
             throw new ArgumentException(
@@ -24,12 +24,11 @@ public class ConfigRangeFloat : ConfigEntry<float>, IConfigRangeFloat
         MaxValue = maxValue;
         _onValChanged = onValueChanged;
         
-        base.Initialize(name, modName, newValue, defaultValue, sync, menuCategory, valueChangePredicate, _ =>
+        base.Initialize(name, modName, newValue, defaultValue, valueChangePredicate, _ =>
         {
             _onValChanged?.Invoke(this);
         });
     }
 
     public override bool Validate(float value) => value >= MinValue && value <= MaxValue && base.Validate(value);
-    public override IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.Slider;
 }
