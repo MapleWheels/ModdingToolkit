@@ -10,5 +10,8 @@ public interface IConfigRangeFloat : IConfigEntry<float>
 
     void Initialize(string name, string modName, float newValue, float defaultValue, float minValue, float maxValue, int steps,
         Func<float, bool>? valueChangePredicate = null,
-        Action<IConfigRangeFloat>? onValueChanged = null);
+        Action<IConfigRangeFloat>? onValueChanged = null,
+        string? displayName = null,
+        string? displayModname = null,
+        string? displayCategory = null);
 }

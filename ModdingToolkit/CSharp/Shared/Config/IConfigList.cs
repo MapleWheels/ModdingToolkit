@@ -10,7 +10,10 @@ public interface IConfigList : IConfigBase
     void Initialize(string name, string modName, string newValue, string defaultValue, 
         List<string> valueList,
         Func<string, bool>? valueChangePredicate = null,
-        Action<IConfigList>? onValueChanged = null);
+        Action<IConfigList>? onValueChanged = null,
+        string? displayName = null,
+        string? displayModName = null,
+        string? displayCategory = null);
     bool Validate(string value);
     public int GetDefaultValueIndex();
     public void SetValueFromIndex(int index);
