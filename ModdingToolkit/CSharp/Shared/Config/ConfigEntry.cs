@@ -122,20 +122,43 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
 
     bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
+#if SERVER
+        if (NetSync is NetworkSync.NoSync)
+            return false;
+#else
+        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
+            return false;
+#endif
         Utils.Networking.WriteNetValueFromType(msg, this.Value);
         return true;
     }
 
     bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
     {
-        T value = Utils.Networking.ReadNetValueFromType<T>(msg);
-        if (Validate(value))
+#if SERVER
+        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
+            return false;
+#else
+        if (NetSync is NetworkSync.NoSync)
+            return false;
+#endif
+        
+        try
         {
-            this._value = value;
-            this._onValueChanged?.Invoke(this);
-        }
+            T value = Utils.Networking.ReadNetValueFromType<T>(msg);
+            if (Validate(value))
+            {
+                this._value = value;
+                this._onValueChanged?.Invoke(this);
+            }
 
-        return true;
+            return true;
+        }
+        catch (Exception e)
+        {
+            Utils.Logging.PrintError($"ConfigEntry::ReadNetworkValue() | Bad read. ModName={this.ModName}, Name={this.Name}");
+            return false;
+        }
     }
 
     void INetConfigBase.SubscribeToNetEvents(Action<INetConfigBase> evtHandle)

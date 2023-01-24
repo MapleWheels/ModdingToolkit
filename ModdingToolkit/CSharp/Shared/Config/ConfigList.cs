@@ -113,12 +113,26 @@ public partial class ConfigList : IConfigList, INetConfigBase
 
     bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
+#if SERVER
+        if (NetSync is NetworkSync.NoSync)
+            return false;
+#else
+        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
+            return false;
+#endif
         Utils.Networking.WriteNetValueFromType(msg, (ushort)_valueList.IndexOf(_value));
         return true;
     }
 
     bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
     {
+#if SERVER
+        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
+            return false;
+#else
+        if (NetSync is NetworkSync.NoSync)
+            return false;
+#endif
         ushort val = Utils.Networking.ReadNetValueFromType<ushort>(msg);
         if (val >= _valueList.Count)
         {

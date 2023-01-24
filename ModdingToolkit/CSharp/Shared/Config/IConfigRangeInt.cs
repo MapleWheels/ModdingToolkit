@@ -10,8 +10,5 @@ public interface IConfigRangeInt : IConfigEntry<int>
     
     void Initialize(string name, string modName, int newValue, int defaultValue, int minValue, int maxValue, int steps,
         Func<int, bool>? valueChangePredicate = null,
-        Action<IConfigRangeInt>? onValueChanged = null,
-        string? displayName = null,
-        string? displayModname = null,
-        string? displayCategory = null);
+        Action<IConfigRangeInt>? onValueChanged = null);
 }

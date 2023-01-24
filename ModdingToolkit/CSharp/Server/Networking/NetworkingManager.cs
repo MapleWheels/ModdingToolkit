@@ -147,15 +147,19 @@ public static partial class NetworkingManager
     {
         if (!IsInitialized)
             return;
+        if (!cfg.NetAuthorityValidate() || !cfg.IsNetworked)
+            return;
         if (TryGetNetId(cfg.NetId, out uint id))
         {
             var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
             msg.WriteUInt32(id);
-            cfg.WriteNetworkValue(msg);
-            if (client is null)
-                SendMsg(msg, null);
-            else
-                SendMsg(msg, client.Connection);
+            if (cfg.WriteNetworkValue(msg))
+            {
+                if (client is null)
+                    SendMsg(msg, null);
+                else
+                    SendMsg(msg, client.Connection);
+            }
         }
     }
 

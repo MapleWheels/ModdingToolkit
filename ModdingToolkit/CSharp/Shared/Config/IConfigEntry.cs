@@ -9,10 +9,7 @@ public interface IConfigEntry<T> : IConfigBase where T : IConvertible
 
     void Initialize(string name, string modName, T newValue, T defaultValue,
         Func<T, bool>? valueChangePredicate = null,
-        Action<IConfigEntry<T>>? onValueChanged = null,
-        string? displayName = null,
-        string? displayModName = null,
-        string? displayCategory = null);
+        Action<IConfigEntry<T>>? onValueChanged = null);
     bool Validate(T value);
 }
 

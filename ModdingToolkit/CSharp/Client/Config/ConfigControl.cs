@@ -55,8 +55,8 @@ public sealed class ConfigControl : IConfigControl, IDisplayable
 
     public DisplayType GetDisplayType() => DisplayType.KeyOrMouse;
 
-    public void InitializeDisplay(string name = "", string modName = "", string displayName = "", string displayModName = "",
-        string displayCategory = "", string tooltip = "", string imageIcon = "", Category menuCategory = Category.Gameplay)
+    public void InitializeDisplay(string? name = "", string? modName = "", string? displayName = "", string? displayModName = "",
+        string? displayCategory = "", string? tooltip = "", string? imageIcon = "", Category menuCategory = Category.Gameplay)
     {
         if (!displayName.IsNullOrWhiteSpace())
             this.DisplayName = displayName;

@@ -18,6 +18,7 @@ public static partial class ConfigManager
         return CreateIConfigControl(name, modName, defaultValue, onValueChanged, filePathOverride);
     }
 
+    public static IEnumerable<IDisplayable> GetDisplayableConfigs() => Displayables.ToImmutableList();
     public static IEnumerable<DisplayableControl> GetControlConfigs() => DisplayableControls.ToImmutableList();
 
     #endregion
@@ -40,6 +41,10 @@ public static partial class ConfigManager
 
     private static void RegisterDisplayable(IDisplayable displayable, DisplayData data)
     {
+        #warning TODO: Implement display data verification
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (displayable is null)
+            return;
         if (data.MenuCategory is Category.Ignore)
             return;
         displayable.InitializeDisplay(data.Name, data.ModName, data.DisplayName, data.DisplayModName, 
@@ -67,13 +72,6 @@ public static partial class ConfigManager
 
     private static readonly List<IDisplayable> Displayables = new();
     private static readonly List<DisplayableControl> DisplayableControls = new();
-
-    /// <summary>
-    /// A pointer container to reduce type assignment checking at runtime. Both vars point to the same object.
-    /// </summary>
-    /// <param name="Displayable">The IDisplayable interface.</param>
-    /// <param name="Control">The IConfigControl interface.</param>
-    public record DisplayableControl(IDisplayable Displayable, IConfigControl Control);
 
     #endregion
 }

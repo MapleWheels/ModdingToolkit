@@ -417,7 +417,16 @@ public static partial class ConfigManager
         LoadData(cfg, filePathOverride);
 #if CLIENT
         if (cfg is IDisplayable displayable && displayData is not null)
-            RegisterDisplayable(displayable, displayData);
+        {
+            RegisterDisplayable(displayable, displayData with
+            {
+                Name = cfg.Name, 
+                ModName = cfg.ModName, 
+                DisplayName = displayData.DisplayName.IsNullOrWhiteSpace() ? cfg.Name : displayData.DisplayName, 
+                DisplayModName = displayData.DisplayModName.IsNullOrWhiteSpace() ? cfg.ModName : displayData.DisplayModName,
+                DisplayCategory = displayData.DisplayCategory.IsNullOrWhiteSpace() ? "All" : displayData.DisplayCategory
+            });
+        }
 #endif
         if (cfg is INetConfigBase inc)
             RegisterForNetworking(inc, syncMode);

@@ -163,6 +163,7 @@ internal sealed class Bootloader : ACsMod
 #if CLIENT
         UserData.RegisterType<IConfigControl>();
         UserData.RegisterType<ConfigControl>();
+        UserData.RegisterType<IDisplayable>();
 #endif
         // Statics
         UserData.RegisterType(typeof(ConfigManager));
@@ -181,6 +182,7 @@ internal sealed class Bootloader : ACsMod
         UserData.UnregisterType(typeof(ConfigManager));
 
 #if CLIENT
+        UserData.RegisterType<IDisplayable>();
         UserData.UnregisterType<ConfigControl>();
         UserData.UnregisterType<IConfigControl>();
 #endif

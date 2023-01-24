@@ -2,7 +2,7 @@ using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
-public class ConfigRangeFloat : ConfigEntry<float>, IConfigRangeFloat
+public partial class ConfigRangeFloat : ConfigEntry<float>, IConfigRangeFloat
 {
     public float MinValue { get; private set; }
     public float MaxValue { get; private set; }

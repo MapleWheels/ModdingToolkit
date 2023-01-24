@@ -33,8 +33,8 @@ public partial class ConfigList : IConfigList, INetConfigBase, IDisplayable
     public string ImageIcon { get; private set; }
     public Category MenuCategory { get; private set; }
 
-    public void InitializeDisplay(string name = "", string modName = "", string displayName = "", string displayModName = "",
-        string displayCategory = "", string tooltip = "", string imageIcon = "", Category menuCategory = Category.Gameplay)
+    public void InitializeDisplay(string? name = "", string? modName = "", string? displayName = "", string? displayModName = "",
+        string? displayCategory = "", string? tooltip = "", string? imageIcon = "", Category menuCategory = Category.Gameplay)
     {
         if (!displayName.IsNullOrWhiteSpace())
             this.DisplayName = displayName;

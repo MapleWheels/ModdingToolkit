@@ -73,7 +73,6 @@ public class Bootloader : IAssemblyPlugin
             "net_ce_test01",
             "ModdingTK2",
             10f,
-            IConfigBase.Category.Ignore,
             NetworkSync.ServerAuthority,
             (ce) =>
             {
@@ -87,7 +86,6 @@ public class Bootloader : IAssemblyPlugin
             "net_ce_test02",
             "ModdingTK2",
             "Hello",
-            IConfigBase.Category.Ignore,
             NetworkSync.TwoWaySync,
             (ce) =>
             {
@@ -101,7 +99,6 @@ public class Bootloader : IAssemblyPlugin
             "03",
             new List<string> { "01", "02", "03", "04", "05" },
             NetworkSync.TwoWaySync,
-            IConfigBase.Category.Ignore,
             null,
             (ce) =>
             {

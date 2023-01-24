@@ -2,7 +2,7 @@
 
 namespace ModdingToolkit.Config;
 
-public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
+public partial class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
 {
     public int MinValue { get; private set; }
     public int MaxValue { get; private set; }

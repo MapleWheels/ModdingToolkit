@@ -57,6 +57,9 @@
       <Compile Include="..\ModdingToolkit\CSharp\Server\Config\ConfigList.cs">
         <Link>Server\Config\ConfigList.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetVar.cs">
+        <Link>Server\Networking\NetVar.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetworkingManager.cs">
         <Link>Server\Networking\NetworkingManager.cs</Link>
       </Compile>
@@ -119,6 +122,12 @@
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetConfigBase.cs">
         <Link>Shared\Networking\INetConfigBase.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetVar.cs">
+        <Link>Shared\Networking\INetVar.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetVar.cs">
+        <Link>Shared\Networking\NetVar.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetworkingManager.cs">
         <Link>Shared\Networking\NetworkingManager.cs</Link>
