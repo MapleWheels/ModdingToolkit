@@ -26,7 +26,16 @@ public class Bootloader : IAssemblyPlugin
         ce_float = ConfigManager.AddConfigEntry(
             "TestEntry00",
             "ModdingTK",
-            20.0f
+            20.0f,
+            validateNewInput: f =>
+            {
+                if (Utils.Game.IsRoundInProgress())
+                {
+                    Utils.Logging.PrintMessage($"Round in progress, cannot change value.");
+                    return false;
+                }
+                return true;
+            }
         );
         
         ce_int = ConfigManager.AddConfigEntry(

@@ -33,6 +33,15 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry00",
             "ModdingTK",
             20.0f,
+            validateNewInput: f =>
+            {
+                if (Utils.Game.IsRoundInProgress())
+                {
+                    Utils.Logging.PrintMessage($"Round in progress, cannot change value.");
+                    return false;
+                }
+                return true;
+            },
             displayData: new DisplayData(DisplayName: "Test Entry 00", DisplayModName: "Modding TK", DisplayCategory: "Category 0") 
         );
         
