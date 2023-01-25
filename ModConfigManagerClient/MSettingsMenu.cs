@@ -611,6 +611,94 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         }
     }
 
+    private void Gameplay_GenerateVanillaList(GUILayoutGroup containerGroup)
+    {
+        var languages = TextManager.AvailableLanguages
+            .OrderBy(l => TextManager.GetTranslatedLanguageName(l).ToIdentifier())
+            .ToArray();
+        GUIUtil.Label(containerGroup, TextManager.Get("Language"), GUIStyle.SubHeadingFont, Vector2.One);
+        GUIUtil.Dropdown(containerGroup, v => TextManager.GetTranslatedLanguageName(v), null, languages, unsavedConfig.Language, v => unsavedConfig.Language = v, Vector2.One);
+        GUIUtil.Spacer(containerGroup, Vector2.One);
+            
+        GUIUtil.Tickbox(containerGroup, TextManager.Get("PauseOnFocusLost"), TextManager.Get("PauseOnFocusLostTooltip"), unsavedConfig.PauseOnFocusLost, v => unsavedConfig.PauseOnFocusLost = v, Vector2.One);
+        GUIUtil.Spacer(containerGroup, Vector2.One);
+            
+        GUIUtil.Tickbox(containerGroup, TextManager.Get("DisableInGameHints"), TextManager.Get("DisableInGameHintsTooltip"), unsavedConfig.DisableInGameHints, v => unsavedConfig.DisableInGameHints = v, Vector2.One);
+        var resetInGameHintsButton =
+            new GUIButton(new RectTransform(new Vector2(1.0f, 1.0f), containerGroup.RectTransform),
+                TextManager.Get("ResetInGameHints"), style: "GUIButtonSmall")
+            {
+                OnClicked = (button, o) =>
+                {
+                    var msgBox = new GUIMessageBox(TextManager.Get("ResetInGameHints"),
+                        TextManager.Get("ResetInGameHintsTooltip"),
+                        buttons: new[] { TextManager.Get("Yes"), TextManager.Get("No") });
+                    msgBox.Buttons[0].OnClicked = (guiButton, o1) =>
+                    {
+                        IgnoredHints.Instance.Clear();
+                        msgBox.Close();
+                        return false;
+                    };
+                    msgBox.Buttons[1].OnClicked = msgBox.Close;
+                    return false;
+                }
+            };
+        GUIUtil.Spacer(containerGroup, Vector2.One);
+
+        GUIUtil.Label(containerGroup, TextManager.Get("ShowEnemyHealthBars"), GUIStyle.SubHeadingFont, Vector2.One);
+        GUIUtil.DropdownEnum(containerGroup, v => TextManager.Get($"ShowEnemyHealthBars.{v}"), null, unsavedConfig.ShowEnemyHealthBars, v => unsavedConfig.ShowEnemyHealthBars = v, Vector2.One);
+        GUIUtil.Spacer(containerGroup, Vector2.One);
+
+        GUIUtil.Label(containerGroup, TextManager.Get("HUDScale"), GUIStyle.SubHeadingFont, Vector2.One);
+        GUIUtil.Slider(containerGroup, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.HUDScale, v => unsavedConfig.Graphics.HUDScale = v, null, Vector2.One);
+        GUIUtil.Label(containerGroup, TextManager.Get("InventoryScale"), GUIStyle.SubHeadingFont, Vector2.One);
+        GUIUtil.Slider(containerGroup, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.InventoryScale, v => unsavedConfig.Graphics.InventoryScale = v, null, Vector2.One);
+        GUIUtil.Label(containerGroup, TextManager.Get("TextScale"), GUIStyle.SubHeadingFont, Vector2.One);
+        GUIUtil.Slider(containerGroup, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.TextScale, v => unsavedConfig.Graphics.TextScale = v, null, Vector2.One);
+            
+#if !OSX
+        GUIUtil.Spacer(containerGroup, Vector2.One);
+        var statisticsTickBox = new GUITickBox(NewItemRectT(containerGroup), TextManager.Get("statisticsconsenttickbox"))
+        {
+            OnSelected = tickBox =>
+            {
+                GameAnalyticsManager.SetConsent(
+                    tickBox.Selected
+                        ? GameAnalyticsManager.Consent.Ask
+                        : GameAnalyticsManager.Consent.No);
+                return false;
+            }
+        };
+#if DEBUG
+        statisticsTickBox.Enabled = false;
+#endif
+        void updateGATickBoxToolTip()
+            => statisticsTickBox.ToolTip = TextManager.Get($"GameAnalyticsStatus.{GameAnalyticsManager.UserConsented}");
+        updateGATickBoxToolTip();
+            
+        var cachedConsent = GameAnalyticsManager.Consent.Unknown;
+        var statisticsTickBoxUpdater = new GUICustomComponent(
+            new RectTransform(Vector2.Zero, statisticsTickBox.RectTransform),
+            onUpdate: (deltaTime, component) =>
+            {
+                bool shouldTickBoxBeSelected = GameAnalyticsManager.UserConsented == GameAnalyticsManager.Consent.Yes;
+                
+                bool shouldUpdateTickBoxState = cachedConsent != GameAnalyticsManager.UserConsented
+                                                || statisticsTickBox.Selected != shouldTickBoxBeSelected;
+
+                if (!shouldUpdateTickBoxState) { return; }
+
+                updateGATickBoxToolTip();
+                cachedConsent = GameAnalyticsManager.UserConsented;
+                GUITickBox.OnSelectedHandler prevHandler = statisticsTickBox.OnSelected;
+                statisticsTickBox.OnSelected = null;
+                statisticsTickBox.Selected = shouldTickBoxBeSelected;
+                statisticsTickBox.OnSelected = prevHandler;
+                statisticsTickBox.Enabled = GameAnalyticsManager.UserConsented != GameAnalyticsManager.Consent.Error;
+            });
+#endif
+    }
+
     private void Gameplay_GenerateGameplayScreen()
     {
         if (Gameplay_MasterLayout is null)
@@ -619,7 +707,8 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         #region DATA_DEF
 
         // Defs
-        string includeAllOption = "All";
+        string modIncludeAllOption = "All Modded";
+        string categoryIncludeAllOption = "All";
         
         // Mod List
         var modDisplayablesList = new List<IDisplayable>();
@@ -636,7 +725,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
         // Build Mod List for Dropdown
         List<string> modListDropdown = new List<string>();
-        modListDropdown.Add(includeAllOption);
+        modListDropdown.Add(modIncludeAllOption);
         modListDropdown.Add("Vanilla");
         modListDropdown.AddRange(modDisplayablesList
             .GroupBy(d => d.DisplayModName)
@@ -645,26 +734,26 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
         //--- Set current mod selection
         if (Gameplay_SelectedMod.IsNullOrWhiteSpace() || !modListDropdown.Contains(Gameplay_SelectedMod))
-            Gameplay_SelectedMod = includeAllOption;
+            Gameplay_SelectedMod = modIncludeAllOption;
         
         // Build Category List for Dropdown
         List<string> categoryList = new List<string>();
-        categoryList.Add("All");
+        categoryList.Add(categoryIncludeAllOption);
         categoryList.AddRange(modDisplayablesList
-            .Where(d => Gameplay_SelectedMod.Equals("All") || d.DisplayModName.Equals(Gameplay_SelectedMod))
+            .Where(d => Gameplay_SelectedMod.Equals(modIncludeAllOption) || d.DisplayModName.Equals(Gameplay_SelectedMod))
             .GroupBy(d => d.DisplayCategory)
             .Select(dg => dg.Key));
         categoryList = categoryList.Distinct().ToList();
 
         //--- Set current category selection
         if (Gameplay_SelectedCategory.IsNullOrWhiteSpace() || !categoryList.Contains(Gameplay_SelectedCategory))
-            Gameplay_SelectedCategory = includeAllOption;
+            Gameplay_SelectedCategory = categoryIncludeAllOption;
         
         // Filter list of displayables
         modDisplayablesList = modDisplayablesList
             .Where(d => 
-                (d.DisplayModName.Equals(Gameplay_SelectedMod) || Gameplay_SelectedMod.Equals(includeAllOption)) 
-                && (d.DisplayCategory.Equals(Gameplay_SelectedCategory) || Gameplay_SelectedCategory.Equals(includeAllOption))
+                (d.DisplayModName.Equals(Gameplay_SelectedMod) || Gameplay_SelectedMod.Equals(modIncludeAllOption)) 
+                && (d.DisplayCategory.Equals(Gameplay_SelectedCategory) || Gameplay_SelectedCategory.Equals(categoryIncludeAllOption))
             )
             .OrderBy(d => d.DisplayModName)
             .ThenBy(d => d.DisplayName)
@@ -718,7 +807,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             },
             (0.79f, 1f));
 
-        GUIUtil.Label(searchBarGroup, new RawLString("Search: "), GUIStyle.SubHeadingFont, (0.2f, 1f));
+        GUIUtil.Label(searchBarGroup, new RawLString("Search Mods: "), GUIStyle.SubHeadingFont, (0.2f, 1f));
         new GUITextBox(
             new RectTransform((0.79f, 1f), searchBarGroup.RectTransform),
             Gameplay_KeywordFilter)
@@ -750,8 +839,21 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             CanBeFocused = false,
             OnSelected = (_, _) => false
         };
-
         
+        
+        GUIFrame displayableContentFrame = new GUIFrame(
+            new RectTransform((1.0f, size), modDisplayListBox.Content.RectTransform),
+            "", Color.DarkOliveGreen);
+
+        GUILayoutGroup displayableContentGroup = new GUILayoutGroup(
+            new RectTransform((1.0f, 1.0f), displayableContentFrame.RectTransform),
+            false);
+        
+        if (Gameplay_SelectedMod.Equals("Vanilla"))
+        {
+            Gameplay_GenerateVanillaList(displayableContentGroup);
+            return;
+        }
         
         // Reset button
         GUIButton resetAllVars = new GUIButton(new RectTransform((0.2f, 0.1f), Gameplay_MasterLayout.RectTransform),
@@ -775,14 +877,6 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         };
         
         // Populate displayable GUIListBox
-        
-        GUIFrame displayableContentFrame = new GUIFrame(
-            new RectTransform((1.0f, size), modDisplayListBox.Content.RectTransform),
-            "", Color.DarkOliveGreen);
-
-        GUILayoutGroup displayableContentGroup = new GUILayoutGroup(
-            new RectTransform((1.0f, 1.0f), displayableContentFrame.RectTransform),
-            false);
 
         string _header = string.Empty;
 

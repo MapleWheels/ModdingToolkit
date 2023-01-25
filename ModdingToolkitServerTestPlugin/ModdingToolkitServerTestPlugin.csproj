@@ -44,9 +44,14 @@
     <ItemGroup>
       <ProjectReference Include="..\WindowsServer\WindowsServer.csproj" />
     </ItemGroup>
-
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced&quot; &quot;$(TargetFileName)&quot;) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0&#xA;&#xA;(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced&quot; &quot;$(TargetName).deps.json&quot;) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0" />
+    
+    <Target Name="CopyFiles">
+        <ItemGroup>
+            <PluginFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetFileName)" />
+            <DepsFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetName).deps.json" />
+        </ItemGroup>
+        <Copy SourceFiles="@(PluginFile)" DestinationFiles="C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced\$(TargetFileName)" />
+        <Copy SourceFiles="@(DepsFile)" DestinationFiles="C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Server\Forced\$(TargetName).deps.json" />
     </Target>
 
 </Project>

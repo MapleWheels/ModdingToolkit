@@ -167,8 +167,19 @@
       </Compile>
     </ItemGroup>
 
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="(robocopy &quot;$(ProjectDir)bin\$(ConfigurationName)\net6.0&quot; &quot;$(SolutionDir)Refs\Server&quot; &quot;NetScriptAssembly.dll&quot;  /R:0 /W:0) ^&amp; IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0" />
-    </Target>
+    <PropertyGroup>
+      <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
+    </PropertyGroup>
+  
+    <!-- Disabled as WindowsClient project has the same functions -->
+    <Target Name="CopyFiles"> </Target> <!-- Placeholder to stop complaints from MSBuild -->
+    <!--<Target Name="CopyFiles">
+      <ItemGroup>
+        <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
+        <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />
+      </ItemGroup>
+      <Copy SourceFiles="@(SourceFiles)" DestinationFiles="$(ModDeployDir)CSharp\%(RecursiveDir)%(Filename)%(Extension)" />
+      <Copy SourceFiles="@(FileList)" DestinationFiles="$(ModDeployDir)filelist.xml" />
+    </Target>-->
 
 </Project>
