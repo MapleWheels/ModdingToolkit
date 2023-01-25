@@ -7,6 +7,15 @@ public static partial class ConfigManager
 {
     #region PUBLIC_API
 
+    /// <summary>
+    /// Creates a Config var for binding key or mouse buttons to.
+    /// </summary>
+    /// <param name="name">Name of your config variable</param>
+    /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
+    /// <param name="defaultValue">The default key or mouse binding.</param>
+    /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
+    /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <returns></returns>
     public static IConfigControl AddConfigKeyOrMouseBind(
         string name,
         string modName,

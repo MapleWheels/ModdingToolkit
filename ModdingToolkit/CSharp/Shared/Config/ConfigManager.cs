@@ -33,7 +33,7 @@ public static partial class ConfigManager
      */
     
     /// <summary>
-    /// The base location where config save file folders are stored.
+    /// The base location where config save file folders are stored. Should be used when creating the file path for custom save data loading.
     /// </summary>
     public static readonly string BaseConfigDir = Path.Combine(Directory.GetCurrentDirectory(), "Config");
 
@@ -44,10 +44,9 @@ public static partial class ConfigManager
     /// <param name="name">Name of your config variable</param>
     /// <param name="modName">The name of your Mod. Acts a collection everything with the same ModName.</param>
     /// <param name="defaultValue">The default value if one cannot be loaded from file.</param>
-    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
+    /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
-    /// <param name="validateNewInput">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
     /// <param name="displayData">Contains data used for Settings Menu entries or other GUI functions. Not used on server.</param>
     /// <typeparam name="T">The Value's Type</typeparam>
@@ -57,12 +56,12 @@ public static partial class ConfigManager
         string modName,
         T defaultValue,
         NetworkSync networkSync = NetworkSync.NoSync,
+        Func<T, bool>? valueChangePredicate = null,
         Action<IConfigEntry<T>>? onValueChanged = null,
-        Func<T, bool>? validateNewInput = null,
         string? filePathOverride = null, DisplayData? displayData = null) where T : IConvertible
     {
         return CreateIConfigEntry(name, modName, defaultValue, networkSync, onValueChanged,
-            validateNewInput, filePathOverride, displayData);
+            valueChangePredicate, filePathOverride, displayData ?? new DisplayData());
     }
 
     /// <summary>
@@ -90,7 +89,7 @@ public static partial class ConfigManager
         string? filePathOverride = null, DisplayData? displayData = null)
     {
         return CreateIConfigList(name, modName, defaultValue, valueList, networkSync, 
-            valueChangePredicate, onValueChanged, filePathOverride, displayData);
+            valueChangePredicate, onValueChanged, filePathOverride, displayData ?? new DisplayData());
     }
 
     /// <summary>
@@ -104,7 +103,6 @@ public static partial class ConfigManager
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
     /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
-    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
@@ -119,7 +117,7 @@ public static partial class ConfigManager
         string? filePathOverride = null, DisplayData? displayData = null)
     {
         return CreateIConfigRangeInt(name, modName, defaultValue, minValue, maxValue, steps, networkSync,
-            valueChangePredicate, onValueChanged, filePathOverride, displayData);
+            valueChangePredicate, onValueChanged, filePathOverride, displayData ?? new DisplayData());
     }
     
     /// <summary>
@@ -133,7 +131,6 @@ public static partial class ConfigManager
     /// <param name="maxValue">The maximum value.</param>
     /// <param name="steps">The number of steps in the Slider in the menu.</param>
     /// <param name="networkSync">Whether this should be synced or not with the server and clients.</param>
-    /// <param name="menuCategory">The Menu Category to show this in. Default is Gameplay (recommended).</param>
     /// <param name="valueChangePredicate">Allows you to validate any potential changes to the Value. Return false to deny.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
@@ -149,7 +146,7 @@ public static partial class ConfigManager
         DisplayData? displayData = null)
     {
         return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync,
-            valueChangePredicate, onValueChanged, filePathOverride, displayData);
+            valueChangePredicate, onValueChanged, filePathOverride, displayData ?? new DisplayData());
     }
 
     /// <summary>
@@ -201,15 +198,16 @@ public static partial class ConfigManager
     /// Reloads the values from disk for all config members with the given ModName.
     /// </summary>
     /// <param name="modName">The ModName of the members.</param>
+    /// <param name="filePath">The absolute file to load the members from. Uses default filepath if none provided.</param>
     /// <returns>Whether or not the operation was successful.</returns>
-    public static bool ReloadAllValuesForModFromFiles(string modName)
+    public static bool ReloadAllValuesForModFromFiles(string modName, string? filePath = null)
     {
         if (!LoadedConfigEntries.ContainsKey(modName))
             return false;
         bool b = true;
         foreach (var pair in LoadedConfigEntries[modName].ToImmutableDictionary())
         {
-            if (!LoadData(pair.Value, null, true, true))
+            if (!LoadData(pair.Value, filePath, true, true))
             {
                 b = false;
             }
@@ -243,43 +241,66 @@ public static partial class ConfigManager
             yield return LoadedConfigEntries[index.ModName][index.Name];
         }
     }
+    
+    /// <summary>
+    /// Gets the default absolute file path for a given instance's save data. 
+    /// </summary>
+    /// <param name="config"></param>
+    /// <param name="fp">The file path if the function returns true.</param>
+    /// <returns>Whether or not the default file path could be generated.</returns>
+    public static bool GetDefaultFilePath(IConfigBase config, out string? fp)
+    {
+        fp = null;
+        if (config.Name.IsNullOrWhiteSpace())
+        {
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
+            return false;
+        }
+        if (config.ModName.IsNullOrWhiteSpace())
+        {
+            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
+            return false;
+        }
+        fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
+        return true;
+    }
 
     #endregion
 
     #region Helper_Extensions
-    /**
+    /***
      * For use by Lua/MoonSharp Interop
      */
     
     public static IConfigEntry<double> AddConfigDouble(string name, string modName, double defaultValue,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action<IConfigEntry<double>>? onValueChanged = null, 
         Func<double, bool>? validateNewInput = null, 
+        Action<IConfigEntry<double>>? onValueChanged = null,
         string? filePath = null, DisplayData? data = null)
-        => AddConfigEntry(name, modName, defaultValue, networkSync, onValueChanged, validateNewInput, filePath, data);
+        => AddConfigEntry(name, modName, defaultValue, networkSync, validateNewInput, onValueChanged, filePath, data ?? new DisplayData());
     
     public static IConfigEntry<string> AddConfigString(string name, string modName, string defaultValue,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action<IConfigEntry<string>>? onValueChanged = null, 
         Func<string, bool>? validateNewInput = null, 
+        Action<IConfigEntry<string>>? onValueChanged = null,
         string? filePath = null, DisplayData? data = null)
-        => AddConfigEntry(name, modName, defaultValue, networkSync, onValueChanged, validateNewInput, filePath, data);
+        => AddConfigEntry(name, modName, defaultValue, networkSync, validateNewInput, onValueChanged, filePath, data ?? new DisplayData());
 
     
     public static IConfigEntry<bool> AddConfigBoolean(string name, string modName, bool defaultValue,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action<IConfigEntry<bool>>? onValueChanged = null, 
         Func<bool, bool>? validateNewInput = null, 
+        Action<IConfigEntry<bool>>? onValueChanged = null, 
         string? filePath = null, DisplayData? data = null)
-        => AddConfigEntry(name, modName, defaultValue, networkSync, onValueChanged, validateNewInput, filePath, data);
+        => AddConfigEntry(name, modName, defaultValue, networkSync, validateNewInput, onValueChanged, filePath, data ?? new DisplayData());
 
     
     public static IConfigEntry<int> AddConfigInteger(string name, string modName, int defaultValue,
         NetworkSync networkSync = NetworkSync.NoSync,
-        Action<IConfigEntry<int>>? onValueChanged = null, 
         Func<int, bool>? validateNewInput = null, 
+        Action<IConfigEntry<int>>? onValueChanged = null, 
         string? filePath = null, DisplayData? data = null)
-        => AddConfigEntry(name, modName, defaultValue, networkSync, onValueChanged, validateNewInput, filePath, data);
+        => AddConfigEntry(name, modName, defaultValue, networkSync, validateNewInput, onValueChanged, filePath, data ?? new DisplayData());
 
     #endregion
 
@@ -612,24 +633,7 @@ public static partial class ConfigManager
 
         return config.ModName + "::" + config.Name;
     }
-    
-    private static bool GetDefaultFilePath(IConfigBase config, out string? fp)
-    {
-        fp = null;
-        if (config.Name.IsNullOrWhiteSpace())
-        {
-            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var Name is null!");
-            return false;
-        }
-        if (config.ModName.IsNullOrWhiteSpace())
-        {
-            Utils.Logging.PrintError($"ConfigManager::GetDefaultFilePath() | config var ModName is null!");
-            return false;
-        }
-        fp = Path.Combine(BaseConfigDir, Utils.IO.SanitizePath(config.ModName), Utils.IO.SanitizeFileName(config.ModName) + ".xml");
-        return true;
-    }
-    
+
     #endregion
 
     #region NETWORKING

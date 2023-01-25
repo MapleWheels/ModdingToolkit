@@ -33,7 +33,7 @@ public class Bootloader : IAssemblyPlugin
             "TestEntry00",
             "ModdingTK",
             20.0f,
-            validateNewInput: f =>
+            valueChangePredicate: f =>
             {
                 if (Utils.Game.IsRoundInProgress())
                 {
@@ -98,11 +98,9 @@ public class Bootloader : IAssemblyPlugin
             "ModdingTK2",
             10f,
             NetworkSync.ServerAuthority,
-            (ce) =>
+            onValueChanged: (ce) =>
             {
-                PrintNetTestMsg(
-                    ce.ModName + ":" + ce.Name,
-                    ce.Value.ToString(CultureInfo.CurrentCulture));
+                PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value.ToString(CultureInfo.CurrentCulture));
             }
         );
         
@@ -111,7 +109,7 @@ public class Bootloader : IAssemblyPlugin
             "ModdingTK2",
             "Hello",
             NetworkSync.TwoWaySync,
-            (ce) =>
+            onValueChanged: (ce) =>
             {
                 PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);
             }
@@ -124,7 +122,7 @@ public class Bootloader : IAssemblyPlugin
             new List<string> { "01", "02", "03", "04", "05" },
             NetworkSync.TwoWaySync,
             null,
-            (ce) =>
+            onValueChanged: (ce) =>
             {
                 PrintNetTestMsg(ce.ModName + ":" + ce.Name, ce.Value);
             }
@@ -138,9 +136,7 @@ public class Bootloader : IAssemblyPlugin
     private static void PrintNetTestMsg(string name, string value)
     {
         string mode = GameMain.IsSingleplayer ? "sp" : "mp";
-        Utils.Logging.PrintMessage(NetworkingManager.IsClient
-            ? $"net_ce_test: client, name: {name}, mode: {mode}, net_auth: srvauth, value {value}"
-            : $"net_ce_test: server, name: {name}, mode: {mode}, net_auth: srvauth, value {value}");
+        Utils.Logging.PrintMessage($"net_ce_test: name: {name}, mode: {mode}, net_auth: srvauth, value {value}");
     }
 
     #endregion

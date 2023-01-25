@@ -307,7 +307,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                         foreach ((object, IConfigBase) tuple in ValuesToSave)
                         {
                             if (tuple.Item2 is IConfigControl icc
-                                && icc == input
+                                && icc == input.Control
                                 && tuple.Item1 is KeyOrMouse km)
                             {
                                 return km.MouseButton == MouseButton.None
