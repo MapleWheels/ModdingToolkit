@@ -81,6 +81,10 @@
       </Content>
     </ItemGroup>
 
+    <PropertyGroup>
+        <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
+    </PropertyGroup>
+    
     <Target Name="CopyFiles">
         <ItemGroup>
             <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
