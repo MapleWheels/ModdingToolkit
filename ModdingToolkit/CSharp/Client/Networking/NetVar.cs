@@ -18,7 +18,7 @@ public sealed partial class NetVar<T> : INetVar<T> where T : IConvertible
     
     public void TriggerNetEvent()
     {
-        if (this.NetSync is NetworkSync.TwoWaySync)
+        if (NetSync is NetworkSync.TwoWaySync)
         {
             this._onNetworkEvent?.Invoke(this);
         } 

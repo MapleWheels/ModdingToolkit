@@ -1,4 +1,5 @@
-﻿using ModdingToolkit.Networking;
+﻿using Barotrauma.Networking;
+using ModdingToolkit.Networking;
 
 namespace ModdingToolkit.Config;
 
@@ -9,6 +10,9 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase, IDisplaya
     {
         if (!IsNetworked)
             return true;
+        if (NetSync is NetworkSync.ServerAuthority && GameMain.Client.HasPermission(ClientPermissions.ManageSettings))
+            return true;
+        
         return this.NetSync switch
         {
             NetworkSync.NoSync => true,
@@ -20,7 +24,8 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase, IDisplaya
     
     public void TriggerNetEvent()
     {
-        if (this.NetSync is NetworkSync.TwoWaySync)
+        if (NetSync is NetworkSync.TwoWaySync
+            || (NetSync is NetworkSync.ServerAuthority && GameMain.Client.HasPermission(ClientPermissions.ManageSettings)))
         {
             this._onNetworkEvent?.Invoke(this);
         } 

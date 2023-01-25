@@ -33,26 +33,12 @@ public sealed partial class NetVar<T> : INetVar<T> where T : IConvertible
     
     bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
     {
-#if SERVER
-        if (NetSync is NetworkSync.NoSync)
-            return false;
-#else
-        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
-            return false;
-#endif
         Utils.Networking.WriteNetValueFromType(msg, this.Value);
         return true;
     }
 
     bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
     {
-#if SERVER
-        if (NetSync is NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync or NetworkSync.NoSync)
-            return false;
-#else
-        if (NetSync is NetworkSync.NoSync)
-            return false;
-#endif
         try
         {
             this._value = Utils.Networking.ReadNetValueFromType<T>(msg);

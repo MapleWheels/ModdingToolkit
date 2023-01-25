@@ -2,8 +2,7 @@
 
 public static class MemoryCallbackCache
 {
-    private static Dictionary<Guid, CallbackMachine> CallbackMachines = new();
-
+    private static readonly Dictionary<Guid, CallbackMachine> CallbackMachines = new();
 
     public static Guid CreateInstance()
     {

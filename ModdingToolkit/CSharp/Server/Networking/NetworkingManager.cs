@@ -165,6 +165,8 @@ public static partial class NetworkingManager
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg, Barotrauma.Networking.Client? client)
     {
+        if (client is null)
+            return false;
 #if DEBUG      
         Utils.Logging.PrintMessage($"ReceiveSyncVarSingle()");
 #endif
@@ -174,7 +176,9 @@ public static partial class NetworkingManager
             if (TryGetNetConfigInstance(id, out var cfg))
             {
                 // If bad read, retransmit the known good value to all clients.
-                if (!cfg!.ReadNetworkValue(msg))
+                if (cfg!.NetSync is NetworkSync.NoSync 
+                    || (cfg!.NetSync is NetworkSync.ServerAuthority && !client.HasPermission(ClientPermissions.ManageSettings))
+                    || !cfg!.ReadNetworkValue(msg))
                 {
                     SendNetSyncVarEvent(cfg);
                     return false;
