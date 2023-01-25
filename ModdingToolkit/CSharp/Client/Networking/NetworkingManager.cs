@@ -105,8 +105,11 @@ public static partial class NetworkingManager
         try
         {
             uint id = msg.ReadUInt32();
-            if (TryGetNetConfigInstance(id, out var cfg))
+            if (TryGetNetConfigInstance(id, out var cfg)
+                && cfg!.NetSync is not NetworkSync.NoSync)
+            {
                 return cfg!.ReadNetworkValue(msg);
+            };
             return false;
         }
         catch (Exception e)
@@ -142,6 +145,9 @@ public static partial class NetworkingManager
 
     public static void SynchronizeAll()
     {
+        if (!GameMain.IsMultiplayer)
+            return;
+
         ClearNetworkData();
         SendRequestIdList();
     }

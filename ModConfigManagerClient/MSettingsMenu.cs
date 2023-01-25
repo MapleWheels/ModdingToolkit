@@ -1,24 +1,32 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Barotrauma.Networking;
 using Barotrauma.Steam;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using ModdingToolkit.Client;
 using ModdingToolkit.Config;
+using MonoMod.Utils;
 
 namespace ModConfigManager;
 
 public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 {
-    private static readonly Dictionary<IConfigBase.Category, List<IConfigBase>?> PerMenuConfig = new();
-    private static readonly List<IConfigControl?> ControlsMenuConfig = new();
-    private static readonly List<(object, IConfigBase)> ValuesToSave = new();
-    private List<IConfigBase> OrganizedList = new();
-
+    private static readonly Dictionary<Category, List<IDisplayable>> PerMenuConfig = new();
+    private static readonly List<DisplayableControl> ControlsMenuConfig = new();
+    private static readonly List<(object, IDisplayable)> ValuesToSave = new();
+    //private List<IDisplayable> OrganizedList = new();
     public readonly Dictionary<GUIButton, Func<LocalizedString>> CustomInputValueNameGetters = new();
+    // Gameplay Tab
+    private GUILayoutGroup? Gameplay_MasterLayout;
+    private string? Gameplay_SelectedMod;
+    private string? Gameplay_SelectedCategory;
+    private string? Gameplay_KeywordFilter;
+    public static readonly string GAMEPLAY_SEARCHBAR_DELIMITER = ";";
 
     private record ResetHandle(string id, System.Action handle);
-    private readonly Dictionary<IConfigBase.Category, List<ResetHandle>> PerMenuResetHandles = new();
+    private readonly Dictionary<Category, List<ResetHandle>> PerMenuResetHandles = new();
 
     public MSettingsMenu(RectTransform mainParent, GameSettings.Config setConfig = default) : base(mainParent, setConfig)
     {
@@ -27,23 +35,21 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
     private static void Init()
     {
-        foreach (IConfigBase.Category category in Enum.GetValues<IConfigBase.Category>())
+        foreach (Category category in Enum.GetValues<Category>())
         {
-            if (!PerMenuConfig.ContainsKey(category))
-                PerMenuConfig.Add(category, new List<IConfigBase>());
-            if (PerMenuConfig[category] is null)
-                PerMenuConfig[category] = new List<IConfigBase>();
+            if (category is Category.Ignore or Category.Controls)   // Controls are handled separately.
+                continue;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (!PerMenuConfig.ContainsKey(category) || PerMenuConfig[category] is null)
+                PerMenuConfig[category] = new List<IDisplayable>();
             else
-                PerMenuConfig[category]!.Clear();
-            foreach (IConfigBase member in ConfigManager.GetConfigMembers(category))
-                PerMenuConfig[category]!.Add(member);
+                PerMenuConfig[category].Clear();
+            foreach (IDisplayable member in ConfigManager.GetDisplayableConfigs().Where(d => d.MenuCategory == category))
+                PerMenuConfig[category].Add(member);
         }
         
         ControlsMenuConfig.Clear();
-        foreach (IConfigControl member in ConfigManager.GetControlConfigs())
-        {
-            ControlsMenuConfig.Add(member);
-        }
+        ControlsMenuConfig.AddRange(ConfigManager.GetControlConfigs());
     }
     
     public new static Barotrauma.SettingsMenu Create(RectTransform mainParent)
@@ -295,13 +301,13 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 
                 addInputToRowCustom(
                     currentRow,
-                    $"{input.ModName}: {input.Name}",
+                    $"{input.Displayable.ModName}: {input.Displayable.Name}",
                     () =>
                     {
                         foreach ((object, IConfigBase) tuple in ValuesToSave)
                         {
                             if (tuple.Item2 is IConfigControl icc
-                                && icc == input
+                                && icc == input.Control
                                 && tuple.Item1 is KeyOrMouse km)
                             {
                                 return km.MouseButton == MouseButton.None
@@ -309,18 +315,18 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                                     : new RawLString(km.MouseButton.ToString());
                             }
                         }
-                        return new RawLString(FormatControlString(input.GetStringValue()));
+                        return new RawLString(FormatControlString(input.Displayable.GetStringValue()));
                     },
                     kom =>
                     {
                         if (kom.MouseButton == MouseButton.None)
                         {
-                            if (input.ValidateString(kom.Key.ToString()))
-                                AddOrUpdateUnsavedChange(kom, input);
+                            if (input.Displayable.ValidateString(kom.Key.ToString()))
+                                AddOrUpdateUnsavedChange(kom, input.Displayable);
                         }
-                        else if (input.ValidateString(kom.MouseButton.ToString()))
+                        else if (input.Displayable.ValidateString(kom.MouseButton.ToString()))
                         {
-                            AddOrUpdateUnsavedChange(kom, input);
+                            AddOrUpdateUnsavedChange(kom, input.Displayable);
                         }
 
                     });
@@ -343,11 +349,9 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                     unsavedConfig.InventoryKeyMap = GameSettings.Config.InventoryKeyMapping.GetDefault();
                     unsavedConfig.KeyMap = GameSettings.Config.KeyMapping.GetDefault();
                     ValuesToSave.Clear();
-                    foreach (IConfigControl? control in ControlsMenuConfig)
+                    foreach (DisplayableControl displayableControl in ControlsMenuConfig)
                     {
-                        if (control is null)
-                            continue;
-                        AddOrUpdateUnsavedChange(control.DefaultValue, control);
+                        AddOrUpdateUnsavedChange(displayableControl.Control.DefaultValue, displayableControl.Displayable);
                     }
                     
                     foreach (var btn in inputButtonValueNameGetters.Keys)
@@ -365,15 +369,15 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             };
     }
 
-    public void AddOrUpdateUnsavedChange(object newVal, IConfigBase config)
+    public void AddOrUpdateUnsavedChange(object newVal, IDisplayable config)
     {
         ValuesToSave.RemoveAll(tuple => tuple.Item2.Equals(config));
         ValuesToSave.Add((newVal, config));
     }
 
-    public object? GetUnsavedValue(IConfigBase config)
+    public object? GetUnsavedValue(IDisplayable config)
     {
-        foreach ((object, IConfigBase) tuple in ValuesToSave)
+        foreach ((object, IDisplayable) tuple in ValuesToSave)
         {
             if (tuple.Item2.Equals(config))
             {
@@ -387,9 +391,19 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
     public new void CreateGameplayTab()
     {
         GUIFrame content = CreateNewContentFrame(Tab.Gameplay);
-        var (left, right) = CreateSidebars(content);
         
-        #region LEFT_FRAME
+        // Layout
+        Gameplay_MasterLayout = new GUILayoutGroup(new RectTransform((1f, 1f), content.RectTransform));
+
+        Gameplay_KeywordFilter = "";
+        Gameplay_SelectedMod = "";
+        Gameplay_SelectedCategory = "";
+        Gameplay_GenerateGameplayScreen();
+
+        // Old Menu Code
+        //var (left, right) = CreateSidebars(content);
+
+        /*#region LEFT_FRAME
         var languages = TextManager.AvailableLanguages
             .OrderBy(l => TextManager.GetTranslatedLanguageName(l).ToIdentifier())
             .ToArray();
@@ -475,18 +489,18 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
             });
 #endif
 
-        #endregion
+        #endregion*/
 
-        #region RIGHT_FRAME
+        /*#region RIGHT_FRAME
 
-        if (!PerMenuResetHandles.ContainsKey(IConfigBase.Category.Gameplay))
-            PerMenuResetHandles.Add(IConfigBase.Category.Gameplay, new List<ResetHandle>());
+        if (!PerMenuResetHandles.ContainsKey(Category.Gameplay))
+            PerMenuResetHandles.Add(Category.Gameplay, new List<ResetHandle>());
         else
-            PerMenuResetHandles[IConfigBase.Category.Gameplay].Clear();
+            PerMenuResetHandles[Category.Gameplay].Clear();
         
-        if (PerMenuConfig[IConfigBase.Category.Gameplay] is null)
+        if (PerMenuConfig[Category.Gameplay] is null)
             return;
-        List<IConfigBase> cfgList = PerMenuConfig[IConfigBase.Category.Gameplay]!;
+        List<IDisplayable> cfgList = PerMenuConfig[Category.Gameplay]!;
         
         int groupCount = cfgList.GroupBy(x => x.ModName).Count();
         int entryCount = cfgList.Count;
@@ -517,9 +531,9 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         {
             OnClicked = (button, o) =>
             {
-                if (PerMenuResetHandles.ContainsKey(IConfigBase.Category.Gameplay))
+                if (PerMenuResetHandles.ContainsKey(Category.Gameplay))
                 {
-                    foreach (var resetHandle in PerMenuResetHandles[IConfigBase.Category.Gameplay])
+                    foreach (var resetHandle in PerMenuResetHandles[Category.Gameplay])
                     {
                         resetHandle.handle?.Invoke();
                     }
@@ -542,184 +556,390 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
         string _header = string.Empty;
 
-        foreach (IConfigBase configBase in OrganizedList)
+        foreach (IDisplayable displayable in OrganizedList)
         {
-            if (!_header.Equals(configBase.ModName))
+            if (!_header.Equals(displayable.ModName))
             {
-                _header = configBase.ModName;
+                _header = displayable.ModName;
                 ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
                 ModdingToolkit.Client.GUIUtil.Label(contentGroup, $"{_header} Settings", GUIStyle.LargeFont, 1f/size);
                 ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
             }
 
-            PerMenuResetHandles[IConfigBase.Category.Gameplay].Add(new ResetHandle(
-                configBase.ModName+configBase.Name,
-                AddListEntry(contentGroup, configBase, (1.0f, entrySize.Y/size), 1f/size))
+            PerMenuResetHandles[Category.Gameplay].Add(new ResetHandle(
+                displayable.ModName+displayable.Name,
+                AddListEntry(contentGroup, displayable, (1.0f, entrySize.Y/size), 1f/size))
             );
         }
+
+        #endregion*/
+    }
+    
+    
+
+    private bool KeywordFilterContainsAny(IDisplayable? displayable, string? keywords, bool trueIfKeywordsNull = true)
+    {
+        if (displayable is null)
+            return false;
+        if (keywords.IsNullOrWhiteSpace())
+            return trueIfKeywordsNull;
+
+        string[] keywordsS = keywords.Split(GAMEPLAY_SEARCHBAR_DELIMITER);
         
-        System.Action AddListEntry(GUILayoutGroup layoutGroup, IConfigBase entry, Vector2 scaleRatio, float yAdjustRatio = 1.0f)
+        Stack<string> keywordStack = new Stack<string>();
+
+        foreach (string s in keywordsS)
         {
-            ModdingToolkit.Client.GUIUtil.Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont, yAdjustRatio);
-            if (entry.GetDisplayType() == IConfigBase.DisplayType.Tickbox)
+            if (!s.IsNullOrWhiteSpace())
+                keywordStack.Push(s.ToLowerInvariant().Trim());
+        }
+
+        if (keywordStack.Count < 1)
+            return trueIfKeywordsNull;
+        
+        return RecursiveCheck();
+        
+        bool RecursiveCheck()
+        {
+            string s = keywordStack.Pop();
+            return
+                (!displayable.Name.IsNullOrWhiteSpace() && displayable.Name.ToLowerInvariant().Contains(s))
+                || (!displayable.DisplayName.IsNullOrWhiteSpace() && displayable.DisplayName.ToLowerInvariant().Contains(s))
+                || (!displayable.ModName.IsNullOrWhiteSpace() && displayable.ModName.ToLowerInvariant().Contains(s))
+                || (!displayable.DisplayModName.IsNullOrWhiteSpace() && displayable.DisplayModName.ToLowerInvariant().Contains(s))
+                || (keywordStack.Count > 0 && RecursiveCheck());
+        }
+    }
+
+    private void Gameplay_GenerateGameplayScreen()
+    {
+        if (Gameplay_MasterLayout is null)
+            return;
+
+        #region DATA_DEF
+
+        // Defs
+        string includeAllOption = "All";
+        
+        // Mod List
+        var modDisplayablesList = new List<IDisplayable>();
+        
+        if (PerMenuConfig.ContainsKey(Category.Gameplay)
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            && PerMenuConfig[Category.Gameplay] is not null
+            && PerMenuConfig[Category.Gameplay].Any())
+        {
+            modDisplayablesList.AddRange(PerMenuConfig[Category.Gameplay]
+                .Where(d => KeywordFilterContainsAny(d, Gameplay_KeywordFilter))
+                .ToList());
+        }
+
+        // Build Mod List for Dropdown
+        List<string> modListDropdown = new List<string>();
+        modListDropdown.Add(includeAllOption);
+        modListDropdown.Add("Vanilla");
+        modListDropdown.AddRange(modDisplayablesList
+            .GroupBy(d => d.DisplayModName)
+            .Select(d => d.Key));
+        modListDropdown = modListDropdown.Distinct().ToList();
+
+        //--- Set current mod selection
+        if (Gameplay_SelectedMod.IsNullOrWhiteSpace() || !modListDropdown.Contains(Gameplay_SelectedMod))
+            Gameplay_SelectedMod = includeAllOption;
+        
+        // Build Category List for Dropdown
+        List<string> categoryList = new List<string>();
+        categoryList.Add("All");
+        categoryList.AddRange(modDisplayablesList
+            .Where(d => Gameplay_SelectedMod.Equals("All") || d.DisplayModName.Equals(Gameplay_SelectedMod))
+            .GroupBy(d => d.DisplayCategory)
+            .Select(dg => dg.Key));
+        categoryList = categoryList.Distinct().ToList();
+
+        //--- Set current category selection
+        if (Gameplay_SelectedCategory.IsNullOrWhiteSpace() || !categoryList.Contains(Gameplay_SelectedCategory))
+            Gameplay_SelectedCategory = includeAllOption;
+        
+        // Filter list of displayables
+        modDisplayablesList = modDisplayablesList
+            .Where(d => 
+                (d.DisplayModName.Equals(Gameplay_SelectedMod) || Gameplay_SelectedMod.Equals(includeAllOption)) 
+                && (d.DisplayCategory.Equals(Gameplay_SelectedCategory) || Gameplay_SelectedCategory.Equals(includeAllOption))
+            )
+            .OrderBy(d => d.DisplayModName)
+            .ThenBy(d => d.DisplayName)
+            .ToList();
+
+        #endregion
+
+        #region GUI_MENU_HEADER
+
+        // Begin building GUI Elements
+        // Clear existing view
+        GUIUtil.ClearChildElements(Gameplay_MasterLayout);
+        
+        // Header
+        var topHeader = GUIUtil.Label(Gameplay_MasterLayout, "Gameplay Settings", GUIStyle.LargeFont, Vector2.One);
+        GUIUtil.Spacer(Gameplay_MasterLayout, Vector2.One);
+        
+        // GUI Container Init
+        var modListDropdownGroup = new GUILayoutGroup(
+            new RectTransform((1f, 0.06f), Gameplay_MasterLayout.RectTransform), true, Anchor.CenterLeft);
+        var categoryListDropdownGroup = new GUILayoutGroup(
+            new RectTransform((1f, 0.06f), Gameplay_MasterLayout.RectTransform), true, Anchor.CenterLeft);
+        var searchBarGroup = new GUILayoutGroup(
+            new RectTransform((1f, 0.06f), Gameplay_MasterLayout.RectTransform), true, Anchor.CenterLeft);
+        
+        var modListLabelElement = GUIUtil.Label(modListDropdownGroup, new RawLString("Mod: "), GUIStyle.SubHeadingFont, (0.2f, 1f));
+        var modListDropdownElement = GUIUtil.Dropdown(
+            modListDropdownGroup,
+            s => new RawLString(s),
+            s => new RawLString(s),
+            modListDropdown,
+            Gameplay_SelectedMod,
+            s =>
             {
-                var tickbox = ModdingToolkit.Client.GUIUtil.Tickbox(layoutGroup, "", "",
-                    (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
-                    (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), yAdjustRatio);
+                Gameplay_SelectedMod = s;
+                Gameplay_GenerateGameplayScreen();
+            },
+            (0.79f, 1f));
+
+        GUIUtil.Label(categoryListDropdownGroup, new RawLString("Category: "), GUIStyle.SubHeadingFont, (0.2f, 1f));
+        GUIUtil.Dropdown(
+            categoryListDropdownGroup,
+            s => new RawLString(s),
+            s => new RawLString(s),
+            categoryList,
+            Gameplay_SelectedCategory,
+            s =>
+            {
+                Gameplay_SelectedCategory = s;
+                Gameplay_GenerateGameplayScreen();
+            },
+            (0.79f, 1f));
+
+        GUIUtil.Label(searchBarGroup, new RawLString("Search: "), GUIStyle.SubHeadingFont, (0.2f, 1f));
+        new GUITextBox(
+            new RectTransform((0.79f, 1f), searchBarGroup.RectTransform),
+            Gameplay_KeywordFilter)
+        {
+            OnEnterPressed = (box, text) =>
+            {
+                Gameplay_KeywordFilter = text;
+                Gameplay_GenerateGameplayScreen();
+                return true;
+            }
+        };
+
+        #endregion
+
+        #region GUI_SETTINGS_ENTRIES
+
+        Vector2 entrySize = (1.0f, 0.122f);
+        float groupGount = modDisplayablesList.GroupBy(d => d.DisplayModName).Count();
+        float size = Math.Max(1.0f, 0.2f * groupGount + modDisplayablesList.Count * entrySize.Y);
+
+        // Settings List
+        var modDisplayListGroup = new GUILayoutGroup(
+            new RectTransform((1f, 0.7f), Gameplay_MasterLayout.RectTransform));
+        var modDisplayListBox = new GUIListBox(
+            new RectTransform((1f, 1f), modDisplayListGroup.RectTransform),
+            false,
+            Color.Black)
+        {
+            CanBeFocused = false,
+            OnSelected = (_, _) => false
+        };
+
+        
+        
+        // Reset button
+        GUIButton resetAllVars = new GUIButton(new RectTransform((0.2f, 0.1f), Gameplay_MasterLayout.RectTransform),
+            "Reset", color: Color.Beige)
+        {
+            OnClicked = (button, o) =>
+            {
+                if (PerMenuResetHandles.ContainsKey(Category.Gameplay))
+                {
+                    foreach (var resetHandle in PerMenuResetHandles[Category.Gameplay])
+                    {
+                        resetHandle.handle?.Invoke();
+                    }
+                }
+                return false;
+            },
+            OnAddedToGUIUpdateList = component =>
+            {
+                component.Enabled = CurrentTab == Tab.Gameplay;
+            }
+        };
+        
+        // Populate displayable GUIListBox
+        
+        GUIFrame displayableContentFrame = new GUIFrame(
+            new RectTransform((1.0f, size), modDisplayListBox.Content.RectTransform),
+            "", Color.DarkOliveGreen);
+
+        GUILayoutGroup displayableContentGroup = new GUILayoutGroup(
+            new RectTransform((1.0f, 1.0f), displayableContentFrame.RectTransform),
+            false);
+
+        string _header = string.Empty;
+
+        if (!PerMenuResetHandles.ContainsKey(Category.Gameplay))
+            PerMenuResetHandles.Add(Category.Gameplay, new List<ResetHandle>());
+        
+        foreach (IDisplayable displayable in modDisplayablesList)
+        {
+            if (!_header.Equals(displayable.DisplayModName))
+            {
+                _header = displayable.DisplayModName;
+                GUIUtil.Spacer(displayableContentGroup, new Vector2(1f, 1f/size));
+                GUIUtil.Label(displayableContentGroup, $"{_header}", GUIStyle.LargeFont, new Vector2(1f, 1f/size));
+                GUIUtil.Spacer(displayableContentGroup, new Vector2(1f, 1f/size));
+            }
+
+            PerMenuResetHandles[Category.Gameplay].Add(new ResetHandle(
+                displayable.ModName+displayable.Name,
+                AddListEntry(displayableContentGroup, displayable, (1.0f, entrySize.Y/size), new Vector2(1f, 1f/size)))
+            );
+        }
+
+        #endregion
+    }
+
+    private System.Action AddListEntry(GUILayoutGroup layoutGroup, IDisplayable entry, Vector2 scaleRatio, Vector2 adjustRatio)
+    {
+        GUIUtil.Label(layoutGroup, entry.Name, GUIStyle.SubHeadingFont, adjustRatio);
+        if (entry.GetDisplayType() == DisplayType.Tickbox)
+        {
+            var tickbox = GUIUtil.Tickbox(layoutGroup, "", "",
+                (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
+                (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), adjustRatio);
+            return () =>
+            {
+                bool b;
+                try
+                {
+                    b = (bool)Convert.ChangeType(entry.GetStringDefaultValue(), TypeCode.Boolean);
+                }
+                catch
+                {
+                    b = false;
+                }
+
+                tickbox.Selected = b;
+                AddOrUpdateUnsavedChange(b.ToString(), entry);
+            };
+        }
+        if (entry.GetDisplayType() == DisplayType.DropdownList
+                 && entry is IConfigList icl)
+        {
+            var dropdown = GUIUtil.Dropdown<string>(layoutGroup, 
+                s => new RawLString(s), 
+                s => new RawLString(s),
+                icl.GetReadOnlyList(), icl.Value, 
+                s => AddOrUpdateUnsavedChange(s, entry), adjustRatio);
+            return () =>
+            {
+                int index = icl.GetDefaultValueIndex();
+                if (index < 0)
+                    return;
+                dropdown.Select(index);
+                AddOrUpdateUnsavedChange(icl.GetStringDefaultValue(), entry);
+            };
+        }
+        if (entry.GetDisplayType() == DisplayType.Slider)
+        {
+            if (entry is IConfigRangeFloat icf)
+            {
+                float cv;
+                try
+                {
+                    cv = (float)Convert.ChangeType(GetUnsavedValue(entry), TypeCode.Single)!;
+                }
+                catch
+                {
+                    cv = icf.Value;
+                }
+
+                var (slider, label) = GUIUtil.Slider(layoutGroup,
+                    new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
+                    f => f.ToString(), cv, 
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry),null, adjustRatio);
                 return () =>
                 {
-                    bool b;
-                    try
-                    {
-                        b = (bool)Convert.ChangeType(entry.GetStringDefaultValue(), TypeCode.Boolean);
-                    }
-                    catch
-                    {
-                        b = false;
-                    }
-
-                    tickbox.Selected = b;
-                    AddOrUpdateUnsavedChange(b.ToString(), entry);
+                    slider.BarScrollValue = icf.DefaultValue;
+                    label.Text = (RichString)slider.BarScrollValue.ToString();
+                    AddOrUpdateUnsavedChange(icf.DefaultValue.ToString(), entry);
                 };
             }
-            if (entry.GetDisplayType() == IConfigBase.DisplayType.DropdownList
-                     && entry is IConfigList icl)
+            if (entry is IConfigRangeInt ici)
             {
-                var dropdown = ModdingToolkit.Client.GUIUtil.Dropdown<string>(layoutGroup, 
-                    s => new RawLString(s), 
-                    s => new RawLString(s),
-                    icl.GetReadOnlyList(), icl.Value, 
-                    s => AddOrUpdateUnsavedChange(s, icl), yAdjustRatio);
-                return () =>
+                int cv;
+                try
                 {
-                    int index = icl.GetDefaultValueIndex();
-                    if (index < 0)
-                        return;
-                    dropdown.Select(index);
-                    AddOrUpdateUnsavedChange(icl.GetStringDefaultValue(), icl);
-                };
-            }
-            if (entry.GetDisplayType() == IConfigBase.DisplayType.Slider)
-            {
-                if (entry is IConfigRangeFloat icf)
-                {
-                    float cv;
-                    try
-                    {
-                        cv = (float)Convert.ChangeType(GetUnsavedValue(icf), TypeCode.Single)!;
-                    }
-                    catch
-                    {
-                        cv = icf.Value;
-                    }
-
-                    var (slider, label) = ModdingToolkit.Client.GUIUtil.Slider(layoutGroup,
-                        new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
-                        f => f.ToString(), cv, 
-                        f => AddOrUpdateUnsavedChange(f.ToString(), entry), LayoutYAdjust: yAdjustRatio);
-                    return () =>
-                    {
-                        slider.BarScrollValue = icf.DefaultValue;
-                        label.Text = (RichString)slider.BarScrollValue.ToString();
-                        AddOrUpdateUnsavedChange(icf.DefaultValue.ToString(), icf);
-                    };
+                    cv = (int)Convert.ChangeType(GetUnsavedValue(entry), TypeCode.Int32)!;
                 }
-                if (entry is IConfigRangeInt ici)
+                catch
                 {
-                    int cv;
-                    try
-                    {
-                        cv = (int)Convert.ChangeType(GetUnsavedValue(ici), TypeCode.Int32)!;
-                    }
-                    catch
-                    {
-                        cv = ici.Value;
-                    }
-
-                    var (slider, label) = ModdingToolkit.Client.GUIUtil.Slider(layoutGroup,
-                        new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
-                        f => f.ToString(), cv, 
-                        f => AddOrUpdateUnsavedChange(f.ToString(), entry), LayoutYAdjust: yAdjustRatio);
-                    
-                    return () =>
-                    {
-                        slider.BarScrollValue = ici.DefaultValue;
-                        label.Text = (RichString)slider.BarScrollValue.ToString();
-                        AddOrUpdateUnsavedChange(ici.DefaultValue.ToString(), ici);
-                    };
+                    cv = ici.Value;
                 }
 
-                return () => { };
-            }
-            //GUINumberInput breaks formatting, includes unknown padding
-            /*if (entry.GetDisplayType() == IConfigBase.DisplayType.Number)
-            {
-                var numInput = new ModConfigManager.CustomGUI.GUINumberInput(
-                    new RectTransform(scaleRatio, layoutGroup.RectTransform),
-                    NumberType.Float, yAdjustRatio: yAdjustRatio)
-                {
-                    OnValueChanged = input =>
-                    {
-                        AddOrUpdateUnsavedChange(input.FloatValue.ToString(), entry);
-                    }
-                };
+                var (slider, label) = GUIUtil.Slider(layoutGroup,
+                    new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
+                    f => f.ToString(), cv, 
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), null, adjustRatio);
                 
-                if (float.TryParse(entry.GetStringValue(), out var v))
-                {
-                    numInput.FloatValue = v;
-                }
-
                 return () =>
                 {
-                    if (float.TryParse(entry.GetStringDefaultValue(), out var fl))
-                    {
-                        numInput.FloatValue = fl;
-                        AddOrUpdateUnsavedChange(entry.GetStringDefaultValue(), entry);
-                    }
-                };
-            }*/
-            if (entry.GetDisplayType() == IConfigBase.DisplayType.Standard
-                     || entry.GetDisplayType() == IConfigBase.DisplayType.Number)
-            {
-                var textBox = new GUITextBox(
-                    new RectTransform(scaleRatio, layoutGroup.RectTransform),
-                    entry.GetStringValue(),
-                    createPenIcon: false
-                )
-                {
-                    OnEnterPressed = (box, text) =>
-                    {
-                        if (entry.ValidateString(text))
-                            AddOrUpdateUnsavedChange(text, entry);
-                        else
-                        {
-                            string s = String.Empty;
-                            try
-                            {
-                                s = (string)Convert.ChangeType(GetUnsavedValue(entry), TypeCode.String)!;
-                            }
-                            catch
-                            {
-                                s = entry.GetStringValue();
-                            }
-
-                            box.Text = s;
-                        }
-                        return true;
-                    }
-                };
-                return () =>
-                {
-                    string s = entry.GetStringDefaultValue();
-                    textBox.Text = s;
-                    AddOrUpdateUnsavedChange(s, entry);
+                    slider.BarScrollValue = ici.DefaultValue;
+                    label.Text = (RichString)slider.BarScrollValue.ToString();
+                    AddOrUpdateUnsavedChange(ici.DefaultValue.ToString(), entry);
                 };
             }
 
             return () => { };
         }
-        
-        #endregion
+        if (entry.GetDisplayType() == DisplayType.Standard
+            || entry.GetDisplayType() == DisplayType.Number)
+        {
+            var textBox = new GUITextBox(
+                new RectTransform(scaleRatio, layoutGroup.RectTransform),
+                entry.GetStringValue(),
+                createPenIcon: false
+            )
+            {
+                OnEnterPressed = (box, text) =>
+                {
+                    if (entry.ValidateString(text))
+                        AddOrUpdateUnsavedChange(text, entry);
+                    else
+                    {
+                        string s = String.Empty;
+                        try
+                        {
+                            s = (string)Convert.ChangeType(GetUnsavedValue(entry), TypeCode.String)!;
+                        }
+                        catch
+                        {
+                            s = entry.GetStringValue();
+                        }
+
+                        box.Text = s;
+                    }
+                    return true;
+                }
+            };
+            return () =>
+            {
+                string s = entry.GetStringDefaultValue();
+                textBox.Text = s;
+                AddOrUpdateUnsavedChange(s, entry);
+            };
+        }
+
+        return () => { };
     }
 
     public new void CreateGraphicsTab()

@@ -7,7 +7,7 @@ public enum NetworkSync
     /// </summary>
     NoSync, 
     /// <summary>
-    /// Only the server can make changes.
+    /// Only the server or clients with Server Authority can make changes.
     /// </summary>
     ServerAuthority, 
     /// <summary>

@@ -2,7 +2,7 @@
 
 namespace ModdingToolkit.Config;
 
-public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
+public partial class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
 {
     public int MinValue { get; private set; }
     public int MaxValue { get; private set; }
@@ -12,8 +12,8 @@ public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
     private Action<IConfigRangeInt>? _onValChanged;
 
     public void Initialize(string name, string modName, int newValue, int defaultValue, int minValue, int maxValue, int steps,
-        NetworkSync sync = NetworkSync.NoSync, IConfigBase.Category menuCategory = IConfigBase.Category.Gameplay,
-        Func<int, bool>? valueChangePredicate = null, Action<IConfigRangeInt>? onValueChanged = null)
+        Func<int, bool>? valueChangePredicate = null, 
+        Action<IConfigRangeInt>? onValueChanged = null)
     {
         if (minValue >= maxValue)
             throw new ArgumentException(
@@ -23,10 +23,9 @@ public class ConfigRangeInt : ConfigEntry<int>, IConfigRangeInt
         MaxValue = maxValue;
         _onValChanged = onValueChanged;
         
-        base.Initialize(name, modName, newValue, defaultValue, sync, menuCategory, 
+        base.Initialize(name, modName, newValue, defaultValue,
             valueChangePredicate, _ => _onValChanged?.Invoke(this));
     }
 
     public override bool Validate(int value) => value >= MinValue && value <= MaxValue && base.Validate(value);
-    public override IConfigBase.DisplayType GetDisplayType() => IConfigBase.DisplayType.Slider;
 }

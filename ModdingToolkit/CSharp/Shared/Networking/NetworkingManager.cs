@@ -112,10 +112,10 @@ public static partial class NetworkingManager
         IsInitialized = false;
     }
 
-    public static bool RegisterNetConfigInstance(INetConfigBase config)
+    public static bool RegisterNetConfigInstance(INetConfigBase config, NetworkSync syncMode)
     {
         Guid id = Guid.NewGuid();
-        if (!RegisterLocalConfig(config, id))
+        if (!RegisterLocalConfig(config, id, syncMode))
         {
             Utils.Logging.PrintError($"NetworkingManager::RegisterNetConfigInstance() | A config with that Guid exists locally. Unable to continue. Modname={config.ModName}, Name={config.Name}");
             return false;
@@ -148,11 +148,11 @@ public static partial class NetworkingManager
         return msg;
     }
 
-    private static bool RegisterLocalConfig(INetConfigBase cfg, Guid localId)
+    private static bool RegisterLocalConfig(INetConfigBase cfg, Guid localId, NetworkSync syncMode)
     {
         if (NetConfigRegistry.ContainsKey(localId) && NetConfigRegistry[localId] is not null)
             return false;
-        cfg.SetNetworkingId(localId);
+        cfg.InitializeNetworking(localId, syncMode);
         NetConfigRegistry[localId] = cfg;
         if (!Indexer_LocalGuidsLookup.ContainsKey(cfg.ModName))
             Indexer_LocalGuidsLookup.Add(cfg.ModName, new Dictionary<string, Guid>());

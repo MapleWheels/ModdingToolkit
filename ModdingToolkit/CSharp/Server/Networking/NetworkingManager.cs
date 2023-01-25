@@ -110,17 +110,17 @@ public static partial class NetworkingManager
                 TryGetNetConfigInstance(kvp.Value.ModName, kvp.Value.Name, out var cfg) 
                 && cfg is { IsNetworked: true })
             .ToImmutableDictionary();
-#if DEBUG
+    #if DEBUG
         Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | SyncVar Count: {toSync.Count}");
-#endif
+    #endif
         foreach (var index in toSync)
         {
             var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.Client_RequestIdSingle);
             outmsg.WriteIdNameInfo(index.Key, index.Value.ModName, index.Value.Name);
             SendMsg(outmsg, client.Connection);
-#if DEBUG
+    #if DEBUG
             Utils.Logging.PrintMessage($"NM::WriteIdListMsg() | Writing SyncVar: id={index.Key}, modName={index.Value.ModName}, name={index.Value.Name}");
-#endif
+    #endif
         }
     }
 
@@ -147,20 +147,26 @@ public static partial class NetworkingManager
     {
         if (!IsInitialized)
             return;
+        if (!cfg.NetAuthorityValidate() || !cfg.IsNetworked)
+            return;
         if (TryGetNetId(cfg.NetId, out uint id))
         {
             var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
             msg.WriteUInt32(id);
-            cfg.WriteNetworkValue(msg);
-            if (client is null)
-                SendMsg(msg, null);
-            else
-                SendMsg(msg, client.Connection);
+            if (cfg.WriteNetworkValue(msg))
+            {
+                if (client is null)
+                    SendMsg(msg, null);
+                else
+                    SendMsg(msg, client.Connection);
+            }
         }
     }
 
     private static bool ReceiveSyncVarSingle(IReadMessage msg, Barotrauma.Networking.Client? client)
     {
+        if (client is null)
+            return false;
 #if DEBUG      
         Utils.Logging.PrintMessage($"ReceiveSyncVarSingle()");
 #endif
@@ -170,7 +176,9 @@ public static partial class NetworkingManager
             if (TryGetNetConfigInstance(id, out var cfg))
             {
                 // If bad read, retransmit the known good value to all clients.
-                if (!cfg!.ReadNetworkValue(msg))
+                if (cfg!.NetSync is NetworkSync.NoSync 
+                    || (cfg!.NetSync is NetworkSync.ServerAuthority && !client.HasPermission(ClientPermissions.ManageSettings))
+                    || !cfg!.ReadNetworkValue(msg))
                 {
                     SendNetSyncVarEvent(cfg);
                     return false;

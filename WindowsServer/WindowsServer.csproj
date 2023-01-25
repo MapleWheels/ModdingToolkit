@@ -57,6 +57,9 @@
       <Compile Include="..\ModdingToolkit\CSharp\Server\Config\ConfigList.cs">
         <Link>Server\Config\ConfigList.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetVar.cs">
+        <Link>Server\Networking\NetVar.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetworkingManager.cs">
         <Link>Server\Networking\NetworkingManager.cs</Link>
       </Compile>
@@ -81,6 +84,12 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ConfigRangeInt.cs">
         <Link>Shared\Config\ConfigRangeInt.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\ECategory.cs">
+        <Link>Shared\Config\ECategory.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\EDisplayType.cs">
+        <Link>Shared\Config\EDisplayType.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigBase.cs">
         <Link>Shared\Config\IConfigBase.cs</Link>
       </Compile>
@@ -96,11 +105,17 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\IConfigRangeInt.cs">
         <Link>Shared\Config\IConfigRangeInt.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Config\RDisplayData.cs">
+        <Link>Shared\Config\RDisplayData.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\ConsoleCommands.cs">
         <Link>Shared\ConsoleCommands.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\global.cs">
         <Link>Shared\global.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\MemoryCallbackCache.cs">
+        <Link>Shared\MemoryCallbackCache.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\ENetworkEventId.cs">
         <Link>Shared\Networking\ENetworkEventId.cs</Link>
@@ -110,6 +125,12 @@
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetConfigBase.cs">
         <Link>Shared\Networking\INetConfigBase.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetVar.cs">
+        <Link>Shared\Networking\INetVar.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetVar.cs">
+        <Link>Shared\Networking\NetVar.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetworkingManager.cs">
         <Link>Shared\Networking\NetworkingManager.cs</Link>

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Barotrauma.Items.Components;
 using Barotrauma.Networking;
 using ModdingToolkit.Networking;
 
@@ -6,6 +7,8 @@ namespace ModdingToolkit;
 
 public static class Utils
 {
+    #region LOGGING
+
     public static class Logging
     {
         public static void PrintMessage(string s)
@@ -26,7 +29,11 @@ public static class Utils
 #endif
         }
     }
+
+    #endregion
     
+    #region FILE_IO
+
     public static class IO
     {
         public static string PrepareFilePathString(string filePath) =>
@@ -206,9 +213,15 @@ public static class Utils
             Success, FilePathNull, FilePathInvalid, EntryMissing, DirectoryMissing, PathTooLong, InvalidOperation, IOFailure, UnknownError
         }
     }
+    
+    #endregion
+
+    #region NETWORKING
 
     internal static class Networking
     {
+        #region MESSAGE_UTILS
+
         public static object ReadNetValueFromType(IReadMessage msg, Type type)
         {
             if (type == typeof(bool)) return msg.ReadBoolean();
@@ -241,13 +254,13 @@ public static class Utils
                 }
                 catch (Exception e)
                 {
-                    Utils.Logging.PrintError($"Utils.Net...::ReadNetValueFromType() | {e.Message}");
+                    Logging.PrintError($"Utils.Net...::ReadNetValueFromType() | {e.Message}");
                     return 0;
                 }
             }
 
-            Utils.Logging.PrintError(
-            $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
+            Logging.PrintError(
+                $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return 0;
         }
         
@@ -285,12 +298,12 @@ public static class Utils
                 }
                 catch (Exception e)
                 {
-                    Utils.Logging.PrintError($"Utils.Net...::ReadNetValueFromType<{typeof(T)}>() | {e.Message}");
+                    Logging.PrintError($"Utils.Net...::ReadNetValueFromType<{typeof(T)}>() | {e.Message}");
                     return default!;
                 }
             }
 
-            Utils.Logging.PrintError(
+            Logging.PrintError(
                 $"Utils::ReadNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             return default!;
         }
@@ -306,7 +319,7 @@ public static class Utils
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (value is null)
             {
-                Utils.Logging.PrintError(
+                Logging.PrintError(
                     $"Utils::WriteNetValueFromType() | The value was null for the type of {type.Name}.");
                 return;
             }
@@ -391,7 +404,7 @@ public static class Utils
             }
             else
             {
-                Utils.Logging.PrintError(
+                Logging.PrintError(
                     $"Utils::WriteNetValueFromType() | The Type of {type.Name} is unsupported by Barotrauma Networking!");
             }
         }
@@ -405,5 +418,90 @@ public static class Utils
         {
             Byte = 0, Short, Int, Long, String
         }
+
+        #endregion
+
+        #region NETMGR_UTILS
+
+        public static INetVar<T> CreateNetVar<T>(ItemComponent component, string className, string varName, T value, 
+            NetworkSync syncMode) where T : IConvertible
+        {
+            NetVar<T> netVar = new NetVar<T>();
+
+            int index = 0;
+            for (int i = 0; i < component.Item.Components.Count; i++)
+            {
+                if (component.Item.Components[i] == component)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            netVar.Initialize($"{className}_{component.Item.ID}_{index}", varName, value);
+
+            if (!GameMain.IsMultiplayer || syncMode is NetworkSync.NoSync)
+                return netVar;
+
+            NetworkingManager.RegisterNetConfigInstance(netVar, syncMode);
+
+            return netVar;
+        }
+        
+        public static INetVar<T> CreateNetVar<T>(Item item, string className, string varName, T value, 
+            NetworkSync syncMode) where T : IConvertible
+        {
+            NetVar<T> netVar = new NetVar<T>();
+            
+            netVar.Initialize($"{className}_{item.ID}_NoCompID", varName, value);
+
+            if (!GameMain.IsMultiplayer || syncMode is NetworkSync.NoSync)
+                return netVar;
+
+            NetworkingManager.RegisterNetConfigInstance(netVar, syncMode);
+
+            return netVar;
+        }
+        
+        public static INetVar<T> CreateNetVar<T>(string baseName, string varName, T value, 
+            NetworkSync syncMode) where T : IConvertible
+        {
+            NetVar<T> netVar = new NetVar<T>();
+
+            int indexV = 0;
+            foreach (char c in baseName)
+            {
+                indexV += Convert.ToInt32(c);
+            }
+            
+            netVar.Initialize($"{baseName}_CID{indexV}", varName, value);
+
+            if (!GameMain.IsMultiplayer || syncMode is NetworkSync.NoSync)
+                return netVar;
+
+            NetworkingManager.RegisterNetConfigInstance(netVar, syncMode);
+
+            return netVar;
+        }
+
+        #endregion
     }
+
+    #endregion
+
+    #region GAME
+
+    public static class Game
+    {
+        public static bool IsRoundInProgress()
+        {
+#if CLIENT
+            if (Screen.Selected is not null
+                && Screen.Selected.IsEditor)
+                return false;
+#endif
+            return GameMain.GameSession is not null && Level.Loaded is not null;
+        }
+    }
+
+    #endregion
 }

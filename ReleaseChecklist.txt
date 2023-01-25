@@ -1,0 +1,19 @@
+Todo on new version:
+
++++ Preparation - All:
+- Update Version numbers.
+- Compile Release and Debug Versions.
+- Create Changelog.
+
++++ Preparation - Steam Workshop:
+- Remove Server & Client testing plugins from /LocalMods.
+- Verify changes outside of /CSharp are copied (filelist.xml, RunConfig.xml)
+
++++ Post-Update - Steam Workshop:
+- Update description in Steam (Barotrauma bug).
+- Validate uploaded version received by Steam (Barotrauma bug).
+
++++ Preparation - Github
+- Update Readme.
+- Update Git Wiki.
+- Prepare Refs folder.
