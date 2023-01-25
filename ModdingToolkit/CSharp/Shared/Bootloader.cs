@@ -168,8 +168,10 @@ internal sealed class Bootloader : ACsMod
         // Statics
         UserData.RegisterType(typeof(ConfigManager));
         UserData.RegisterType(typeof(NetworkingManager));
+        UserData.RegisterType(typeof(MemoryCallbackCache));
         GameMain.LuaCs.Lua.Globals[nameof(ConfigManager)] = UserData.CreateStatic(typeof(ConfigManager));
         GameMain.LuaCs.Lua.Globals[nameof(NetworkingManager)] = UserData.CreateStatic(typeof(NetworkingManager));
+        GameMain.LuaCs.Lua.Globals[nameof(MemoryCallbackCache)] = UserData.CreateStatic(typeof(MemoryCallbackCache));
     }
 
     private void DeregisterLua()
@@ -178,8 +180,10 @@ internal sealed class Bootloader : ACsMod
         // Statics
         GameMain.LuaCs.Lua.Globals[nameof(ConfigManager)] = null;
         GameMain.LuaCs.Lua.Globals[nameof(NetworkingManager)] = null;
+        GameMain.LuaCs.Lua.Globals[nameof(MemoryCallbackCache)] = null;
         UserData.UnregisterType(typeof(NetworkingManager));
         UserData.UnregisterType(typeof(ConfigManager));
+        UserData.UnregisterType(typeof(MemoryCallbackCache));
 
 #if CLIENT
         UserData.RegisterType<IDisplayable>();
