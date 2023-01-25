@@ -216,6 +216,8 @@ public static class Utils
     
     #endregion
 
+    #region NETWORKING
+
     internal static class Networking
     {
         #region MESSAGE_UTILS
@@ -483,4 +485,23 @@ public static class Utils
 
         #endregion
     }
+
+    #endregion
+
+    #region GAME
+
+    public static class Game
+    {
+        public static bool IsRoundInProgress()
+        {
+#if CLIENT
+            if (Screen.Selected is not null
+                && Screen.Selected.IsEditor)
+                return false;
+#endif
+            return GameMain.GameSession is not null && Level.Loaded is not null;
+        }
+    }
+
+    #endregion
 }
