@@ -15,16 +15,18 @@ public static partial class ConfigManager
     /// <param name="defaultValue">The default key or mouse binding.</param>
     /// <param name="onValueChanged">Called whenever the value has been successfully changed.</param>
     /// <param name="filePathOverride">Use if you want to load this variable from another config file on disk. Takes an absolute path.</param>
+    /// <param name="displayData">Contains data used for Settings Menu entries or other GUI functions. Not used on server.</param>
     /// <returns></returns>
     public static IConfigControl AddConfigKeyOrMouseBind(
         string name,
         string modName,
         KeyOrMouse defaultValue,
         Action? onValueChanged = null,
-        string? filePathOverride = null
+        string? filePathOverride = null,
+        DisplayData? displayData = null
     )
     {
-        return CreateIConfigControl(name, modName, defaultValue, onValueChanged, filePathOverride);
+        return CreateIConfigControl(name, modName, defaultValue, onValueChanged, filePathOverride, displayData ?? new DisplayData());
     }
 
     public static IEnumerable<IDisplayable> GetDisplayableConfigs() => Displayables.ToImmutableList();
