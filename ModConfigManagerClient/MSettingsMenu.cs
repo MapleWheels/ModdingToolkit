@@ -903,7 +903,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
     private System.Action AddListEntry(GUILayoutGroup layoutGroup, IDisplayable entry, Vector2 scaleRatio, Vector2 adjustRatio)
     {
-        GUIUtil.Label(layoutGroup, new RawLString(entry.DisplayName), GUIStyle.SubHeadingFont, adjustRatio);
+        GUIUtil.Label(layoutGroup, new RawLString(entry.DisplayName), GUIStyle.SmallFont, adjustRatio);
         if (entry.GetDisplayType() == DisplayType.Tickbox)
         {
             var tickbox = GUIUtil.Tickbox(layoutGroup, "", "",
