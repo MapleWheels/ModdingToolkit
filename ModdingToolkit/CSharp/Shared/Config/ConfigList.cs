@@ -111,13 +111,13 @@ public partial class ConfigList : IConfigList, INetConfigBase
 
     public bool ValidateString(string value) => Validate(value);
 
-    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
+    bool INetConfigBase.WriteNetworkValue(INetWriteMessage msg)
     {
         Utils.Networking.WriteNetValueFromType(msg, (ushort)_valueList.IndexOf(_value));
         return true;
     }
 
-    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    bool INetConfigBase.ReadNetworkValue(INetReadMessage msg)
     {
         ushort val = Utils.Networking.ReadNetValueFromType<ushort>(msg);
         if (val >= _valueList.Count)

@@ -35,7 +35,7 @@
         <HintPath>..\Refs\0Harmony.dll</HintPath>
       </Reference>
       <Reference Include="Barotrauma">
-        <HintPath>..\Refs\Barotrauma.dll</HintPath>
+        <HintPath>..\Refs\Client\Barotrauma.dll</HintPath>
       </Reference>
       <Reference Include="Mono.Cecil">
         <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
@@ -51,7 +51,7 @@
       </Reference>
     </ItemGroup>
 
-    <Target Name="CopyFiles">
+    <Target Name="CopyFiles" AfterTargets="Build">
         <ItemGroup>
             <PluginFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetFileName)" />
             <DepsFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetName).deps.json" />

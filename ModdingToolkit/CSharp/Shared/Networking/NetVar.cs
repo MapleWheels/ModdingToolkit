@@ -31,13 +31,13 @@ public sealed partial class NetVar<T> : INetVar<T> where T : IConvertible
         }
     }
     
-    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
+    bool INetConfigBase.WriteNetworkValue(INetWriteMessage msg)
     {
         Utils.Networking.WriteNetValueFromType(msg, this.Value);
         return true;
     }
 
-    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    bool INetConfigBase.ReadNetworkValue(INetReadMessage msg)
     {
         try
         {

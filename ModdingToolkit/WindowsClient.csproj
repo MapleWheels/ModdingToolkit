@@ -33,6 +33,12 @@
       <Compile Remove="ModdingToolkitTestPlugin\**" />
       <Compile Remove="CSharp\Shared\Settings\**" />
       <Compile Remove="CSharp\Server\**" />
+      <Compile Update="CSharp\Client\Networking\INetReadMessage.cs">
+        <Link>Server\Networking\INetReadMessage.cs</Link>
+      </Compile>
+      <Compile Update="CSharp\Client\Networking\INetWriteMessage.cs">
+        <Link>Server\Networking\INetWriteMessage.cs</Link>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
@@ -56,7 +62,7 @@
         <HintPath>..\Refs\0Harmony.dll</HintPath>
       </Reference>
       <Reference Include="Barotrauma">
-        <HintPath>..\Refs\Barotrauma.dll</HintPath>
+        <HintPath>..\Refs\Client\Barotrauma.dll</HintPath>
       </Reference>
       <Reference Include="Mono.Cecil">
         <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
@@ -85,7 +91,7 @@
         <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
     </PropertyGroup>
     
-    <Target Name="CopyFiles">
+    <Target Name="CopyFiles" AfterTargets="Build">
         <ItemGroup>
             <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
             <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />

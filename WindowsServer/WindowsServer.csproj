@@ -31,7 +31,7 @@
         <HintPath>..\Refs\0Harmony.dll</HintPath>
       </Reference>
       <Reference Include="DedicatedServer">
-        <HintPath>..\Refs\DedicatedServer.dll</HintPath>
+        <HintPath>..\Refs\Server\DedicatedServer.dll</HintPath>
       </Reference>
       <Reference Include="Mono.Cecil">
         <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
@@ -56,6 +56,12 @@
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Server\Config\ConfigList.cs">
         <Link>Server\Config\ConfigList.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\INetReadMessage.cs">
+        <Link>Server\Networking\INetReadMessage.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\INetWriteMessage.cs">
+        <Link>Server\Networking\INetWriteMessage.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Server\Networking\NetVar.cs">
         <Link>Server\Networking\NetVar.cs</Link>
@@ -129,11 +135,17 @@
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\INetVar.cs">
         <Link>Shared\Networking\INetVar.cs</Link>
       </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetReadMessage.cs">
+        <Link>Shared\Networking\NetReadMessage.cs</Link>
+      </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetVar.cs">
         <Link>Shared\Networking\NetVar.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetworkingManager.cs">
         <Link>Shared\Networking\NetworkingManager.cs</Link>
+      </Compile>
+      <Compile Include="..\ModdingToolkit\CSharp\Shared\Networking\NetWriteMessage.cs">
+        <Link>Shared\Networking\NetWriteMessage.cs</Link>
       </Compile>
       <Compile Include="..\ModdingToolkit\CSharp\Shared\Patches\IPatchable.cs">
         <Link>Shared\Patches\IPatchable.cs</Link>

@@ -53,7 +53,9 @@ public static partial class NetworkingManager
         {
             var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
             msg.WriteUInt32(id);
-            cfg.WriteNetworkValue(msg);
+            INetWriteMessage n = new NetWriteMessage();
+            n.SetMessage(msg);
+            cfg.WriteNetworkValue(n);
             SendMsg(msg);
         }
     }
@@ -108,7 +110,9 @@ public static partial class NetworkingManager
             if (TryGetNetConfigInstance(id, out var cfg)
                 && cfg!.NetSync is not NetworkSync.NoSync)
             {
-                return cfg!.ReadNetworkValue(msg);
+                INetReadMessage n = new NetReadMessage();
+                n.SetMessage(msg);
+                return cfg!.ReadNetworkValue(n);
             };
             return false;
         }

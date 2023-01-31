@@ -148,6 +148,22 @@ public static partial class ConfigManager
         return CreateIConfigRangeFloat(name, modName, defaultValue, minValue, maxValue, steps, networkSync,
             valueChangePredicate, onValueChanged, filePathOverride, displayData ?? new DisplayData());
     }
+    
+    /// <summary>
+    /// Allows registration of an existing IConfigBase implementation with 
+    /// </summary>
+    /// <param name="icb"></param>
+    /// <param name="data"></param>
+    /// <param name="filePathOverride"></param>
+    /// <param name="networkSync"></param>
+    public static void RegisterConfigBase(
+        IConfigBase icb,
+        DisplayData? data = null,
+        string? filePathOverride = null,
+        NetworkSync networkSync = NetworkSync.NoSync)
+    {
+        InitializeConfigBase(icb, data, filePathOverride, networkSync);
+    }
 
     /// <summary>
     /// Saves the config member to disk.
@@ -306,7 +322,7 @@ public static partial class ConfigManager
 
 
     #region Internal_Func
-    
+
     private static IConfigEntry<T> CreateIConfigEntry<T>(
         string name,
         string modName,

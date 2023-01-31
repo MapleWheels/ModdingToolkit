@@ -308,6 +308,11 @@ public static class Utils
             return default!;
         }
 
+        public static T ReadNetValueFromType<T>(INetReadMessage msg) where T : IConvertible
+        {
+            return ReadNetValueFromType<T>(msg.Message);
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -412,6 +417,11 @@ public static class Utils
         public static void WriteNetValueFromType<T>(IWriteMessage msg, T value) where T : IConvertible
         {
             WriteNetValueFromType(msg, typeof(T), value);
+        }
+
+        public static void WriteNetValueFromType<T>(INetWriteMessage msg, T value) where T : IConvertible
+        {
+            WriteNetValueFromType(msg.Message, value);
         }
 
         public enum EnumNetworkType : byte

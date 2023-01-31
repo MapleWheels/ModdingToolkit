@@ -99,7 +99,7 @@ public static partial class NetworkingManager
         if (!IsInitialized)
             return;
         
-        GameMain.LuaCs.Networking.LuaCsNetReceives.Remove(NetMsgId);
+        GameMain.LuaCs.Networking.Receive(NetMsgId, (args) => { }); // Deregister
         ClearNetworkData();
         NetConfigRegistry.Clear();
         foreach (var indexer in Indexer_LocalGuidsLookup)

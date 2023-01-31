@@ -87,7 +87,9 @@ public static partial class NetworkingManager
             {
                 var outmsg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
                 outmsg.WriteUInt32(id);
-                cfg!.WriteNetworkValue(outmsg);
+                INetWriteMessage n = new NetWriteMessage();
+                n.SetMessage(outmsg);
+                cfg!.WriteNetworkValue(n);
                 SendMsg(outmsg, client.Connection);
             }
         }
@@ -153,7 +155,9 @@ public static partial class NetworkingManager
         {
             var msg = PrepareWriteMessageWithHeaders(NetworkEventId.SyncVarSingle);
             msg.WriteUInt32(id);
-            if (cfg.WriteNetworkValue(msg))
+            INetWriteMessage n = new NetWriteMessage();
+            n.SetMessage(msg);
+            if (cfg.WriteNetworkValue(n))
             {
                 if (client is null)
                     SendMsg(msg, null);
@@ -176,9 +180,11 @@ public static partial class NetworkingManager
             if (TryGetNetConfigInstance(id, out var cfg))
             {
                 // If bad read, retransmit the known good value to all clients.
+                INetReadMessage nr = new NetReadMessage();
+                nr.SetMessage(msg);
                 if (cfg!.NetSync is NetworkSync.NoSync 
                     || (cfg!.NetSync is NetworkSync.ServerAuthority && !client.HasPermission(ClientPermissions.ManageSettings))
-                    || !cfg!.ReadNetworkValue(msg))
+                    || !cfg!.ReadNetworkValue(nr))
                 {
                     SendNetSyncVarEvent(cfg);
                     return false;

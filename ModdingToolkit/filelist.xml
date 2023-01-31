@@ -1,4 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<contentpackage name="Modding Toolkit" modversion="0.0.2.2" corepackage="False" steamworkshopid="2905375979" gameversion="0.20.16.1">
+<contentpackage name="Modding Toolkit" modversion="0.0.3.0" corepackage="False" steamworkshopid="2905375979" gameversion="0.20.16.1">
   <Other file="%ModDir%/CSharp/Shared/Bootloader.cs" />
 </contentpackage>

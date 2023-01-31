@@ -120,13 +120,13 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         }
     }
 
-    bool INetConfigBase.WriteNetworkValue(IWriteMessage msg)
+    bool INetConfigBase.WriteNetworkValue(INetWriteMessage msg)
     {
         Utils.Networking.WriteNetValueFromType(msg, this.Value);
         return true;
     }
 
-    bool INetConfigBase.ReadNetworkValue(IReadMessage msg)
+    bool INetConfigBase.ReadNetworkValue(INetReadMessage msg)
     {
         try
         {

@@ -16,10 +16,10 @@ public interface INetConfigBase
     /// Called when the Value is changed. Args: ModName, Name, Value.
     /// </summary>
     /// <param name="evtHandle"></param>
-    internal bool WriteNetworkValue(IWriteMessage msg);
-    internal bool ReadNetworkValue(IReadMessage msg);
-    internal void SubscribeToNetEvents(System.Action<INetConfigBase> evtHandle);
-    internal void UnsubscribeFromNetEvents(System.Action<INetConfigBase> evtHandle);
+    public bool WriteNetworkValue(INetWriteMessage msg);
+    public bool ReadNetworkValue(INetReadMessage msg);
+    public void SubscribeToNetEvents(System.Action<INetConfigBase> evtHandle);
+    public void UnsubscribeFromNetEvents(System.Action<INetConfigBase> evtHandle);
     void TriggerNetEvent();
     void InitializeNetworking(Guid netId, NetworkSync networkSync);
 }
