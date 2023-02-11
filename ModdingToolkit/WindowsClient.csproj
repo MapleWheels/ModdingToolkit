@@ -95,10 +95,12 @@
         <ItemGroup>
             <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
             <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />
+            <DummyFile Include="$(SolutionDir)ModdingToolkit\dummyitem.xml" />
             <RefAsm Include="$(TargetPath)"/>
         </ItemGroup>
         <Copy SourceFiles="@(SourceFiles)" DestinationFiles="$(ModDeployDir)CSharp\%(RecursiveDir)%(Filename)%(Extension)" />
         <Copy SourceFiles="@(FileList)" DestinationFiles="$(ModDeployDir)filelist.xml" />
+        <Copy SourceFiles="@(DummyFile)" DestinationFiles="$(ModDeployDir)dummyitem.xml" />
         <Copy SourceFiles="@(RefAsm)" DestinationFiles="$(SolutionDir)Refs\Client\$(TargetFileName)" />
     </Target>
 
