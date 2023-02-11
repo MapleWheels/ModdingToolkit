@@ -12,6 +12,7 @@ public partial class ConfigEntry<T> : IConfigEntry<T>, INetConfigBase where T : 
         if (this.NetSync is NetworkSync.TwoWaySync or NetworkSync.ServerAuthority or NetworkSync.ClientPermissiveDesync)
         {
             this._onNetworkEvent?.Invoke(this);
-        } 
+            
+        }  
     }
 }

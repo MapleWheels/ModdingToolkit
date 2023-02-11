@@ -183,15 +183,11 @@
       <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
     </PropertyGroup>
   
-    <!-- Disabled as WindowsClient project has the same functions -->
-    <Target Name="CopyFiles"> </Target> <!-- Placeholder to stop complaints from MSBuild -->
-    <!--<Target Name="CopyFiles">
+    <Target Name="CopyFiles">
       <ItemGroup>
-        <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
-        <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />
+        <RefAsm Include="$(TargetPath)"/>
       </ItemGroup>
-      <Copy SourceFiles="@(SourceFiles)" DestinationFiles="$(ModDeployDir)CSharp\%(RecursiveDir)%(Filename)%(Extension)" />
-      <Copy SourceFiles="@(FileList)" DestinationFiles="$(ModDeployDir)filelist.xml" />
-    </Target>-->
+      <Copy SourceFiles="@(RefAsm)" DestinationFiles="$(SolutionDir)Refs\Server\$(TargetFileName)" />
+    </Target> 
 
 </Project>
