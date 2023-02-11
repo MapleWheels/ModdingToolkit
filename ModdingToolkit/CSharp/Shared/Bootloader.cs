@@ -14,7 +14,7 @@ internal sealed class Bootloader : ACsMod
 
     public Bootloader()
     {
-        DebugConsole.LogError($"ModConfigManager: Starting...");
+        Utils.Logging.PrintMessage($"Modding Toolkit: Starting...");
         Init();
     }
 
@@ -22,6 +22,11 @@ internal sealed class Bootloader : ACsMod
     {
         bool enabled = CheckIfEnabled();
         
+        if (enabled)
+            Utils.Logging.PrintMessage($"Modding Toolkit loading in Standard Mode.");
+        else
+            Utils.Logging.PrintMessage($"Modding Toolkit loading in Forced Mode.");
+
         RegisterLua();
 #if CLIENT
         if (enabled)
