@@ -20,17 +20,31 @@ internal sealed class Bootloader : ACsMod
 
     private void Init()
     {
+        bool enabled = CheckIfEnabled();
+        
         RegisterLua();
-        NetworkingManager.Initialize(true);
+#if CLIENT
+        if (enabled)
+            NetworkingManager.Initialize(true);
+#else
+            NetworkingManager.Initialize(true);
+#endif
         PluginHelper.LoadAssemblies();
         LoadPatches();
         RegisterCommands();
         ConsoleCommands.ReloadAllCommands();
 #if CLIENT
-        if (GameMain.IsMultiplayer)
+        if (GameMain.IsMultiplayer && enabled)
             NetworkingManager.SynchronizeAll();        
 #endif
         IsLoaded = true;
+    }
+
+    private bool CheckIfEnabled()
+    {
+        return ContentPackageManager.EnabledPackages.All.Any(p => 
+            p.UgcId.ValueEquals(new SteamWorkshopId(2905375979)) 
+            || p.Name.Trim().ToLowerInvariant().Contains("moddingtoolkit"));
     }
 
     private void RegisterCommands()
