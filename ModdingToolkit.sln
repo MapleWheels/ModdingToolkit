@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsClient.Tests", "Wind
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsServer.Tests", "WindowsServer.Tests\WindowsServer.Tests.csproj", "{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectTasks", "ProjectTasks\ProjectTasks.csproj", "{98058EFF-CBC8-4221-B13D-3C8955E7E80B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
