@@ -116,10 +116,8 @@ public sealed class ConfigControl : IConfigControl, IDisplayable
             case MouseButton.None:
                 return Barotrauma.PlayerInput.KeyHit(this.Value.Key);
             case MouseButton.PrimaryMouse:
-            case MouseButton.LeftMouse:
                 return Barotrauma.PlayerInput.PrimaryMouseButtonClicked();
             case MouseButton.SecondaryMouse:
-            case MouseButton.RightMouse:
                 return Barotrauma.PlayerInput.SecondaryMouseButtonClicked();
             case MouseButton.MiddleMouse:
                 return Barotrauma.PlayerInput.MidButtonClicked();
