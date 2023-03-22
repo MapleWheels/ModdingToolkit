@@ -89,9 +89,11 @@
 
     <PropertyGroup>
         <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
+        <WorkshopModsDir>C:\Users\njain\AppData\Local\Daedalic Entertainment GmbH\Barotrauma\WorkshopMods\Installed\</WorkshopModsDir>
+        <ModdingTKId>2905375979</ModdingTKId>
     </PropertyGroup>
     
-    <Target Name="CopyFiles" AfterTargets="Build">
+    <Target Name="CleanAndCopyFiles" AfterTargets="Build">
         <ItemGroup>
             <SourceFiles Include="$(SolutionDir)ModdingToolkit\CSharp\**\*.cs" />
             <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />
@@ -99,6 +101,7 @@
 			<RunConfig Include="$(SolutionDir)ModdingToolkit\CSharp\RunConfig.xml" />
             <RefAsm Include="$(TargetPath)"/>
         </ItemGroup>
+        <RemoveDir Directories="$(WorkshopModsDir)$(ModdingTKId)"/>
         <Copy SourceFiles="@(SourceFiles)" DestinationFiles="$(ModDeployDir)CSharp\%(RecursiveDir)%(Filename)%(Extension)" />
         <Copy SourceFiles="@(FileList)" DestinationFiles="$(ModDeployDir)filelist.xml" />
         <Copy SourceFiles="@(DummyFile)" DestinationFiles="$(ModDeployDir)dummyitem.xml" />
