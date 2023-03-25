@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<contentpackage name="Modding Toolkit" modversion="0.0.3.4" corepackage="False" steamworkshopid="2905375979" gameversion="1.0.8.0">
+<contentpackage name="Modding Toolkit" modversion="0.0.3.5" corepackage="False" steamworkshopid="2905375979" gameversion="1.0.8.0">
   <Other file="%ModDir%/CSharp/Shared/Bootloader.cs" />
   <Item file="%ModDir%/dummyitem.xml" />
 </contentpackage>

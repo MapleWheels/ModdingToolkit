@@ -39,6 +39,7 @@
       <Compile Update="CSharp\Client\Networking\INetWriteMessage.cs">
         <Link>Server\Networking\INetWriteMessage.cs</Link>
       </Compile>
+      <Compile Remove="Server\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -47,6 +48,7 @@
       <EmbeddedResource Remove="ModdingToolkitTestPlugin\**" />
       <EmbeddedResource Remove="CSharp\Shared\Settings\**" />
       <EmbeddedResource Remove="CSharp\Server\**" />
+      <EmbeddedResource Remove="Server\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -55,6 +57,7 @@
       <None Remove="ModdingToolkitTestPlugin\**" />
       <None Remove="CSharp\Shared\Settings\**" />
       <None Remove="CSharp\Server\**" />
+      <None Remove="Server\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -99,9 +102,9 @@
             <FileList Include="$(SolutionDir)ModdingToolkit\filelist.xml" />
             <DummyFile Include="$(SolutionDir)ModdingToolkit\dummyitem.xml" />
 			<RunConfig Include="$(SolutionDir)ModdingToolkit\CSharp\RunConfig.xml" />
-            <RefAsm Include="$(TargetPath)"/>
+            <RefAsm Include="$(TargetPath)" />
         </ItemGroup>
-        <RemoveDir Directories="$(WorkshopModsDir)$(ModdingTKId)"/>
+        <RemoveDir Directories="$(WorkshopModsDir)$(ModdingTKId)" />
         <Copy SourceFiles="@(SourceFiles)" DestinationFiles="$(ModDeployDir)CSharp\%(RecursiveDir)%(Filename)%(Extension)" />
         <Copy SourceFiles="@(FileList)" DestinationFiles="$(ModDeployDir)filelist.xml" />
         <Copy SourceFiles="@(DummyFile)" DestinationFiles="$(ModDeployDir)dummyitem.xml" />

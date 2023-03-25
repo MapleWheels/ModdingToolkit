@@ -132,6 +132,7 @@ public static class PluginHelper
 
     private static void OnAssemblyLoadedHandle(Assembly assembly)
     {
+        Utils.Logging.PrintMessage($"Modding TK: Registering Assembly {assembly.FullName}");
         Barotrauma.ReflectionUtils.AddNonAbstractAssemblyTypes(assembly);
     }
 

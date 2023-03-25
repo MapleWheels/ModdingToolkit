@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Loader;
+using System.Runtime;
 using System.IO;
 
 namespace ModdingToolkit;
@@ -250,6 +251,7 @@ public static class AssemblyManager
     {
         foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes())   
         {
+            Utils.Logging.PrintMessage($"ASMMGR3: {type.FullName}");
             yield return type;
         }
 
@@ -258,12 +260,17 @@ public static class AssemblyManager
         {
             foreach (KeyValuePair<string,LoadedACL> loadedAcl in LoadedACLs)
             {
+                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Key}");
+                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Value.ToString()}");
                 if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
                 {
+                    Utils.Logging.PrintMessage($"ASMMGR_ACL_ALIVE: {acl.ToString()}");
                     foreach (Assembly aclAssembly in acl.Assemblies)
                     {
+                        Utils.Logging.PrintMessage($"ASMMGR_ACL_ASM: {aclAssembly.FullName}");
                         foreach (var type in aclAssembly.GetSafeTypes())
                         {
+                            Utils.Logging.PrintMessage($"ASMMGR4: {type.FullName}");
                             yield return type;
                         }
                     }
