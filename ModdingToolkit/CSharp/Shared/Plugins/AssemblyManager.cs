@@ -252,7 +252,6 @@ public static class AssemblyManager
     {
         foreach (var type in typeof(AssemblyManager).Assembly.GetSafeTypes())   
         {
-            Utils.Logging.PrintMessage($"ASMMGR3: {type.FullName}");
             yield return type;
         }
 
@@ -261,17 +260,12 @@ public static class AssemblyManager
         {
             foreach (KeyValuePair<string,LoadedACL> loadedAcl in LoadedACLs)
             {
-                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Key}");
-                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Value}");
                 if (loadedAcl.Value.Acl is not null)
                 {
-                    Utils.Logging.PrintMessage($"ASMMGR_ACL_ALIVE: {loadedAcl.Value.Acl}");
                     foreach (Assembly aclAssembly in loadedAcl.Value.Acl.Assemblies)
                     {
-                        Utils.Logging.PrintMessage($"ASMMGR_ACL_ASM: {aclAssembly.FullName}");
                         foreach (var type in aclAssembly.GetSafeTypes())
                         {
-                            Utils.Logging.PrintMessage($"ASMMGR4: {type.FullName}");
                             yield return type;
                         }
                     }

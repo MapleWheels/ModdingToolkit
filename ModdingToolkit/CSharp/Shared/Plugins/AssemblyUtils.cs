@@ -14,13 +14,11 @@ public static class AssemblyUtils
     {
         foreach (var type in typeof(Barotrauma.GameMain).Assembly.GetSafeTypes())   
         {
-            Utils.Logging.PrintMessage($"ASMUTIL1: {type.FullName}");
             yield return type;
         }
 
         foreach (Type type in AssemblyManager.GetAllTypesInLoadedAssemblies())
         {
-            Utils.Logging.PrintMessage($"ASMUTIL2: {type.FullName}");
             yield return type;
         }
     }
