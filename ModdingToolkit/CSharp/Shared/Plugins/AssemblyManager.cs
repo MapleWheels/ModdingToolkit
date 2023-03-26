@@ -1,6 +1,7 @@
-﻿using System.Runtime.Loader;
-using System.Runtime;
-using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Loader;
+// ReSharper disable EventNeverSubscribedTo.Global
+// ReSharper disable InconsistentNaming
 
 namespace ModdingToolkit;
 
@@ -16,32 +17,32 @@ public static class AssemblyManager
     /// <summary>
     /// Called after a plugin has been loaded (OnLoadComplete executed on the plugin). 
     /// </summary>
-    public static event System.Action<IAssemblyPlugin>? OnPluginLoaded;
+    public static event Action<IAssemblyPlugin>? OnPluginLoaded;
 
     /// <summary>
     /// Called right before a plugin is about to be unloaded. Use this to cleanup any interop you have with the plugin.
     /// </summary>
-    public static event System.Action<IAssemblyPlugin>? OnPluginUnloading; 
+    public static event Action<IAssemblyPlugin>? OnPluginUnloading; 
     /// <summary>
     /// Called when an assembly is loaded.
     /// </summary>
-    public static event System.Action<Assembly>? OnAssemblyLoaded;
+    public static event Action<Assembly>? OnAssemblyLoaded;
     
     /// <summary>
     /// Called when an assembly is marked for unloading, before unloading begins. You should use this to cleanup
     /// any references that you have to this assembly.
     /// </summary>
-    public static event System.Action<Assembly>? OnAssemblyUnloading; 
+    public static event Action<Assembly>? OnAssemblyUnloading; 
     
     /// <summary>
     /// Called whenever an exception is thrown. First arg is a formatted message, Second arg is the Exception.
     /// </summary>
-    public static event System.Action<string, Exception>? OnException;
+    public static event Action<string, Exception>? OnException;
 
     /// <summary>
     /// For unloading issue debugging. Called whenever AssemblyContextLoader [load context] is unloaded. 
     /// </summary>
-    public static event System.Action<string>? OnACLUnload; 
+    public static event Action<string>? OnACLUnload; 
     
     #if DEBUG
 
@@ -95,7 +96,7 @@ public static class AssemblyManager
     /// <summary>
     /// Whether or not loaded assemblies have their plugins instantiated.
     /// </summary>
-    public static bool PluginsLoaded { get; private set; } = false;
+    public static bool PluginsLoaded { get; private set; }
 
     /// <summary>
     /// [BLOCKING]
@@ -189,9 +190,9 @@ public static class AssemblyManager
         {
             foreach (KeyValuePair<string, LoadedACL> loadedAcl in LoadedACLs)
             {
-                if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
+                if (loadedAcl.Value.Acl is not null)
                 {
-                    foreach (Assembly aclAssembly in acl.Assemblies)
+                    foreach (Assembly aclAssembly in loadedAcl.Value.Acl.Assemblies)
                     {
                         foreach (var type in aclAssembly.GetSafeTypes()
                                      .Where(t => targetType.IsAssignableFrom(t) && !t.IsInterface))
@@ -225,9 +226,9 @@ public static class AssemblyManager
         {
             foreach (KeyValuePair<string,LoadedACL> loadedAcl in LoadedACLs)
             {
-                if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
+                if (loadedAcl.Value.Acl is not null)
                 {
-                    foreach (Assembly aclAssembly in acl.Assemblies)
+                    foreach (Assembly aclAssembly in loadedAcl.Value.Acl.Assemblies)
                     {
                         foreach (var type in aclAssembly.GetSafeTypes().Where(t => t.Name.Equals(name) && !t.IsInterface))
                         {
@@ -261,11 +262,11 @@ public static class AssemblyManager
             foreach (KeyValuePair<string,LoadedACL> loadedAcl in LoadedACLs)
             {
                 Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Key}");
-                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Value.ToString()}");
-                if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
+                Utils.Logging.PrintMessage($"ASMMGR_ACL: {loadedAcl.Value}");
+                if (loadedAcl.Value.Acl is not null)
                 {
-                    Utils.Logging.PrintMessage($"ASMMGR_ACL_ALIVE: {acl.ToString()}");
-                    foreach (Assembly aclAssembly in acl.Assemblies)
+                    Utils.Logging.PrintMessage($"ASMMGR_ACL_ALIVE: {loadedAcl.Value.Acl}");
+                    foreach (Assembly aclAssembly in loadedAcl.Value.Acl.Assemblies)
                     {
                         Utils.Logging.PrintMessage($"ASMMGR_ACL_ASM: {aclAssembly.FullName}");
                         foreach (var type in aclAssembly.GetSafeTypes())
@@ -349,7 +350,7 @@ public static class AssemblyManager
         out LoadedACL? loadedAcl)
     {
         loadedAcl = null;
-        string vAssemblyName = System.IO.Path.GetFileName(filePath);
+        string vAssemblyName = Path.GetFileName(filePath);
 
         OpsLockLoaded.EnterReadLock();
         try
@@ -357,9 +358,9 @@ public static class AssemblyManager
             // Check if the assembly is already loaded in an ACL, most likely due to it being a dependency.
             foreach (var loadedAlc in LoadedACLs)
             {
-                if (loadedAlc.Value.Alc.TryGetTarget(out var a))
+                if (loadedAlc.Value.Acl is not null)
                 {
-                    foreach (Assembly ass in a.Assemblies)
+                    foreach (Assembly ass in loadedAlc.Value.Acl.Assemblies)
                     {
                         if (ass.FullName?.ToLower().Contains(vAssemblyName.ToLower()) ?? false)
                         {
@@ -385,7 +386,7 @@ public static class AssemblyManager
                     filePath,
                     new List<Type>(), //types that impl IAssemblyPlugin  
                     new List<IAssemblyPlugin>(), //loaded plugins from this assembly, none right now
-                    new WeakReference<AssemblyContextLoader>(acl));
+                    acl);
 
                 foreach (Assembly aclAssembly in acl.Assemblies)
                 {
@@ -541,16 +542,16 @@ public static class AssemblyManager
                 PluginsLoaded = false;
                 loadedAcl.Value.LoadedPlugins.Clear();
                 loadedAcl.Value.PluginTypes.Clear();
-                if (loadedAcl.Value.Alc.TryGetTarget(out var acl))
+                if (loadedAcl.Value.Acl is not null)
                 {
-                    foreach (Assembly assembly in acl.Assemblies)
+                    foreach (Assembly assembly in loadedAcl.Value.Acl.Assemblies)
                     {
                         OnAssemblyUnloading?.Invoke(assembly);
                     }
 
-                    acl.Unloading += CleanupReference;
-                    UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(acl, true));
-                    acl.Unload();
+                    loadedAcl.Value.Acl.Unloading += CleanupReference;
+                    UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(loadedAcl.Value.Acl, true));
+                    loadedAcl.Value.Acl.Unload();
                 }
             }
 
@@ -566,7 +567,7 @@ public static class AssemblyManager
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static bool FinalizeDispose()
     {
-        bool isUnloaded = false;
+        bool isUnloaded;
         OpsLockUnloaded.EnterUpgradeableReadLock();
         try
         {
@@ -676,15 +677,16 @@ public static class AssemblyManager
 
     #region TypeDefs
 
+    // ReSharper disable once NotAccessedPositionalProperty.Global
     internal record LoadedACL(string FilePath, 
         List<Type> PluginTypes, 
         List<IAssemblyPlugin> LoadedPlugins,
-        WeakReference<AssemblyContextLoader> Alc);
+        AssemblyContextLoader? Acl);
     
     public sealed class AssemblyContextLoader : AssemblyLoadContext
     {
         private AssemblyDependencyResolver dependencyResolver;
-        private bool IsResolving = false;   //this is to avoid circular dependency lookup.
+        private bool IsResolving;   //this is to avoid circular dependency lookup.
         
         public AssemblyContextLoader(string mainAssemblyLoadPath) : base(isCollectible: true)
         {
@@ -692,6 +694,7 @@ public static class AssemblyManager
         }
         
         [MethodImpl(MethodImplOptions.NoInlining)]
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract")]
         protected override Assembly? Load(AssemblyName assemblyName)
         {
             if (IsResolving)
@@ -705,14 +708,14 @@ public static class AssemblyManager
             {
                 //try resolve against other loaded alcs
                 IsResolving = true;
-                Assembly? ass = Barotrauma.GameMain.LuaCs.CsScriptLoader.LoadFromAssemblyName(assemblyName);
+                Assembly? ass = GameMain.LuaCs.CsScriptLoader.LoadFromAssemblyName(assemblyName);
                 if (ass is not null)
                     return ass;
                 foreach (var loadedAcL in LoadedACLs)
                 {
-                    if (loadedAcL.Value.Alc.TryGetTarget(out var acl))
+                    if (loadedAcL.Value.Acl is not null)
                     {
-                        ass = acl.LoadFromAssemblyName(assemblyName);
+                        ass = loadedAcL.Value.Acl.LoadFromAssemblyName(assemblyName);
                         if (ass is not null)
                             return ass;
                     }
