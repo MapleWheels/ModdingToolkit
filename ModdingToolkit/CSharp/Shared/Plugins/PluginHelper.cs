@@ -78,6 +78,7 @@ public static class PluginHelper
         
         lock (_OpsLock)
         {
+            #warning TODO: Add maximum iteration counter to avoid infinite timeout.
             AssemblyManager.BeginDispose();
             while (!AssemblyManager.FinalizeDispose())
             {

@@ -542,10 +542,10 @@ public static class AssemblyManager
                     {
                         OnAssemblyUnloading?.Invoke(assembly);
                     }
-
-                    loadedAcl.Value.Acl.Unloading += CleanupReference;
+                    
                     UnloadingACLs.Add(new WeakReference<AssemblyContextLoader>(loadedAcl.Value.Acl, true));
                     loadedAcl.Value.Acl.Unload();
+                    OnACLUnload?.Invoke(loadedAcl.Value.Acl.Name ?? string.Empty);
                 }
             }
 
@@ -599,47 +599,7 @@ public static class AssemblyManager
         return isUnloaded;
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void CleanupReference(AssemblyLoadContext ctx)
-    {
-        OpsLockUnloaded.EnterWriteLock();
-        try
-        {
-            if (ctx is AssemblyContextLoader { } acl)
-            {
-                if (acl.Assemblies.Any())
-                    return;
 
-                WeakReference<AssemblyContextLoader>? unloadingACLRef = null;
-                AssemblyContextLoader? aclRef = null;
-                foreach (WeakReference<AssemblyContextLoader> reference in UnloadingACLs)
-                {
-                    if (reference.TryGetTarget(out var _acl))
-                    {
-                        if (acl.Equals(_acl))
-                        {
-                            aclRef = _acl;
-                            unloadingACLRef = reference;
-                            break;
-                        }
-                    }
-                }
-
-                if (unloadingACLRef is not null)
-                {
-                    UnloadingACLs.Remove(unloadingACLRef);
-                    if (aclRef is not null) // Turns out there's an edge case where this extra check is needed.
-                    {
-                        OnACLUnload?.Invoke($"AssemblyManager: Unloaded assembly context {aclRef.Name}");
-                    }
-                }
-            }
-        }
-        finally
-        {
-            OpsLockUnloaded.ExitWriteLock();
-        }
-    }
     
     #endregion
 

@@ -32,7 +32,7 @@ internal sealed class Bootloader : ACsMod
         if (enabled)
             NetworkingManager.Initialize(true);
 #else
-            NetworkingManager.Initialize(true);
+        NetworkingManager.Initialize(true);
 #endif
         PluginHelper.LoadAssemblies();
         LoadPatches();
