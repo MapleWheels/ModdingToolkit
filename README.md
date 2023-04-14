@@ -34,7 +34,7 @@ Readme is WIP.
 ```lua
 -- Availability: CLIENT AND SERVER
 -- Simplest verion
-local mySimpleVar = ModdingToolkit.Config.ConfigManager.AddConfigBool(
+local mySimpleVar = ConfigManager.AddConfigBool(
     "MyVarName1",   -- [REQUIRED] Variable name
     "MyModName",    -- [REQUIRED] Mod name, used for the config file name.
     false           -- [REQUIRED] Default value.
