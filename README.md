@@ -28,8 +28,9 @@ Readme is WIP.
 
 ## For Lua Developers: How to Use - Config Variables (C# Developers look further down)
 
-#### NOTE: Not all features are implemented, see beginning of this README for details.
-#### NOTE2: As Lua doesn't handle Generic method calls without mess, the only C# function you CANNOT use is `AddConfigEntry<T>()`, please make use of the helper extensions below. Everything else should follow the C# Config Var instructions further down (but written in Lua Syntax obviously).
+### NOTE: Please use the Wiki articles instead of the below as they will generally be more up to date.
+#### NOTE2: Not all features are implemented, see beginning of this README for details.
+#### NOTE3: As Lua doesn't handle Generic method calls without mess, the only C# function you CANNOT use is `AddConfigEntry<T>()`, please make use of the helper extensions below. Everything else should follow the C# Config Var instructions further down (but written in Lua Syntax obviously).
 
 ```lua
 -- Availability: CLIENT AND SERVER
