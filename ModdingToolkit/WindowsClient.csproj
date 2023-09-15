@@ -16,13 +16,13 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <PlatformTarget>x64</PlatformTarget>
-      <DefineConstants>TRACE,CLIENT</DefineConstants>
+      <DefineConstants>TRACE,CLIENT;WINDOWS</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <PlatformTarget>x64</PlatformTarget>
-      <DefineConstants>TRACE,CLIENT</DefineConstants>
+      <DefineConstants>TRACE,CLIENT;WINDOWS</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <DocumentationFile>bin\Release\WindowsClient.xml</DocumentationFile>
     </PropertyGroup>
@@ -91,7 +91,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
+        <ModDeployDir>E:\Program Files (x86)\SteamLibrary\steamapps\common\Barotrauma\LocalMods\Modding Toolkit\</ModDeployDir>
         <WorkshopModsDir>C:\Users\njain\AppData\Local\Daedalic Entertainment GmbH\Barotrauma\WorkshopMods\Installed\</WorkshopModsDir>
         <ModdingTKId>2905375979</ModdingTKId>
     </PropertyGroup>

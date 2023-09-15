@@ -10,12 +10,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsServer", "WindowsSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModdingToolkitServerTestPlugin", "ModdingToolkitServerTestPlugin\ModdingToolkitServerTestPlugin.csproj", "{D2EBF76A-0C20-46FE-98EB-94D20452E8B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsClient.Tests", "WindowsClient.Tests\WindowsClient.Tests.csproj", "{C66920EF-DF63-4A4C-98ED-4535FDF6838E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsServer.Tests", "WindowsServer.Tests\WindowsServer.Tests.csproj", "{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectTasks", "ProjectTasks\ProjectTasks.csproj", "{98058EFF-CBC8-4221-B13D-3C8955E7E80B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,17 +36,5 @@ Global
 		{D2EBF76A-0C20-46FE-98EB-94D20452E8B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2EBF76A-0C20-46FE-98EB-94D20452E8B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2EBF76A-0C20-46FE-98EB-94D20452E8B5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C66920EF-DF63-4A4C-98ED-4535FDF6838E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C66920EF-DF63-4A4C-98ED-4535FDF6838E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C66920EF-DF63-4A4C-98ED-4535FDF6838E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C66920EF-DF63-4A4C-98ED-4535FDF6838E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DC20FA6A-3CC7-4D1E-934E-404E0DDC2876}.Release|Any CPU.Build.0 = Release|Any CPU
-		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{98058EFF-CBC8-4221-B13D-3C8955E7E80B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

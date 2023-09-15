@@ -42,24 +42,39 @@ public static class PluginHelper
             scannedPackages.Add(package);
             try
             {
-                string baseForcedSearchPath = Path.GetFullPath(
+                dllPaths.AddRange(FindAssembliesFilePaths(Path.GetFullPath(
                     Path.Combine(
                         Path.GetDirectoryName(package.Path)!,
                         GetApplicationModSubDir(mode),
                         "Forced")
-                );
-                string baseStandardSearchPath = Path.GetFullPath(
+                )));
+                // interim update support for forced packages with new system from Lua PR.
+                dllPaths.AddRange(FindAssembliesFilePaths(Path.GetFullPath(
                     Path.Combine(
-                        Path.GetDirectoryName(package.Path)!,
-                        GetApplicationModSubDir(mode),
-                        "Standard")
-                );
-                // Add always load packages
-                dllPaths.AddRange(FindAssembliesFilePaths(baseForcedSearchPath));
+                        Path.GetDirectoryName(package.Path)!,   // %ModDir%
+                        GetApplicationModSubDir(mode),          // Client | Server
+                        GetPlatformDir(),                       // Linux | Windows | OSX
+                        "Forced")                           
+                )));
+                
                 // Add enabled-only load packages
                 if (ContentPackageManager.EnabledPackages.All.Contains(package))
                 {
-                    dllPaths.AddRange(FindAssembliesFilePaths(baseStandardSearchPath));
+                    dllPaths.AddRange(FindAssembliesFilePaths(Path.GetFullPath(
+                        Path.Combine(
+                            Path.GetDirectoryName(package.Path)!,
+                            GetApplicationModSubDir(mode),
+                            "Standard")
+                    )));
+                    
+                    // interim update support for standard packages with new system from Lua PR.
+                    dllPaths.AddRange(FindAssembliesFilePaths(Path.GetFullPath(
+                        Path.Combine(
+                            Path.GetDirectoryName(package.Path)!,
+                            GetApplicationModSubDir(mode),
+                            GetPlatformDir(),
+                            "Standard")
+                    )));
                 }
             }
             catch(Exception e)
@@ -68,6 +83,17 @@ public static class PluginHelper
             }
         }
         return dllPaths;
+
+        string GetPlatformDir()
+        {
+#if WINDOWS
+            return "Windows";
+#elif LINUX
+            return "Linux";
+#elif OSX
+            return "OSX";
+#endif
+        }
     }
     
     [MethodImpl(MethodImplOptions.Synchronized | MethodImplOptions.NoInlining)]

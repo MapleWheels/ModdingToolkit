@@ -14,14 +14,14 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DefineConstants>TRACE,SERVER</DefineConstants>
+      <DefineConstants>TRACE,SERVER;WINDOWS</DefineConstants>
       <PlatformTarget>x64</PlatformTarget>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <PlatformTarget>x64</PlatformTarget>
-      <DefineConstants>TRACE,SERVER</DefineConstants>
+      <DefineConstants>TRACE,SERVER;WINDOWS</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <DocumentationFile>bin\Release\WindowsServer.xml</DocumentationFile>
     </PropertyGroup>
@@ -180,12 +180,12 @@
     </ItemGroup>
 
     <PropertyGroup>
-      <ModDeployDir>C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\</ModDeployDir>
+      <ModDeployDir>E:\Program Files (x86)\SteamLibrary\steamapps\common\Barotrauma\LocalMods\Modding Toolkit\</ModDeployDir>
     </PropertyGroup>
   
     <Target Name="CopyFiles">
       <ItemGroup>
-        <RefAsm Include="$(TargetPath)"/>
+        <RefAsm Include="$(TargetPath)" />
       </ItemGroup>
       <Copy SourceFiles="@(RefAsm)" DestinationFiles="$(SolutionDir)Refs\Server\$(TargetFileName)" />
     </Target> 

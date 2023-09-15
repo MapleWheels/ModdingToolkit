@@ -3,6 +3,8 @@ Currently in Alpha. Incomplete.
 
 Readme is WIP.
 
+### IMPORTANT: Assembly loading has been added to LuaCsForBarotrauma and thus is currently deprecated.
+
 [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2905375979)
 
 ## Feature List
