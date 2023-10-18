@@ -14,11 +14,12 @@ public sealed class Initializer : IAssemblyPlugin
 
     public void OnLoadCompleted()
     {
+        
     }
 
-    public PluginInfo GetPluginInfo()
+    public void PreInitPatching()
     {
-        return new PluginInfo("ModConfigManagerClient", "0.0.0.0", ImmutableArray<string>.Empty);
+        
     }
 
     public void Dispose()

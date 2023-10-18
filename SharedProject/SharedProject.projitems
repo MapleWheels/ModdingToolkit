@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>3c1540c8-8235-4e85-8bff-9af5fe32fe99</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>SharedProject</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\ApplicationMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Bootloader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigRangeFloat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigRangeInt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ECategory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\EDisplayType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\IConfigBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\IConfigEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\IConfigList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\IConfigRangeFloat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\IConfigRangeInt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\RDisplayData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\ConsoleCommands.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\global.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\MemoryCallbackCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\ENetworkEventId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\ENetworkSync.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\INetConfigBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\INetVar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\NetReadMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\NetVar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\NetworkingManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Networking\NetWriteMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Patches\IPatchable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Patches\PatchManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\ReflectionsBinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Utils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\XMLDocumentHelper.cs" />
+  </ItemGroup>
+</Project>

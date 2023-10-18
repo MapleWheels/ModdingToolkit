@@ -6,20 +6,16 @@ using MoonSharp.Interpreter;
 
 namespace ModdingToolkit;
 
-internal sealed class Bootloader : ACsMod
+internal sealed class Bootloader : IAssemblyPlugin
 {
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsLoaded { get; private set; }
 
-    public Bootloader()
+    public void Initialize()
     {
         Utils.Logging.PrintMessage($"Modding Toolkit: Starting...");
-        Init();
-    }
 
-    private void Init()
-    {
         bool enabled = CheckIfEnabled();
         
         if (enabled)
@@ -34,15 +30,23 @@ internal sealed class Bootloader : ACsMod
 #else
         NetworkingManager.Initialize(true);
 #endif
-        PluginHelper.LoadAssemblies();
+    }
+
+    public void OnLoadCompleted()
+    {
         LoadPatches();
         RegisterCommands();
         ConsoleCommands.ReloadAllCommands();
 #if CLIENT
-        if (GameMain.IsMultiplayer && enabled)
+        if (GameMain.IsMultiplayer && CheckIfEnabled())
             NetworkingManager.SynchronizeAll();        
 #endif
         IsLoaded = true;
+    }
+
+    public void PreInitPatching()
+    {
+        
     }
 
     private bool CheckIfEnabled()
@@ -294,7 +298,7 @@ internal sealed class Bootloader : ACsMod
         PatchManager.OnPatchStateUpdate -= OnPatchStateUpdate;
     }
 
-    public override void Stop()
+    public void Dispose()
     {
         NetworkingManager.Dispose();
         ConfigManager.Dispose();
@@ -302,7 +306,6 @@ internal sealed class Bootloader : ACsMod
         ConsoleCommands.UnloadAllCommands();
         UnloadPatches();
         PatchManager.Dispose();
-        PluginHelper.UnloadAssemblies();
         DeregisterLua();
         IsLoaded = false;
     }

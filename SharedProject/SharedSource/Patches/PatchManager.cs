@@ -24,11 +24,20 @@ public static class PatchManager
     public static void RegisterPatches(List<PatchData> pdata)
     {
         PatchList.AddRange(pdata);
+        if (IsLoaded)
+        {
+            foreach (PatchData p in pdata)
+                Instance.Patch(p.orig, p.pre, p.post);
+        }
     }
 
     public static void RegisterPatch(PatchData pdata)
     {
         PatchList.Add(pdata);
+        if (IsLoaded)
+        {
+            Instance.Patch(pdata.orig, pdata.pre, pdata.post);
+        }
     }
 
     /// <summary>
@@ -40,7 +49,7 @@ public static class PatchManager
             Unload();
         try
         {
-            foreach (Type patchType in AssemblyUtils.GetSubTypesInLoadedAssemblies<IPatchable>())
+            foreach (Type patchType in LuaCsSetup.AssemblyManager.GetSubTypesInLoadedAssemblies<IPatchable>())
             {
                 IPatchable? p = (IPatchable?)Activator.CreateInstance(patchType);
                 if (p is not null)
