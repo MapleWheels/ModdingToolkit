@@ -1,3 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<contentpackage name="MyModName" modversion="1.0" corepackage="false">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<contentpackage name="Modding Toolkit" modversion="0.1.0.1" corepackage="False" steamworkshopid="2905375979" gameversion="1.0.8.0">
+  <Item file="%ModDir%/Content/dummyitem.xml" />
 </contentpackage>
