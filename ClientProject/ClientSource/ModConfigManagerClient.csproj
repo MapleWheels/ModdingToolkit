@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>ModConfigManager</RootNamespace>
+        <AssemblyName>SettingsMenuPatcher.plugin</AssemblyName>
+        <Copyright>TBN_MapleWheels</Copyright>
+        <PackageProjectUrl>https://github.com/MapleWheels/ModdingToolkit</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/MapleWheels/ModdingToolkit</RepositoryUrl>
+        <RepositoryType>Git</RepositoryType>
+        <AssemblyVersion>0.0.0.0</AssemblyVersion>
+        <FileVersion>0.0.0.0</FileVersion>
+        <Company>TBN_MapleWheels</Company>
+        <Product>SettingsMenuPatcher</Product>
+        <PackageId>SettingsMenuPatcher.plugin</PackageId>
+        <Authors>TBN_MapleWheels</Authors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ModdingToolkit\WindowsClient.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="0Harmony">
+        <HintPath>..\Refs\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="Barotrauma">
+        <HintPath>..\Refs\Client\Barotrauma.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Cecil">
+        <HintPath>..\Refs\Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework.Windows.NetStandard">
+        <HintPath>..\Refs\MonoGame.Framework.Windows.NetStandard.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Common">
+        <HintPath>..\Refs\MonoMod.Common.dll</HintPath>
+      </Reference>
+      <Reference Include="XNATypes">
+        <HintPath>..\Refs\XNATypes.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <Target Name="CopyFiles" AfterTargets="Build">
+        <ItemGroup>
+            <PluginFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetFileName)" />
+            <DepsFile Include="$(ProjectDir)bin\$(ConfigurationName)\net6.0\$(TargetName).deps.json" />
+        </ItemGroup>
+        <Copy SourceFiles="@(PluginFile)" DestinationFiles="C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Client\Forced\$(TargetFileName)" />
+        <Copy SourceFiles="@(DepsFile)" DestinationFiles="C:\SHORT_PATH_REQ\LuaCsForBarotrauma\Barotrauma\bin\DebugWindows\net6.0\LocalMods\ModdingToolkit\bin\Client\Forced\$(TargetName).deps.json" />
+    </Target>
+
+</Project>
