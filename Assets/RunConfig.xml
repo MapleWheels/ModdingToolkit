@@ -2,5 +2,5 @@
 <RunConfig>
 <!--Options: "None" / "Forced" (always) / "Standard" (when enabled)-->
   <Server>Standard</Server>
-  <Client>Standard</Client>
+  <Client>Forced</Client>
 </RunConfig>
