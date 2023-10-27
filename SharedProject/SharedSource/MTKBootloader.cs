@@ -4,31 +4,43 @@ using ModdingToolkit.Networking;
 using ModdingToolkit.Patches;
 using MoonSharp.Interpreter;
 
+#if CLIENT
+using ModConfigManager;
+#endif
+
 namespace ModdingToolkit;
 
-internal sealed class Bootloader : IAssemblyPlugin
+// ReSharper disable once InconsistentNaming
+public sealed class MTKBootloader : IAssemblyPlugin
 {
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsLoaded { get; private set; }
 
-    public void Initialize()
+    public MTKBootloader()
     {
         Utils.Logging.PrintMessage($"Modding Toolkit: Starting...");
+        RegisterLua();
+    }
 
+    public void Initialize()
+    {
         bool enabled = CheckIfEnabled();
         
         if (enabled)
             Utils.Logging.PrintMessage($"Modding Toolkit loading in Standard Mode.");
         else
             Utils.Logging.PrintMessage($"Modding Toolkit loading in Forced Mode.");
-
-        RegisterLua();
+        
 #if CLIENT
         if (enabled)
             NetworkingManager.Initialize(true);
 #else
         NetworkingManager.Initialize(true);
+#endif
+
+#if CLIENT
+        PatchManager.RegisterPatches(ModConfigManager.Patches.GetPatches());
 #endif
     }
 
@@ -46,7 +58,7 @@ internal sealed class Bootloader : IAssemblyPlugin
 
     public void PreInitPatching()
     {
-        
+        // Not Impl
     }
 
     private bool CheckIfEnabled()
@@ -199,60 +211,18 @@ internal sealed class Bootloader : IAssemblyPlugin
 
     private void DeregisterLua()
     {
+        // Note: As of Barotrauma LuaCs 1.0.74, type de-registration is automatic. 
         // Deregister in reverse order
-        // Statics
-        GameMain.LuaCs.Lua.Globals[nameof(ConfigManager)] = null;
-        GameMain.LuaCs.Lua.Globals[nameof(NetworkingManager)] = null;
-        GameMain.LuaCs.Lua.Globals[nameof(MemoryCallbackCache)] = null;
-        UserData.UnregisterType(typeof(NetworkingManager));
-        UserData.UnregisterType(typeof(ConfigManager));
-        UserData.UnregisterType(typeof(MemoryCallbackCache));
-
-#if CLIENT
-        UserData.RegisterType<IDisplayable>();
-        UserData.UnregisterType<ConfigControl>();
-        UserData.UnregisterType<IConfigControl>();
-#endif
-        // Types
-        UserData.UnregisterType<ConfigList>();
-        UserData.UnregisterType<ConfigRangeFloat>();
-        UserData.UnregisterType<ConfigRangeInt>();
-        UserData.UnregisterType<ConfigEntry<bool>>();
-        UserData.UnregisterType<ConfigEntry<byte>>();
-        UserData.UnregisterType<ConfigEntry<short>>();
-        UserData.UnregisterType<ConfigEntry<int>>();
-        UserData.UnregisterType<ConfigEntry<sbyte>>();
-        UserData.UnregisterType<ConfigEntry<ushort>>();
-        UserData.UnregisterType<ConfigEntry<uint>>();
-        UserData.UnregisterType<ConfigEntry<ulong>>();
-        UserData.UnregisterType<ConfigEntry<long>>();
-        UserData.UnregisterType<ConfigEntry<float>>();
-        UserData.UnregisterType<ConfigEntry<double>>();
-        UserData.UnregisterType<ConfigEntry<string>>();
-        
-        UserData.UnregisterType<NetworkSync>();
-        UserData.UnregisterType<DisplayType>();
-        UserData.UnregisterType<DisplayData>();
-        
-        // Interfaces
-        UserData.UnregisterType<IConfigList>();
-        UserData.UnregisterType<IConfigRangeFloat>();
-        UserData.UnregisterType<IConfigRangeInt>();
-        UserData.UnregisterType<IConfigEntry<bool>>();
-        UserData.UnregisterType<IConfigEntry<byte>>();
-        UserData.UnregisterType<IConfigEntry<short>>();
-        UserData.UnregisterType<IConfigEntry<int>>();
-        UserData.UnregisterType<IConfigEntry<sbyte>>();
-        UserData.UnregisterType<IConfigEntry<ushort>>();
-        UserData.UnregisterType<IConfigEntry<uint>>();
-        UserData.UnregisterType<IConfigEntry<ulong>>();
-        UserData.UnregisterType<IConfigEntry<long>>();
-        UserData.UnregisterType<IConfigEntry<float>>();
-        UserData.UnregisterType<IConfigEntry<double>>();
-        UserData.UnregisterType<IConfigEntry<string>>();
-        UserData.UnregisterType<IConfigBase>();
-        
-        UserData.UnregisterType<INetConfigBase>();
+        try
+        {
+            GameMain.LuaCs.Lua.Globals[nameof(ConfigManager)] = null;
+            GameMain.LuaCs.Lua.Globals[nameof(NetworkingManager)] = null;
+            GameMain.LuaCs.Lua.Globals[nameof(MemoryCallbackCache)] = null;
+        }
+        catch
+        {
+            //continue
+        }
     }
 
     private void PrintAllConfigVars()
@@ -300,6 +270,12 @@ internal sealed class Bootloader : IAssemblyPlugin
 
     public void Dispose()
     {
+#if CLIENT
+        LuaCsSetup.PrintCsMessage($"ModConfigMenu: Dispose called.");
+        Barotrauma.SettingsMenu.Instance?.Close();
+        Barotrauma.SettingsMenu.Instance = null;
+#endif
+        
         NetworkingManager.Dispose();
         ConfigManager.Dispose();
         XMLDocumentHelper.UnloadCache();

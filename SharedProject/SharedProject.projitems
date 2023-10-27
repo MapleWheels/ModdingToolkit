@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)SharedSource\ApplicationMode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Bootloader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SharedSource\MTKBootloader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SharedSource\Config\ConfigManager.cs" />

@@ -35,6 +35,14 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
     private static void Init()
     {
+        ReloadConfigs();
+    }
+
+    private static void ReloadConfigs()
+    {
+        ControlsMenuConfig.Clear();
+        PerMenuConfig.Clear();
+        
         foreach (Category category in Enum.GetValues<Category>())
         {
             if (category is Category.Ignore or Category.Controls)   // Controls are handled separately.
@@ -48,7 +56,6 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 PerMenuConfig[category].Add(member);
         }
         
-        ControlsMenuConfig.Clear();
         ControlsMenuConfig.AddRange(ConfigManager.GetControlConfigs());
     }
     
@@ -394,187 +401,12 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         
         // Layout
         Gameplay_MasterLayout = new GUILayoutGroup(new RectTransform((1f, 1f), content.RectTransform));
-
         Gameplay_KeywordFilter = "";
         Gameplay_SelectedMod = "";
         Gameplay_SelectedCategory = "";
+        ReloadConfigs();
         Gameplay_GenerateGameplayScreen();
-
-        // Old Menu Code
-        //var (left, right) = CreateSidebars(content);
-
-        /*#region LEFT_FRAME
-        var languages = TextManager.AvailableLanguages
-            .OrderBy(l => TextManager.GetTranslatedLanguageName(l).ToIdentifier())
-            .ToArray();
-        Label(left, TextManager.Get("Language"), GUIStyle.SubHeadingFont);
-        Dropdown(left, v => TextManager.GetTranslatedLanguageName(v), null, languages, unsavedConfig.Language, v => unsavedConfig.Language = v);
-        Spacer(left);
-            
-        Tickbox(left, TextManager.Get("PauseOnFocusLost"), TextManager.Get("PauseOnFocusLostTooltip"), unsavedConfig.PauseOnFocusLost, v => unsavedConfig.PauseOnFocusLost = v);
-        Spacer(left);
-            
-        Tickbox(left, TextManager.Get("DisableInGameHints"), TextManager.Get("DisableInGameHintsTooltip"), unsavedConfig.DisableInGameHints, v => unsavedConfig.DisableInGameHints = v);
-        var resetInGameHintsButton =
-            new GUIButton(new RectTransform(new Vector2(1.0f, 1.0f), left.RectTransform),
-                TextManager.Get("ResetInGameHints"), style: "GUIButtonSmall")
-            {
-                OnClicked = (button, o) =>
-                {
-                    var msgBox = new GUIMessageBox(TextManager.Get("ResetInGameHints"),
-                        TextManager.Get("ResetInGameHintsTooltip"),
-                        buttons: new[] { TextManager.Get("Yes"), TextManager.Get("No") });
-                    msgBox.Buttons[0].OnClicked = (guiButton, o1) =>
-                    {
-                        IgnoredHints.Instance.Clear();
-                        msgBox.Close();
-                        return false;
-                    };
-                    msgBox.Buttons[1].OnClicked = msgBox.Close;
-                    return false;
-                }
-            };
-        Spacer(left);
-
-        Label(left, TextManager.Get("ShowEnemyHealthBars"), GUIStyle.SubHeadingFont);
-        DropdownEnum(left, v => TextManager.Get($"ShowEnemyHealthBars.{v}"), null, unsavedConfig.ShowEnemyHealthBars, v => unsavedConfig.ShowEnemyHealthBars = v);
-        Spacer(left);
-
-        Label(left, TextManager.Get("HUDScale"), GUIStyle.SubHeadingFont);
-        Slider(left, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.HUDScale, v => unsavedConfig.Graphics.HUDScale = v);
-        Label(left, TextManager.Get("InventoryScale"), GUIStyle.SubHeadingFont);
-        Slider(left, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.InventoryScale, v => unsavedConfig.Graphics.InventoryScale = v);
-        Label(left, TextManager.Get("TextScale"), GUIStyle.SubHeadingFont);
-        Slider(left, (0.75f, 1.25f), 51, Percentage, unsavedConfig.Graphics.TextScale, v => unsavedConfig.Graphics.TextScale = v);
-            
-#if !OSX
-        Spacer(left);
-        var statisticsTickBox = new GUITickBox(NewItemRectT(left), TextManager.Get("statisticsconsenttickbox"))
-        {
-            OnSelected = tickBox =>
-            {
-                GameAnalyticsManager.SetConsent(
-                    tickBox.Selected
-                        ? GameAnalyticsManager.Consent.Ask
-                        : GameAnalyticsManager.Consent.No);
-                return false;
-            }
-        };
-#if DEBUG
-        statisticsTickBox.Enabled = false;
-#endif
-        void updateGATickBoxToolTip()
-            => statisticsTickBox.ToolTip = TextManager.Get($"GameAnalyticsStatus.{GameAnalyticsManager.UserConsented}");
-        updateGATickBoxToolTip();
-            
-        var cachedConsent = GameAnalyticsManager.Consent.Unknown;
-        var statisticsTickBoxUpdater = new GUICustomComponent(
-            new RectTransform(Vector2.Zero, statisticsTickBox.RectTransform),
-            onUpdate: (deltaTime, component) =>
-            {
-                bool shouldTickBoxBeSelected = GameAnalyticsManager.UserConsented == GameAnalyticsManager.Consent.Yes;
-                
-                bool shouldUpdateTickBoxState = cachedConsent != GameAnalyticsManager.UserConsented
-                                                || statisticsTickBox.Selected != shouldTickBoxBeSelected;
-
-                if (!shouldUpdateTickBoxState) { return; }
-
-                updateGATickBoxToolTip();
-                cachedConsent = GameAnalyticsManager.UserConsented;
-                GUITickBox.OnSelectedHandler prevHandler = statisticsTickBox.OnSelected;
-                statisticsTickBox.OnSelected = null;
-                statisticsTickBox.Selected = shouldTickBoxBeSelected;
-                statisticsTickBox.OnSelected = prevHandler;
-                statisticsTickBox.Enabled = GameAnalyticsManager.UserConsented != GameAnalyticsManager.Consent.Error;
-            });
-#endif
-
-        #endregion*/
-
-        /*#region RIGHT_FRAME
-
-        if (!PerMenuResetHandles.ContainsKey(Category.Gameplay))
-            PerMenuResetHandles.Add(Category.Gameplay, new List<ResetHandle>());
-        else
-            PerMenuResetHandles[Category.Gameplay].Clear();
-        
-        if (PerMenuConfig[Category.Gameplay] is null)
-            return;
-        List<IDisplayable> cfgList = PerMenuConfig[Category.Gameplay]!;
-        
-        int groupCount = cfgList.GroupBy(x => x.ModName).Count();
-        int entryCount = cfgList.Count;
-        Vector2 entrySize = (1.0f, 0.119f);
-        float size = Math.Max(1.0f, groupCount * 0.2f + entryCount * entrySize.Y);
-
-        OrganizedList = cfgList
-            .OrderBy(x => x.ModName)
-            .ThenBy(x => x.Name)
-            .ToList();
-
-        Label(right, "Please note: You must press ENTER in the value textbox\nfor the new value to be registered!",
-            GUIStyle.SmallFont);
-        GUIListBox rightListBox = new GUIListBox(
-            new RectTransform((1.0f, 0.9f), right.RectTransform),
-            false,
-            Color.DarkOliveGreen,
-            "",
-            true,
-            false)
-        {
-            CanBeFocused = false,
-            OnSelected = (_, _) => false
-        };
-
-        GUIButton resetAllVars = new GUIButton(new RectTransform((0.5f, 0.1f), right.RectTransform),
-            "Reset", color: Color.Beige)
-        {
-            OnClicked = (button, o) =>
-            {
-                if (PerMenuResetHandles.ContainsKey(Category.Gameplay))
-                {
-                    foreach (var resetHandle in PerMenuResetHandles[Category.Gameplay])
-                    {
-                        resetHandle.handle?.Invoke();
-                    }
-                }
-                return false;
-            },
-            OnAddedToGUIUpdateList = component =>
-            {
-                component.Enabled = CurrentTab == Tab.Gameplay;
-            }
-        };
-
-        GUIFrame testFrame = new GUIFrame(
-        new RectTransform((1.0f, size), rightListBox.Content.RectTransform),
-        "", Color.DarkOliveGreen);
-
-        GUILayoutGroup contentGroup = new GUILayoutGroup(
-            new RectTransform((1.0f, 1.0f), testFrame.RectTransform),
-            false);
-
-        string _header = string.Empty;
-
-        foreach (IDisplayable displayable in OrganizedList)
-        {
-            if (!_header.Equals(displayable.ModName))
-            {
-                _header = displayable.ModName;
-                ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
-                ModdingToolkit.Client.GUIUtil.Label(contentGroup, $"{_header} Settings", GUIStyle.LargeFont, 1f/size);
-                ModdingToolkit.Client.GUIUtil.Spacer(contentGroup, 1f/size);
-            }
-
-            PerMenuResetHandles[Category.Gameplay].Add(new ResetHandle(
-                displayable.ModName+displayable.Name,
-                AddListEntry(contentGroup, displayable, (1.0f, entrySize.Y/size), 1f/size))
-            );
-        }
-
-        #endregion*/
     }
-    
     
 
     private bool KeywordFilterContainsAny(IDisplayable? displayable, string? keywords, bool trueIfKeywordsNull = true)
