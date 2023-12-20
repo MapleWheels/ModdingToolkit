@@ -14,18 +14,18 @@ public static class Utils
         public static void PrintMessage(string s)
         {
 #if SERVER
-            LuaCsLogger.LogMessage($"[Server] {s}");
+            Barotrauma.ModUtils.Logging.PrintMessage(s);
 #else
-            LuaCsLogger.LogMessage($"[Client] {s}");
+            Barotrauma.ModUtils.Logging.PrintMessage(s);
 #endif
         }
         
         public static void PrintError(string s)
         {
 #if SERVER
-            LuaCsLogger.LogError($"[Server] {s}");
+            Barotrauma.ModUtils.Logging.PrintError(s);
 #else
-            LuaCsLogger.LogError($"[Client] {s}");
+            Barotrauma.ModUtils.Logging.PrintError(s);
 #endif
         }
     }
