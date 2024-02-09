@@ -738,7 +738,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         GUIUtil.Label(layoutGroup, new RawLString(entry.DisplayName), GUIStyle.SmallFont, adjustRatio);
         if (entry.GetDisplayType() == DisplayType.Tickbox)
         {
-            var tickbox = GUIUtil.Tickbox(layoutGroup, "", "",
+            var tickbox = GUIUtil.Tickbox(layoutGroup, "", new RawLString(entry.Tooltip),
                 (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
                 (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), adjustRatio);
             return () =>
@@ -762,7 +762,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
         {
             var dropdown = GUIUtil.Dropdown<string>(layoutGroup, 
                 s => new RawLString(s), 
-                s => new RawLString(s),
+                s => new RawLString(entry.Tooltip),
                 icl.GetReadOnlyList(), icl.Value, 
                 s => AddOrUpdateUnsavedChange(s, entry), adjustRatio);
             return () =>
@@ -791,7 +791,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 var (slider, label) = GUIUtil.Slider(layoutGroup,
                     new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
                     f => f.ToString(), cv, 
-                    f => AddOrUpdateUnsavedChange(f.ToString(), entry),null, adjustRatio);
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry),new RawLString(entry.Tooltip), adjustRatio);
                 return () =>
                 {
                     slider.BarScrollValue = icf.DefaultValue;
@@ -814,7 +814,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 var (slider, label) = GUIUtil.Slider(layoutGroup,
                     new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
                     f => f.ToString(), cv, 
-                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), null, adjustRatio);
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), new RawLString(entry.Tooltip), adjustRatio);
                 
                 return () =>
                 {
