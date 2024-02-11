@@ -735,10 +735,26 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
 
     private System.Action AddListEntry(GUILayoutGroup layoutGroup, IDisplayable entry, Vector2 scaleRatio, Vector2 adjustRatio)
     {
-        GUIUtil.Label(layoutGroup, new RawLString(entry.DisplayName), GUIStyle.SmallFont, adjustRatio);
+        if (!entry.Tooltip.IsNullOrWhiteSpace()) 
+        {
+            var labelGroup = new GUILayoutGroup(new RectTransform(new Vector2(0.9f,0.5f * scaleRatio.Y), layoutGroup.RectTransform), isHorizontal: true);
+            var lbl = GUIUtil.Label(labelGroup, new RawLString(entry.DisplayName), GUIStyle.SmallFont, new Vector2(0.8f, adjustRatio.Y));
+            new GUIImage(new RectTransform(
+                    new Point(labelGroup.Rect.Height, labelGroup.Rect.Height), 
+                    labelGroup.RectTransform, Anchor.CenterRight), 
+                style: "GUIButtonInfo")
+            {
+                ToolTip = new RawLString(entry.Tooltip)
+            };
+        }
+        else
+        {
+            var lbl = GUIUtil.Label(layoutGroup, new RawLString(entry.DisplayName), GUIStyle.SmallFont, adjustRatio);
+        }
+        
         if (entry.GetDisplayType() == DisplayType.Tickbox)
         {
-            var tickbox = GUIUtil.Tickbox(layoutGroup, "", new RawLString(entry.Tooltip),
+            var tickbox = GUIUtil.Tickbox(layoutGroup, "", null,
                 (bool)Convert.ChangeType(entry.GetStringValue(), TypeCode.Boolean),
                 (v) => AddOrUpdateUnsavedChange(v.ToString(), entry), adjustRatio);
             return () =>
@@ -791,7 +807,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 var (slider, label) = GUIUtil.Slider(layoutGroup,
                     new Vector2(icf.MinValue, icf.MaxValue), icf.Steps, 
                     f => f.ToString(), cv, 
-                    f => AddOrUpdateUnsavedChange(f.ToString(), entry),new RawLString(entry.Tooltip), adjustRatio);
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), null, adjustRatio);
                 return () =>
                 {
                     slider.BarScrollValue = icf.DefaultValue;
@@ -814,7 +830,7 @@ public class MSettingsMenu : Barotrauma.SettingsMenu, ISettingsMenu
                 var (slider, label) = GUIUtil.Slider(layoutGroup,
                     new Vector2(ici.MinValue, ici.MaxValue), ici.Steps, 
                     f => f.ToString(), cv, 
-                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), new RawLString(entry.Tooltip), adjustRatio);
+                    f => AddOrUpdateUnsavedChange(f.ToString(), entry), null, adjustRatio);
                 
                 return () =>
                 {
